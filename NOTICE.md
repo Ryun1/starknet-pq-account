@@ -2,8 +2,12 @@
 
 - `vendor/cairo-pq-verifiers/`: a subset of [OpenZeppelin/cairo-pq-verifiers](https://github.com/OpenZeppelin/cairo-pq-verifiers)
   (crates `bench_interface`, `ecdsa_stark`, `falcon_512`, `ntt`, and `pq-accounts/signers/falcon-python/falcon_signer.py`),
-  MIT License, Copyright (c) 2026 OpenZeppelin. Downloaded from the `main` branch on 2026-10-15. The workspace
+  MIT License, Copyright (c) 2026 OpenZeppelin. Downloaded from the `main` branch on 2026-10-15; identical to
+  commit `bece5c07eeea5784e570c01108ec000d2d04ae40` (checked by `bench/pf01/reproduce.sh`). The workspace
   manifest was trimmed to these crates; the code is unchanged. See `vendor/cairo-pq-verifiers/LICENSE`.
+- `vendor/provably-fast/falcon-512/`: two cumulative patches to that commit from the Provably Fast Falcon-512 gas
+  challenge (https://postquantum.provably.fast/), MIT, by the contributors listed in its `PROVENANCE.md`. Pinned
+  for measurement only; no contract in this repository uses them yet. Unaudited and not endorsed by OpenZeppelin.
 - `contracts/src/utils/execution.cairo` and `contracts/src/utils/interface.cairo` are adapted from the same
   repository (MIT).
 - Falcon key generation and signing use [falcon.py](https://github.com/tprest/falcon.py) by Thomas Prest
