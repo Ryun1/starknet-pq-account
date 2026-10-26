@@ -26,6 +26,14 @@ need scarb 2.18.0
 need snforge 0.59.0
 need universal-sierra-compiler 2.9.1
 
+# Build with mainnet's audited libfuncs, as the challenge does, and fail on any other libfunc
+# (Scarb only warns by default).
+audited() {
+  sed -i.orig 's/^allowed-libfuncs-list.name = "experimental"/allowed-libfuncs-deny = true\
+allowed-libfuncs-list.name = "audited"/' "$1"
+  grep -q '^allowed-libfuncs-deny = true' "$1"
+}
+
 echo "== patch digests"
 (cd "$PATCHES" && shasum -a 256 -c SHA256SUMS)
 
@@ -55,14 +63,22 @@ for variant in baseline compact record; do
     git -C "$UP" worktree add -q --detach "$ws" "$BASELINE_COMMIT"
     patch=$(ls "$PATCHES"/"$variant"-*.patch 2>/dev/null || true)
     [ -z "$patch" ] || git -C "$ws" apply "$patch"
-    # The challenge builds the account with mainnet's audited libfuncs.
-    sed -i.orig 's/allowed-libfuncs-list.name = "experimental"/allowed-libfuncs-list.name = "audited"/' \
-      "$ws/pq-accounts/contracts/Scarb.toml"
+    audited "$ws/pq-accounts/contracts/Scarb.toml"
   fi
   python3 -I "$HERE/gen_bench_tests.py" "$HERE/corpus.json" "$ws/crates/falcon_512/tests/pf01_corpus.cairo"
   (cd "$ws" && snforge test -p pqbench_falcon_512 > "$WORK/$variant.falcon.log" 2>&1) || true
   (cd "$ws" && snforge test -p pqbench_ntt > "$WORK/$variant.ntt.log" 2>&1) || true
   (cd "$ws" && scarb build -p pq_accounts > "$WORK/$variant.build.log" 2>&1)
+
+  # This project's hybrid classes, unchanged, built against the variant's crates.
+  hyb=$WORK/hybrid-$variant
+  if [ ! -d "$hyb" ]; then
+    mkdir -p "$hyb/vendor"
+    rsync -a --exclude target "$REPO/contracts/" "$hyb/contracts/"
+    ln -s "$ws" "$hyb/vendor/cairo-pq-verifiers"
+    audited "$hyb/contracts/Scarb.toml"
+  fi
+  (cd "$hyb/contracts" && scarb build > "$WORK/$variant.hybrid.log" 2>&1)
 done
 
 {

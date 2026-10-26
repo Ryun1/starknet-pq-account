@@ -1,6 +1,6 @@
 {
  "environment": {
-  "date_utc": "2026-10-26T23:05:43Z",
+  "date_utc": "2026-10-26T23:21:21Z",
   "uname": "Darwin 25.6.0 arm64",
   "scarb": "scarb 2.18.0 (e6144df0f 2026-04-21) cairo: 2.18.0 (https://crates.io/crates/cairo-lang-compiler/2.18.0) sierra: 1.8.0 arch: aarch64-apple-darwin ",
   "snforge": "snforge 0.59.0",
@@ -17,6 +17,20 @@
    "worst_l2_gas": 50182988,
    "account_casm_bytecode_felts": 52315,
    "account_sierra_class_bytes": 2142604,
+   "hybrid_classes": {
+    "HybridMigratableAccount": {
+     "casm_bytecode_felts": 7719,
+     "sierra_class_bytes": 237215
+    },
+    "HybridPoseidonAccount": {
+     "casm_bytecode_felts": 49043,
+     "sierra_class_bytes": 2016956
+    },
+    "HybridShakeAccount": {
+     "casm_bytecode_felts": 53237,
+     "sierra_class_bytes": 2167358
+    }
+   },
    "build_size_warnings": [],
    "falcon_512_tests": {
     "passed": 108,
@@ -175,6 +189,20 @@
    "worst_l2_gas": 25920529,
    "account_casm_bytecode_felts": 72908,
    "account_sierra_class_bytes": 3760793,
+   "hybrid_classes": {
+    "HybridMigratableAccount": {
+     "casm_bytecode_felts": 7719,
+     "sierra_class_bytes": 237215
+    },
+    "HybridPoseidonAccount": {
+     "casm_bytecode_felts": 53359,
+     "sierra_class_bytes": 2611095
+    },
+    "HybridShakeAccount": {
+     "casm_bytecode_felts": 73833,
+     "sierra_class_bytes": 3785722
+    }
+   },
    "build_size_warnings": [
     [
      "Falcon512ShakeDirectAccount",
@@ -338,6 +366,20 @@
    "worst_l2_gas": 25620242,
    "account_casm_bytecode_felts": 81152,
    "account_sierra_class_bytes": 4025263,
+   "hybrid_classes": {
+    "HybridMigratableAccount": {
+     "casm_bytecode_felts": 7719,
+     "sierra_class_bytes": 237215
+    },
+    "HybridPoseidonAccount": {
+     "casm_bytecode_felts": 53359,
+     "sierra_class_bytes": 2611095
+    },
+    "HybridShakeAccount": {
+     "casm_bytecode_felts": 80155,
+     "sierra_class_bytes": 3994172
+    }
+   },
    "build_size_warnings": [
     [
      "Falcon512ShakeDirectAccount",

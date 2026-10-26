@@ -16,9 +16,11 @@ bench/pf01/reproduce.sh /tmp/pf01-work
 
 The script checks the patch digests, clones the baseline commit, checks that
 `vendor/cairo-pq-verifiers` is identical to it, makes one git worktree per variant, applies the
-patch, switches the account crate to the audited libfunc list (as the challenge does), runs
-`snforge test` for `pqbench_falcon_512` and `pqbench_ntt`, builds `pq_accounts`, and rewrites
-`results.json`. It takes about 80 seconds on an M-series Mac.
+patch, runs `snforge test` for `pqbench_falcon_512` and `pqbench_ntt`, builds upstream's
+`pq_accounts`, builds this repository's `contracts/` (unchanged) against the variant's crates,
+and rewrites `results.json`. Both builds use mainnet's audited libfunc list with
+`allowed-libfuncs-deny = true`, so any other libfunc fails the build (Scarb only warns by
+default). It takes about 90 seconds on an M-series Mac.
 
 To regenerate the corpus (not needed to reproduce; the committed one is the pinned artifact):
 
@@ -51,6 +53,19 @@ with the audited libfunc list.
 
 Limits: 81,920 CASM felts, 4,089,446 Sierra class bytes, 100M L2 gas for validation.
 
+This repository's classes, unchanged, built against each variant's crates (CASM felts; Sierra
+class bytes in `results.json`):
+
+| Variant | `HybridShakeAccount` | headroom | `HybridPoseidonAccount` | `HybridMigratableAccount` |
+| --- | ---: | ---: | ---: | ---: |
+| baseline | 53,237 | 28,683 | 49,043 | 7,719 |
+| compact | 73,833 | 8,087 | 53,359 | 7,719 |
+| record | 80,155 | 1,765 | 53,359 | 7,719 |
+
+The project's own suite (`scarb cairo-test`, 54 tests including the browser and wallet
+fixtures) also passes against both candidates; that check was run by hand and is not part of
+the script.
+
 ### Against the board (external figures, from the 2026-10-26 snapshot)
 
 | Variant | Board mean | Local mean | Difference | Board CASM / Sierra bytes | Local |
@@ -79,18 +94,21 @@ CASM limit (86,621 felts); the hint-variant account used here still fits.
    figures (25.06M compact, 24.76M record) come from its held-out set; the measured worst here
    is 25.92M and 25.62M. Both stay far below the 1.25x rejection rule and the 100M validation
    cap, but PF-03 and PF-04 should include high-word salts.
-2. **The record likely does not fit as a full hybrid account.** This project's
-   `HybridShakeAccount` is 53,237 CASM felts against upstream's 52,315 for the same verifier, so
-   the hybrid wrapper adds about 922 felts. The record account is already 81,152 of 81,920;
-   adding the wrapper would land near 82,070. Sizes do not add exactly, so PF-02/PF-04 must
-   build it, but the margin is 768 felts against an overhead of about 900.
-3. **Review cost.** Both patches are largely minified and use `bounded-int-utils` and a
+2. **Both candidates fit as this project's hybrid class, the record narrowly.** Built for real,
+   `HybridShakeAccount` is 73,833 felts with the compact patch (8,087 to spare) and 80,155 with
+   the record (1,765 to spare, 2.2%). Class sizes do not add: with the record patch the hybrid
+   class is smaller than upstream's single-scheme account (81,152).
+3. **The patches also change the Poseidon class.** They rewrite shared NTT code, so
+   `HybridPoseidonAccount` grows from 49,043 to 53,359 felts even though its hash is untouched.
+   PF-02 must keep the existing classes on the baseline crates, or re-measure and re-test them.
+4. **Review cost.** Both patches are largely minified and use `bounded-int-utils` and a
    specialised `keccak_syscall` path. Neither had withstood an attack round when pinned.
 
 ## Provisional recommendation
 
-**Compact (`fj_3a0b1c78`).** It costs 301k gas (1.2%) more per verification than the record but
-leaves about 9,000 CASM felts of headroom, against 768 for the record, which the hybrid wrapper
-probably exceeds. Keep the record for comparison in PF-02/PF-04: a verifier-only class (PF-02)
-could still bring it under the limit. Final selection follows PF-03's correctness gate and PF-04's
-account-level measurements.
+**Compact (`fj_3a0b1c78`), by a small margin.** Both fit and both pass the same tests. The
+record saves 301k gas (1.2%) per verification. The compact leaves 8,087 felts of class headroom
+against the record's 1,765, so the hybrid class can absorb changes without hitting the limit.
+The choice is close: if PF-02 ships a verifier-only class (which will be smaller) and PF-03
+finds both equally sound, the record's 1.2% may be worth taking. Final selection follows PF-03's
+correctness gate and PF-04's account-level measurements.

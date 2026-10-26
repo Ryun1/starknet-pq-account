@@ -29,6 +29,17 @@ def tests(log: Path) -> tuple[dict, dict]:
         n for n, s in status.items() if s == "FAIL")}
 
 
+def hybrid_sizes(target: Path) -> dict:
+    sizes = {}
+    for casm_path in sorted(target.glob("pq_hybrid_*.compiled_contract_class.json")):
+        name = casm_path.name.split(".")[0].removeprefix("pq_hybrid_")
+        sierra_path = casm_path.with_name(casm_path.name.replace("compiled_contract_class",
+                                                                  "contract_class"))
+        sizes[name] = {"casm_bytecode_felts": len(json.loads(casm_path.read_text())["bytecode"]),
+                       "sierra_class_bytes": sierra_path.stat().st_size}
+    return sizes
+
+
 def main() -> None:
     work, corpus_path, out_path = (Path(a) for a in sys.argv[1:4])
     corpus = json.loads(corpus_path.read_text())
@@ -55,6 +66,7 @@ def main() -> None:
             "worst_l2_gas": max(p["l2_gas"] for p in per_vector),
             "account_casm_bytecode_felts": len(casm["bytecode"]),
             "account_sierra_class_bytes": (target / f"{ACCOUNT}.contract_class.json").stat().st_size,
+            "hybrid_classes": hybrid_sizes(work / f"hybrid-{variant}" / "contracts" / "target" / "dev"),
             "build_size_warnings": re.findall(r"contract `(\w+)`:\s*\n?\s*81920 felts allowed\. "
                                               r"Actual size: (\d+) felts", build_log),
             "falcon_512_tests": falcon_status,
@@ -72,6 +84,14 @@ def main() -> None:
               f"{r['mean_l2_gas_by_blocks']['9']:,} | {r['worst_l2_gas']:,} | "
               f"{base / r['mean_l2_gas']:.3f}x | {r['account_casm_bytecode_felts']:,} | "
               f"{r['account_sierra_class_bytes']:,} |")
+    print()
+    print("| Variant | HybridShakeAccount CASM felts | HybridPoseidonAccount | HybridMigratableAccount |")
+    print("| --- | ---: | ---: | ---: |")
+    for variant, r in results["variants"].items():
+        h = r["hybrid_classes"]
+        print(f"| {variant} | {h['HybridShakeAccount']['casm_bytecode_felts']:,} | "
+              f"{h['HybridPoseidonAccount']['casm_bytecode_felts']:,} | "
+              f"{h['HybridMigratableAccount']['casm_bytecode_felts']:,} |")
     for variant, r in results["variants"].items():
         print(f"{variant}: falcon_512 tests {r['falcon_512_tests']}, ntt tests {r['ntt_tests']}, "
               f"size warnings {r['build_size_warnings']}")
