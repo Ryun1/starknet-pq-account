@@ -2,8 +2,25 @@
 
 Two cumulative patches from the Provably Fast Falcon-512 gas challenge
 (https://postquantum.provably.fast/), pinned for PF-01 (issue #2). They are applied on top of
-OpenZeppelin cairo-pq-verifiers at the challenge baseline and are **not** used by any contract in
-this repository yet. Neither is audited, and neither is reviewed or endorsed by OpenZeppelin.
+OpenZeppelin cairo-pq-verifiers at the challenge baseline. Neither is audited, and neither is
+reviewed or endorsed by OpenZeppelin.
+
+## Crates
+
+`crates/` holds one `falcon_512` + `ntt` pair per patch, used by the experimental verifier classes
+`HybridShakeVerifierPfCompact` and `HybridShakeVerifierPfRecord` (`contracts/src/hybrid.cairo`,
+PF-02, issue #3). They are generated, never edited by hand:
+
+```sh
+vendor/provably-fast/falcon-512/make_crates.sh          # regenerate
+vendor/provably-fast/falcon-512/make_crates.sh --check  # CI: crates/ == baseline + patch + renames
+```
+
+Each pair is the vendored baseline crates with the patch applied. The only other change is the
+package names (`pqbench_falcon_512_pf_<name>`, `pqbench_ntt_pf_<name>`) and the `use` paths that
+name them, because Scarb cannot load two packages with the same name. `bench_interface` is shared
+with the baseline, so all three implement the same `PqSignatureVerifier` trait. The baseline
+crates and every existing class are unchanged.
 
 ## Baseline
 

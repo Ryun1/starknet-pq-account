@@ -13,6 +13,8 @@ jobs:
       - uses: software-mansion/setup-scarb@v1
         with:
           scarb-version: "2.18.0"
+      - name: Candidate crates match baseline + pinned patches
+        run: vendor/provably-fast/falcon-512/make_crates.sh --check
       - name: Build
         working-directory: contracts
         run: scarb build

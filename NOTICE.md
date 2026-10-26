@@ -6,8 +6,10 @@
   commit `bece5c07eeea5784e570c01108ec000d2d04ae40` (checked by `bench/pf01/reproduce.sh`). The workspace
   manifest was trimmed to these crates; the code is unchanged. See `vendor/cairo-pq-verifiers/LICENSE`.
 - `vendor/provably-fast/falcon-512/`: two cumulative patches to that commit from the Provably Fast Falcon-512 gas
-  challenge (https://postquantum.provably.fast/), MIT, by the contributors listed in its `PROVENANCE.md`. Pinned
-  for measurement only; no contract in this repository uses them yet. Unaudited and not endorsed by OpenZeppelin.
+  challenge (https://postquantum.provably.fast/), MIT, by the contributors listed in its `PROVENANCE.md`, and
+  the crates generated from them (`crates/`, baseline + patch + package renames only). Used only by the
+  experimental verifier classes `HybridShakeVerifierPfCompact` and `HybridShakeVerifierPfRecord`. Unaudited and
+  not endorsed by OpenZeppelin.
 - `contracts/src/utils/execution.cairo` and `contracts/src/utils/interface.cairo` are adapted from the same
   repository (MIT).
 - Falcon key generation and signing use [falcon.py](https://github.com/tprest/falcon.py) by Thomas Prest

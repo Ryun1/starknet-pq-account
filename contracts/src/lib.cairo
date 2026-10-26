@@ -12,6 +12,8 @@ mod tests;
 #[cfg(test)]
 mod tests_browser;
 #[cfg(test)]
+mod tests_pf;
+#[cfg(test)]
 mod tests_migration;
 #[cfg(test)]
 mod tests_wallets;
