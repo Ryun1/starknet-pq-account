@@ -19,7 +19,9 @@ pqbench_falcon_512_pf_record = { path = "../vendor/provably-fast/falcon-512/crat
 cairo_test = "2.18.0"
 
 [[target.starknet-contract]]
-allowed-libfuncs-list.name = "experimental"
+# Mainnet's audited list; fail on anything else (Scarb only warns by default).
+allowed-libfuncs-deny = true
+allowed-libfuncs-list.name = "audited"
 sierra = true
 casm = true
 
