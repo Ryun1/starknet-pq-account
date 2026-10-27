@@ -27,14 +27,21 @@ the old verifier in place.
   `is_valid_signature`, which every deployed migratable class has (see below).
 - No separate proof. The transaction hash already commits to the chain, the account, the nonce
   and the candidate in the calldata, so the signature cannot be replayed onto another switch.
-- The wallet kit builds it: `verifierSwitchCalls(provider, address, candidate, { guard, allowed })`
-  in `signer/pq_account_kit.mjs`. It checks, read-only, that:
+- The wallet kit sends it: `switchVerifier(account, candidate, { guard, allowed })` in
+  `signer/pq_account_kit.mjs`, where `account` signs with `HybridSigner`. It first builds the
+  calls with `verifierSwitchCalls`, which checks, read-only, that:
   - the account is a migrated hybrid account;
   - the candidate is in the wallet's `allowed` list, declared, exposes
     `is_valid_signature(hash, signature)` and isn't already installed;
   - the guard is deployed.
 
-  It always returns both calls. Simulate them before sending.
+  It then simulates the transaction with validation and the hybrid signature, throws if it would
+  revert, and only then sends it with the simulated resource bounds. `dryRun: true` stops after
+  the simulation.
+- **Don't estimate or simulate it with starknet.js defaults.** They use `skipValidate: true`,
+  which sends an empty signature, so the guard rejects even a compatible verifier: the estimate
+  fails and `account.execute(calls)` without resource bounds never sends. `switchVerifier`
+  simulates with `skipValidate: false`.
 
 ## Limits
 
@@ -84,13 +91,45 @@ state check is removed, the key-rewriting case fails.
 `signer/verifier_switch_check.mjs` checks the kit's read-only gates offline against the compiled
 ABIs.
 
+### Real transactions on every deployed class version
+
+The Cairo tests set the transaction hash and signature by hand, so they can't show that the hash
+binds the signature to the calls. `signer/verifier_switch_devnet.mjs` sends real transactions to
+a local devnet that forks Sepolia (nothing reaches Sepolia; the command is in the file header).
+For each of the four migratable classes below, it deploys a fresh account with a public test key
+and the deployed `HybridShakeAccount` verifier, declares `HybridShakeVerifierPfCompact` and the
+guard on the fork, and runs these checks. The protocol validates every transaction with its
+real hash and signature.
+
+| Check | Result on all four classes |
+| --- | --- |
+| hybrid transfer, baseline verifier | succeeds |
+| starknet.js default (unsigned) fee estimate of a compatible switch | fails: `Guard: signature rejected` |
+| `switchVerifier` to compact | simulated, sent, succeeds |
+| hybrid transfer validated by compact | succeeds |
+| `switchVerifier` to `HybridPoseidonAccount` | refused after simulation, nothing sent |
+| the same switch sent anyway | reverted on chain; pointer and keys unchanged |
+| a switch carrying the signature of another switch | rejected in `__validate__` |
+| ECDSA-only switch | rejected in `__validate__` |
+| outsider calls `set_verifier_class_hash` | `Migratable: only self` |
+| `switchVerifier` back to baseline | succeeds; keys unchanged |
+| guard called by a contract other than the named account | `Guard: caller is not account` |
+
+On 2026-10-27, with devnet 0.10.1 forked at Sepolia block 17229801: 41 of 41 checks pass. With the
+guard's signature check removed, the Poseidon verifier is installed and the account is locked:
+every later check fails with `Account: invalid signature`, including the switch back.
+
+The script checks behaviour only. Devnet's L2 gas accounting differs from Sepolia's, so gas
+figures come from PF-04.
+
 ## Deployed accounts
 
 `signer/verifier_switch_inventory.mjs` reads Sepolia (read-only) for every account linked from
 `README.md` and `contracts/docs/wallet-coverage.md`. On 2026-10-27 it found 17 migrated accounts
 on 4 migratable class versions. All are registered, all have `set_verifier_class_hash` and
 `is_valid_signature`, and every verifier they point at has `is_valid_signature`. So the guarded
-switch needs no account upgrade on any of them.
+switch needs no account upgrade on any of them, and the devnet run above shows the switch
+working on each of the four classes.
 
 | Migratable class | Accounts | Notes |
 | --- | ---: | --- |

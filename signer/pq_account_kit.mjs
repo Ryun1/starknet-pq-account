@@ -7,7 +7,7 @@
 //   await new Account({ provider, address, signer: keys.ecdsaPrivateKey }).execute(calls);
 //   // from now on: new Account({ provider, address, signer: new HybridSigner(keys) })
 //   // later, to change verifier (same scheme only):
-//   const switchCalls = await verifierSwitchCalls(provider, address, newVerifier, { guard, allowed });
+//   await switchVerifier(hybridAccount, newVerifier, { guard, allowed });   // simulates, then sends
 import { Signer, ec, hash, num, shortString } from "starknet";
 import { deriveAccountKeys } from "./pq_keys.mjs";
 import { makeNtt, publicKeyFelts, signatureFelts, signTxHash } from "./falcon_adapter.mjs";
@@ -209,8 +209,8 @@ export async function inspectAccount(provider, address) {
  * Read-only checks first, and throws on any problem: the account is a registered migratable
  * hybrid account with `set_verifier_class_hash`; the candidate is in `allowed` (reviewed, pinned
  * hashes chosen by the wallet), declared, exposes `is_valid_signature(hash, signature)` and is
- * not already installed; the guard is deployed and exposes `assert_compatible`. Simulate the
- * returned calls (estimate or simulate with the hybrid signer) before sending them.
+ * not already installed; the guard is deployed and exposes `assert_compatible`. Send them with
+ * switchVerifier, which simulates them first with the hybrid signature.
  */
 export async function verifierSwitchCalls(provider, address, verifierClass, { guard, allowed }) {
   const candidate = num.toHex(verifierClass);
@@ -239,4 +239,27 @@ export async function verifierSwitchCalls(provider, address, verifierClass, { gu
     { contractAddress: address, entrypoint: "set_verifier_class_hash", calldata: [candidate] },
     { contractAddress: num.toHex(guard), entrypoint: "assert_compatible", calldata: [num.toHex(address), candidate] },
   ];
+}
+
+/**
+ * Builds the guarded switch (verifierSwitchCalls), simulates it from `account` (an Account whose
+ * signer is a HybridSigner) and, unless `dryRun`, sends it with the simulated resource bounds.
+ * Throws if the simulation reverts, before anything is sent.
+ *
+ * The simulation must run with validation and a real signature. starknet.js simulates and
+ * estimates with `skipValidate: true` by default, which signs nothing, so the guard sees an
+ * empty signature and rejects even a compatible verifier; `account.execute(calls)` without
+ * resource bounds fails in fee estimation for the same reason.
+ */
+export async function switchVerifier(account, verifierClass, { guard, allowed, dryRun = false }) {
+  const calls = await verifierSwitchCalls(account.provider, account.address, verifierClass, { guard, allowed });
+  const { simulated_transactions: [sim] } = await account.simulateTransaction(
+    [{ type: "INVOKE", payload: calls }], { skipValidate: false })
+    .catch((e) => { throw new Error(`guarded verifier switch would fail: ${e.message}`); });
+  const trace = sim.transaction_trace;
+  const reason = trace.execute_invocation?.revert_reason ?? trace.validate_invocation?.revert_reason;
+  if (reason) throw new Error(`guarded verifier switch would revert: ${reason}`);
+  if (dryRun) return { calls, simulation: sim };
+  const { transaction_hash } = await account.execute(calls, { resourceBounds: sim.resourceBounds });
+  return { calls, simulation: sim, transaction_hash };
 }

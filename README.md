@@ -198,7 +198,7 @@ Account: [`0x343e3df5…c0db`](https://sepolia.voyager.online/contract/0x343e3df
 - Unaudited. The Poseidon Falcon variant uses a Poseidon hash-to-point (cheap, non-standard); the
   SHAKE-256 variant follows the standard and costs about 3.4x the gas.
 - Changing a migrated account's verifier with `set_verifier_class_hash` alone can lock it. Use the
-  guarded switch (`VerifierSwitchGuard`, `verifierSwitchCalls` in the kit), which reverts unless the
+  guarded switch (`VerifierSwitchGuard`, `switchVerifier` in the kit), which reverts unless the
   new verifier accepts the switch transaction's own signature. It works only between verifiers of
   the same scheme; see [`contracts/docs/verifier-replacement.md`](contracts/docs/verifier-replacement.md).
 - After migration, wallet extras such as SRC-9 outside execution (paymasters, session keys),
