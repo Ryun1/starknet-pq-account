@@ -74,8 +74,8 @@ registered = 1n;
 const other = await verifierSwitchCalls(provider, ACCOUNT, "0xb3", { guard: GUARD, allowed });
 check("other-scheme verifier passes the read-only checks (the guard catches it)", other.length === 2);
 
-// switchVerifier passes the tip to both the simulation and the send: Sepolia evicts zero-tip
-// transactions, so a guarded switch sent without one is never included.
+// switchVerifier passes an explicit tip to both the simulation and the send, and leaves it out
+// when none is given so that starknet.js estimates one (Sepolia evicts zero-tip transactions).
 const seen = {};
 const simBounds = { l2_gas: { max_amount: "0x1", max_price_per_unit: "0x1" } };
 const stub = {
@@ -92,5 +92,8 @@ const stub = {
 await switchVerifier(stub, "0xb2", { guard: GUARD, allowed, tip: 123n });
 check("switchVerifier simulates with validation and the tip", seen.simulate?.skipValidate === false && seen.simulate?.tip === 123n, JSON.stringify(seen.simulate, (k, v) => typeof v === "bigint" ? `${v}n` : v));
 check("switchVerifier sends with the simulated bounds and the tip", seen.execute?.tip === 123n && seen.execute?.resourceBounds === simBounds, JSON.stringify(seen.execute, (k, v) => typeof v === "bigint" ? `${v}n` : v));
+
+await switchVerifier(stub, "0xb2", { guard: GUARD, allowed });
+check("switchVerifier without a tip leaves it to starknet.js", seen.simulate && !("tip" in seen.simulate) && !("tip" in seen.execute), JSON.stringify([seen.simulate, seen.execute], (k, v) => typeof v === "bigint" ? `${v}n` : v));
 
 process.exit(failed ? 1 : 0);

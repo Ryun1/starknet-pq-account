@@ -66,8 +66,11 @@ in the guard. So each direction costs about one baseline plus one small verifica
 a one-off switch to small pays for itself after about four transfers (each about 20M cheaper).
 
 Two operational findings, both handled in the kit or the script:
-- **Sepolia evicts zero-tip transactions**, and `switchVerifier` sent no tip. It now takes `tip`
-  (`signer/pq_account_kit.mjs`), checked offline in `signer/verifier_switch_check.mjs`.
+- **Sepolia evicts zero-tip transactions.** `switchVerifier` leaves the tip to starknet.js, which
+  estimates the recommended tip for each call, or takes an explicit `tip` that it uses for both the
+  simulation and the send (`signer/pq_account_kit.mjs`, checked offline in
+  `signer/verifier_switch_check.mjs`). This run passed `getEstimateTip`'s `recommendedTip`
+  (1e8 fri, `0x5f5e100` on both switches).
 - **A switch needs more balance than its fee.** starknet.js's bound for the switch back was 143.3M
   L2 gas at 1.5x the gas price, about 4.1 STRK, more than the 3.79 STRK the account then held, so
   the RPC refused it before sending. A 5 STRK top-up from the deployer
