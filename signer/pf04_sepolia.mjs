@@ -82,7 +82,9 @@ async function declare(name, run, wallet) {
   // account must hold the whole bound.
   const margin = { max_amount: 10, max_price_per_unit: 25 };
   config.set("resourceBoundsOverhead", { l1_gas: margin, l2_gas: margin, l1_data_gas: margin });
-  const estimate = await retry(() => acc.estimateDeclareFee({ contract: sierra, casm }));
+  // starknet.js estimates with validation skipped by default; a hybrid account's validation is
+  // about 28M L2 gas, so leaving it out underestimates the bound and validation runs out of gas.
+  const estimate = await retry(() => acc.estimateDeclareFee({ contract: sierra, casm }, { skipValidate: false }));
   console.log(`estimated fee ${Number(estimate.overall_fee) / 1e18} STRK (bound includes the margin)`);
   // Stop rather than send if the estimate is far above what was planned (PF04_MAX_FEE_STRK).
   const maxFee = BigInt(process.env.PF04_MAX_FEE_STRK || "250") * 10n ** 18n;

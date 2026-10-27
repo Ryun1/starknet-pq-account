@@ -179,5 +179,50 @@ value plus 1%.
 
 ## Sepolia receipts
 
-Pending: complete transactions (transfer, declare, migrations from a newer and an older wallet
-class) with the selected verifier.
+Complete transactions on Sepolia (Starknet 0.14.4) on 2026-10-27, collected by
+`signer/pf04_sepolia.mjs receipts` into `sepolia.json`. Small: real Argent and Braavos accounts
+from fresh words, migrated in place by `signer/wallet_migrate_demo.mjs` (`PQ_MATRIX_RUN=pf04-small`)
+to verifier class `0x333aa6a6…afb0fb1`, migratable class `0x4b067679…e27a78`. Baseline: the
+`HybridShakeAccount`-verifier runs in `contracts/docs/wallet-coverage.md`, same migratable class.
+L2 gas from the receipts:
+
+| Wallet class | Transaction | baseline | small | change |
+| --- | --- | ---: | ---: | ---: |
+| Argent 0.5.0 (Sierra 1.7.0) | migration (`upgrade` → `perform_upgrade`) | 74,716,214 | 50,330,764 | -32.6% |
+| Argent 0.5.0 | hybrid transfer | 53,946,323 | 29,566,303 | -45.2% |
+| Braavos 1.2.0 (Sierra 1.7.0) | migration (`[upgrade, migrate]`) | 70,122,982 | 48,531,148 | -30.8% |
+| Braavos 1.2.0 | hybrid transfer | 53,952,403 | 29,565,553 | -45.2% |
+| Argent 0.3.1 (Sierra 1.4.0) | migration (`upgrade` → `execute_after_upgrade`) | 137,979,920 | 83,499,920 | -39.5% |
+| Argent 0.3.1 | hybrid transfer | 49,612,741 | 29,554,543 | -40.4% |
+
+L1 data gas is unchanged (3,328 per migration, 192 per transfer). A single transfer's cost depends
+on how many SHAKE blocks its signature's hash-to-point needs: the baseline Argent 0.3.1 transfer
+(49.6M) was cheaper than the other two (54.0M), consistent with eight blocks against nine. The three
+small transfers happened to land within 12k gas of each other. The transfer projection in PF-00
+(53.9M to about 30M, -44%) holds: 53.9M to 29.6M, -45%.
+
+For each small run, `sepolia.json` also records that the stored ECDSA and Falcon keys equal the
+keys derived from the words, that the balance dropped by exactly the fee, and that an ECDSA-only
+transfer was rejected in `__validate__`.
+
+Declares:
+
+| Class | From | L2 gas | Fee | Transaction |
+| --- | --- | ---: | ---: | --- |
+| `HybridShakeVerifierPfSmall` | OpenZeppelin deployer | 5,438,297,280 | 103.48 STRK | `0x18feecd7…c0cd62` |
+| `VerifierSwitchGuard` | the migrated Argent 0.5.0 account (validated by small) | 117,313,246 | 2.24 STRK | `0x687a8500…169e23` |
+
+The verifier's declare is 0.013% above the code-size formula (the rest is the declare's own
+execution). The guard's declare is about 88.4M of code plus about 28.9M of hybrid validation,
+matching the local `__validate_declare__` figure (28.7M). Fees are Sepolia's, at about 1.9e10 fri
+per L2 gas that day, not mainnet prices.
+
+Two findings from these runs, both handled in the scripts:
+
+- **Sepolia evicts zero-tip transactions.** Every recent transaction paid a tip of 1e8 fri per L2
+  gas; the scripts now use `getEstimateTip`. `signer/browser_setup.mjs` and the browser page
+  (`signer/browser-wallet.template.html`) still send `tip: 0n` and were not changed here.
+- **starknet.js estimates fees with validation skipped** (`skipValidate: true` by default). For a
+  hybrid account that omits about 28M L2 gas of Falcon validation, so a bound built from the
+  default estimate makes validation run out of gas ("Account validation failed"). The kit's
+  `switchVerifier` already estimates with `skipValidate: false`; `pf04_sepolia.mjs` now does too.
