@@ -85,7 +85,12 @@ async function declare(name, run, wallet) {
   config.set("resourceBoundsOverhead", { l1_gas: margin, l2_gas: margin, l1_data_gas: margin });
   const estimate = await retry(() => acc.estimateDeclareFee({ contract: sierra, casm }));
   console.log(`estimated fee ${Number(estimate.overall_fee) / 1e18} STRK (bound includes the margin)`);
-  const d = await acc.declare({ contract: sierra, casm }, { tip: 0n, resourceBounds: estimate.resourceBounds });
+  // Stop rather than send if the estimate is far above what was planned (PF04_MAX_FEE_STRK).
+  const maxFee = BigInt(process.env.PF04_MAX_FEE_STRK || "250") * 10n ** 18n;
+  if (estimate.overall_fee > maxFee) throw new Error("estimate above PF04_MAX_FEE_STRK; not sending");
+  // Sepolia evicts zero-tip transactions from the mempool; use the tip recent blocks paid.
+  const { recommendedTip } = await retry(() => provider.getEstimateTip("latest", { maxBlocks: 5 }));
+  const d = await acc.declare({ contract: sierra, casm }, { tip: recommendedTip, resourceBounds: estimate.resourceBounds });
   const rc = await retry(() => provider.waitForTransaction(d.transaction_hash));
   state.declares = { ...state.declares, [name]: { tx: d.transaction_hash, classHash, from: run ? `${run} ${wallet}` : "deployer", status: rc.execution_status } };
   save();
