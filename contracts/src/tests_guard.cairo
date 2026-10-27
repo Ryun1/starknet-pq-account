@@ -7,7 +7,9 @@ use starknet::account::Call;
 use starknet::syscalls::{call_contract_syscall, deploy_syscall};
 use starknet::{ClassHash, ContractAddress, SyscallResult, SyscallResultTrait};
 use crate::guard::{IVerifierSwitchGuardDispatcher, IVerifierSwitchGuardDispatcherTrait, VerifierSwitchGuard};
-use crate::hybrid::{HybridPoseidonAccount, HybridShakeAccount, HybridShakeVerifierPfCompact};
+use crate::hybrid::{
+    HybridPoseidonAccount, HybridShakeAccount, HybridShakeVerifierPfCompact, HybridShakeVerifierPfSmall,
+};
 use crate::migratable::LegacyOzLikeAccount::{ILegacyDispatcher, ILegacyDispatcherTrait};
 use crate::migratable::{
     HybridMigratableAccount, IMigratableDispatcher, IMigratableDispatcherTrait,
@@ -57,6 +59,10 @@ fn baseline() -> ClassHash {
 
 fn compact() -> ClassHash {
     HybridShakeVerifierPfCompact::TEST_CLASS_HASH.try_into().unwrap()
+}
+
+fn small() -> ClassHash {
+    HybridShakeVerifierPfSmall::TEST_CLASS_HASH.try_into().unwrap()
 }
 
 fn hybrid(r: felt252, s: felt252) -> Array<felt252> {
@@ -160,6 +166,26 @@ fn switching_back_to_the_baseline_works() {
     signed(account, switch_calls(account, guard, compact())).unwrap_syscall();
     signed(account, switch_calls(account, guard, baseline())).unwrap_syscall();
     assert_unchanged(account);
+}
+
+#[test]
+fn baseline_to_small_is_installed_and_then_validates() {
+    let (account, guard) = setup();
+    signed(account, switch_calls(account, guard, small())).unwrap_syscall();
+    assert_eq!(IMigratableDispatcher { contract_address: account }.get_verifier_class_hash(), small());
+    signed(account, array![]).unwrap_syscall();
+    // An ECDSA-only transaction is rejected by small in __validate__.
+    assert!(transact(account, array![], array![wallet::ECDSA_R, wallet::ECDSA_S]).is_err());
+}
+
+#[test]
+fn small_back_to_baseline_restores_the_pointer_and_keys() {
+    let (account, guard) = setup();
+    signed(account, switch_calls(account, guard, small())).unwrap_syscall();
+    signed(account, array![]).unwrap_syscall();
+    signed(account, switch_calls(account, guard, baseline())).unwrap_syscall();
+    assert_unchanged(account);
+    signed(account, array![]).unwrap_syscall();
 }
 
 #[test]

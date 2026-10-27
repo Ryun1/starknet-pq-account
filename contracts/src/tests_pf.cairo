@@ -133,6 +133,29 @@ fn each_verifier_validates_a_hybrid_transaction() {
 }
 
 #[test]
+fn each_verifier_validates_a_declare() {
+    let mut salt = 0;
+    for verifier in verifiers() {
+        let account = IHybridAccountDispatcher { contract_address: migrated(verifier, salt) };
+        starknet::testing::set_transaction_hash(wallet::REGISTRATION_HASH);
+        starknet::testing::set_signature(wallet_sig().span());
+        assert_eq!(account.__validate_declare__(0x1234), starknet::VALIDATED, "verifier {salt}");
+        salt += 1;
+    }
+}
+
+#[test]
+#[should_panic]
+fn ecdsa_only_declare_is_rejected_on_the_small_verifier() {
+    let account = IHybridAccountDispatcher {
+        contract_address: migrated(HybridShakeVerifierPfSmall::TEST_CLASS_HASH.try_into().unwrap(), 0),
+    };
+    starknet::testing::set_transaction_hash(wallet::REGISTRATION_HASH);
+    starknet::testing::set_signature(array![wallet::ECDSA_R, wallet::ECDSA_S].span());
+    account.__validate_declare__(0x1234);
+}
+
+#[test]
 fn each_verifier_rejects_a_bad_ecdsa_or_a_bad_falcon_half() {
     let sig = wallet_sig();
     let bad_ecdsa = array![
