@@ -22,6 +22,16 @@ jobs:
         working-directory: contracts
         run: scarb cairo-test
 
+  falcon-differential:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.18.0"
+      - name: Baseline and candidate verifiers agree with the reference on every vector
+        run: bench/pf03/run.sh
+
   recovery:
     runs-on: ubuntu-24.04
     steps:
