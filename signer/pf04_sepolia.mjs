@@ -14,7 +14,7 @@
 // PQ_MATRIX_RUN=pf04-record and is collected the same way. Baseline receipts are the
 // HybridShakeAccount-verifier runs in contracts/docs/wallet-coverage.md.
 // sepolia.json holds transaction hashes and receipts only, never keys or words.
-import { Account, RpcProvider, hash, json, num } from "starknet";
+import { Account, RpcProvider, config, hash, json } from "starknet";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { HybridSigner, deriveAccountKeys, prepareKeys } from "./pq_account_kit.mjs";
@@ -78,9 +78,14 @@ async function declare(name, run, wallet) {
     console.log("already declared");
     return;
   } catch { /* not declared yet */ }
-  // starknet.js estimates the fee (with its default margin), so the balance needed is the
-  // estimate plus margin rather than a fixed worst-case bound.
-  const d = await acc.declare({ contract: sierra, casm }, { tip: 0n });
+  // Bounds from starknet.js's estimate with a smaller margin than its default 50% on amount and
+  // price (2.25x the fee): a verifier class costs on the order of 100+ STRK to declare, and the
+  // account must hold the whole bound.
+  const margin = { max_amount: 10, max_price_per_unit: 25 };
+  config.set("resourceBoundsOverhead", { l1_gas: margin, l2_gas: margin, l1_data_gas: margin });
+  const estimate = await retry(() => acc.estimateDeclareFee({ contract: sierra, casm }));
+  console.log(`estimated fee ${Number(estimate.overall_fee) / 1e18} STRK (bound includes the margin)`);
+  const d = await acc.declare({ contract: sierra, casm }, { tip: 0n, resourceBounds: estimate.resourceBounds });
   const rc = await retry(() => provider.waitForTransaction(d.transaction_hash));
   state.declares = { ...state.declares, [name]: { tx: d.transaction_hash, classHash, from: run ? `${run} ${wallet}` : "deployer", status: rc.execution_status } };
   save();
