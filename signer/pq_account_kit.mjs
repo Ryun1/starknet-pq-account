@@ -6,6 +6,8 @@
 //   const calls = migrationCalls(info, keys, { migratableClass, verifierClass });
 //   await new Account({ provider, address, signer: keys.ecdsaPrivateKey }).execute(calls);
 //   // from now on: new Account({ provider, address, signer: new HybridSigner(keys) })
+//   // later, to change verifier (same scheme only):
+//   const switchCalls = await verifierSwitchCalls(provider, address, newVerifier, { guard, allowed });
 import { Signer, ec, hash, num, shortString } from "starknet";
 import { deriveAccountKeys } from "./pq_keys.mjs";
 import { makeNtt, publicKeyFelts, signatureFelts, signTxHash } from "./falcon_adapter.mjs";
@@ -194,4 +196,47 @@ export async function inspectAccount(provider, address) {
     }
   }
   return info;
+}
+
+// ---------------------------------------------------------------- verifier switch (PF-05)
+
+/**
+ * The guarded verifier switch for a migrated account: one hybrid-signed multicall that sets the
+ * new verifier and then has the guard check that this same transaction's signature verifies
+ * through it, so an incompatible verifier reverts the whole transaction. Only works between
+ * verifiers of the same scheme (e.g. two SHAKE-256 verifiers). See contracts/src/guard.cairo.
+ *
+ * Read-only checks first, and throws on any problem: the account is a registered migratable
+ * hybrid account with `set_verifier_class_hash`; the candidate is in `allowed` (reviewed, pinned
+ * hashes chosen by the wallet), declared, exposes `is_valid_signature(hash, signature)` and is
+ * not already installed; the guard is deployed and exposes `assert_compatible`. Simulate the
+ * returned calls (estimate or simulate with the hybrid signer) before sending them.
+ */
+export async function verifierSwitchCalls(provider, address, verifierClass, { guard, allowed }) {
+  const candidate = num.toHex(verifierClass);
+  if (!Array.isArray(allowed) || !allowed.map((h) => num.toHex(h)).includes(candidate)) {
+    throw new Error(`verifier ${candidate} is not in the allowed list of reviewed class hashes`);
+  }
+  if (BigInt(candidate) === 0n) throw new Error("verifier class hash is zero");
+  const accountClass = num.toHex(await provider.getClassHashAt(address, "latest"));
+  const a = abiFunctions((await provider.getClassByHash(accountClass)).abi);
+  if (!a.has("is_falcon_registered") || a.get("set_verifier_class_hash")?.join() !== "verifier_class_hash") {
+    throw new Error(`account class ${accountClass} has no set_verifier_class_hash: not a migratable hybrid account`);
+  }
+  if (BigInt((await view(provider, address, "is_falcon_registered"))[0]) === 0n) throw new Error("account has not migrated yet");
+  const current = num.toHex((await view(provider, address, "get_verifier_class_hash"))[0]);
+  if (current === candidate) throw new Error(`verifier ${candidate} is already installed`);
+  const cls = await provider.getClassByHash(candidate).catch(() => null);
+  if (!cls) throw new Error(`verifier class ${candidate} is not declared`);
+  if (abiFunctions(cls.abi).get("is_valid_signature")?.join() !== "hash,signature") {
+    throw new Error(`verifier class ${candidate} has no is_valid_signature(hash, signature)`);
+  }
+  const guardClass = await provider.getClassHashAt(guard, "latest").catch(() => null);
+  if (!guardClass) throw new Error(`no guard deployed at ${guard}`);
+  const g = abiFunctions((await provider.getClassByHash(num.toHex(guardClass))).abi);
+  if (g.get("assert_compatible")?.join() !== "account,verifier_class_hash") throw new Error(`${guard} is not a verifier switch guard`);
+  return [
+    { contractAddress: address, entrypoint: "set_verifier_class_hash", calldata: [candidate] },
+    { contractAddress: num.toHex(guard), entrypoint: "assert_compatible", calldata: [num.toHex(address), candidate] },
+  ];
 }
