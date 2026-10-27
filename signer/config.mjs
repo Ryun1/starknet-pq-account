@@ -21,3 +21,4 @@ export const PAGE_CONFIG = resolve(REPO, "signer/browser-wallet.config.json");
 export const WALLETS_FIXTURE = resolve(REPO, "contracts/src/tests_wallets_fixture.cairo");
 export const SURVEY_DIR = resolve(REPO, "signer/survey");
 export const RECOVERY_DIR = resolve(REPO, "recovery");
+export const RELEASE_MANIFEST = resolve(REPO, "release/testnet-v1.json");

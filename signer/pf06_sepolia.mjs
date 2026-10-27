@@ -1,7 +1,7 @@
 // PF-06 on Sepolia: the guarded verifier switch on an already migrated account, from the baseline
 // SHAKE-256 verifier (HybridShakeAccount) to the small Provably Fast verifier and back. TESTNET ONLY.
 //
-//   PQ_MATRIX_RUN=pf06-baseline PQ_VERIFIER_CLASS=0x2255fc213bf39d1df2129c9e068b363f2b11a27b70b4b2c48df8ea4275f1c92 \
+//   PQ_MATRIX_RUN=pf06-baseline PQ_VERIFIER=shake-baseline \
 //     node wallet_migrate_demo.mjs argent-0.5.0        # a fresh account, migrated with the baseline verifier
 //   node pf06_sepolia.mjs guard                        # deploy one VerifierSwitchGuard (class declared by PF-04)
 //   node pf06_sepolia.mjs switch --dry                 # simulate the switch to small; sends nothing
@@ -16,6 +16,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { HybridSigner, deriveAccountKeys, prepareKeys, switchVerifier } from "./pq_account_kit.mjs";
 import { KEYS, ROOTS, RPC, TARGET } from "./config.mjs";
+import { ALLOWED_VERIFIERS, RELEASE, verifierClass } from "./verifiers.mjs";
 
 const provider = new RpcProvider({ nodeUrl: RPC });
 const STATE_FILE = `${KEYS}/pf06-sepolia-state.json`;
@@ -23,13 +24,13 @@ const OUT = resolve(TARGET, "../../../bench/pf06/sepolia.json");
 const RUN = "pf06-baseline";
 const PROFILES = { "argent-0.5.0": "argentx", "braavos-1.2.0": "braavos", "argent-0.3.1": "argentx" };
 const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
-// Pinned class hashes (bench/pf04/sepolia.json, contracts/docs/verifier-replacement.md).
-const BASELINE = "0x2255fc213bf39d1df2129c9e068b363f2b11a27b70b4b2c48df8ea4275f1c92"; // HybridShakeAccount
-const SMALL = "0x333aa6a603a1edcf37867d774d65220528e684ed496f5d8a73ce24fcafb0fb1"; // HybridShakeVerifierPfSmall
-const POSEIDON = "0x7f10b6f2f70e72ef87e97844b5f6f13d384c92afcfed2a1233a03524d359d6f"; // HybridPoseidonAccount
-const GUARD_CLASS = "0x44779ad7a4ea11318759272383a06d06fdf1b7c007ba1e5f38a2096e6e26178"; // VerifierSwitchGuard
+// Pinned class hashes (release/testnet-v1.json).
+const BASELINE = verifierClass("shake-baseline"); // HybridShakeAccount
+const SMALL = verifierClass("shake-pf-small-v1"); // HybridShakeVerifierPfSmall
+const POSEIDON = verifierClass("poseidon"); // HybridPoseidonAccount
+const GUARD_CLASS = RELEASE.classes.VerifierSwitchGuard.class_hash;
 const GUARD_SALT = "0x706636";
-const ALLOWED = [SMALL, BASELINE];
+const ALLOWED = ALLOWED_VERIFIERS;
 // Above a hybrid transfer on either verifier (about 30M on small, 54M on the baseline).
 const TRANSFER_L2_MAX = 70000000n;
 
