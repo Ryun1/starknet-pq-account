@@ -24,9 +24,16 @@ for job in "$@"; do
     --exclude .snfoundry_cache "$REPO/" "$w/"
   f=$w/vendor/provably-fast/falcon-512
   curl -sf -o "$f/$SLOT" "https://postquantum.provably.fast/api/participation/falcon/jobs/$job/patch"
-  # Patches may only touch Cairo sources of the two crates.
-  if grep '^diff --git' "$f/$SLOT" | awk '{print $3}' | grep -v '^a/crates/\(falcon_512\|ntt\)/src/.*\.cairo$'; then
+  # Untrusted input: the patch may only modify or create Cairo sources of the two crates. Check the
+  # paths git apply itself will write (both sides, via --numstat), and reject renames, copies, mode
+  # changes and deletions (--summary), before make_crates.sh applies it.
+  allowed='^crates/(falcon_512|ntt)/src/[A-Za-z0-9_/]+\.cairo$'
+  paths=$(git apply --numstat "$f/$SLOT" | cut -f3-) || { echo "$job: not a valid patch, skipped" >&2; continue; }
+  if [ -z "$paths" ] || grep -Ev "$allowed" <<< "$paths" >&2; then
     echo "$job: patch touches other files, skipped" >&2; continue
+  fi
+  if git apply --summary "$f/$SLOT" | grep -Ev '^ create mode 100644 crates/(falcon_512|ntt)/src/[A-Za-z0-9_/]+\.cairo$' | grep . >&2; then
+    echo "$job: patch renames, copies, deletes or changes modes, skipped" >&2; continue
   fi
   (cd "$f" && shasum -a 256 compact-*.patch record-*.patch small-*.patch > SHA256SUMS)
   "$f/make_crates.sh" > /dev/null
