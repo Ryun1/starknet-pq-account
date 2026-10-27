@@ -1,0 +1,81 @@
+{
+  "description": "PF-04 Sepolia receipts; see bench/pf04/README.md",
+  "generated_utc": "2026-10-27T13:49:38.924Z",
+  "runs": {
+    "baseline": {
+      "argent-0.5.0": {
+        "migration": {
+          "tx": "0x2bd473956e65ee2a017ddcfd4b5a03710fa329f1fdfa60e0de2c05f4dd91f77",
+          "status": "SUCCEEDED",
+          "block": 16813792,
+          "timestamp": 1792387175,
+          "l2_gas": 74716214,
+          "l1_data_gas": 3328,
+          "l1_gas": 0,
+          "fee_fri": "1091065355290573742",
+          "l2_gas_price_fri": "14602792309"
+        },
+        "hybridTransfer": {
+          "tx": "0x348a4cac1c1b0479057a18f021ac9a65e36f18ee6c5839644ef627fe77309d",
+          "status": "SUCCEEDED",
+          "block": 16813796,
+          "timestamp": 1792387182,
+          "l2_gas": 53946323,
+          "l1_data_gas": 192,
+          "l1_gas": 0,
+          "fee_fri": "787766950610947631",
+          "l2_gas_price_fri": "14602792309"
+        }
+      },
+      "braavos-1.2.0": {
+        "migration": {
+          "tx": "0x1a4972fc9e3315c62ebaec99a40de4248e86bbe15ebf5f3892bfc33b71e89f5",
+          "status": "SUCCEEDED",
+          "block": 16813908,
+          "timestamp": 1792387374,
+          "l2_gas": 70122982,
+          "l1_data_gas": 3328,
+          "l1_gas": 0,
+          "fee_fri": "1023991342367521054",
+          "l2_gas_price_fri": "14602792309"
+        },
+        "hybridTransfer": {
+          "tx": "0x1f214500c70833bf88fa6d03c33999a7b23dec0ac188d761c8018d3d078d5c2",
+          "status": "SUCCEEDED",
+          "block": 16813912,
+          "timestamp": 1792387381,
+          "l2_gas": 53952403,
+          "l1_data_gas": 192,
+          "l1_gas": 0,
+          "fee_fri": "787855735588186351",
+          "l2_gas_price_fri": "14602792309"
+        }
+      },
+      "argent-0.3.1": {
+        "migration": {
+          "tx": "0x6d4959b5a61b74af5290f718558bad4eabc1dc662bcd5af072425873c7132b4",
+          "status": "SUCCEEDED",
+          "block": 16813745,
+          "timestamp": 1792387094,
+          "l2_gas": 137979920,
+          "l1_data_gas": 3328,
+          "l1_gas": 0,
+          "fee_fri": "2014892114706210896",
+          "l2_gas_price_fri": "14602792309"
+        },
+        "hybridTransfer": {
+          "tx": "0x7a568054220fe93b40f335dde033bfc9fad008a2f1699f6e7c59ed7333ac91c",
+          "status": "SUCCEEDED",
+          "block": 16813750,
+          "timestamp": 1792387102,
+          "l2_gas": 49612741,
+          "l1_data_gas": 192,
+          "l1_gas": 0,
+          "fee_fri": "724484552710926793",
+          "l2_gas_price_fri": "14602792309"
+        }
+      }
+    }
+  },
+  "declares": {}
+}

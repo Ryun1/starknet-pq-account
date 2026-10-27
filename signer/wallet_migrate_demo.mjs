@@ -9,7 +9,8 @@
 //     a hybrid-signed transfer succeeds, an ECDSA-only transfer is rejected
 // Idempotent; resumes from .keys/wallet-matrix-state.json.   node wallet_migrate_demo.mjs [name ...]
 // PQ_MATRIX_RUN=<tag> starts a separate run (own state file and fresh words), e.g. after a new
-// HybridMigratableAccount class.
+// HybridMigratableAccount class. PQ_VERIFIER_CLASS=<hash> migrates to that declared verifier class
+// instead of the browser-path HybridShakeAccount (PF-04: the Provably Fast verifiers).
 import { Account, CallData, RpcProvider, Signer, cairo, constants, ec, hash, json, num } from "starknet";
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { generateMnemonic } from "@scure/bip39";
@@ -43,7 +44,7 @@ const WALLETS = {
   "openzeppelin-b": { profile: "pq", cls: "0xe2eb8f5672af4e6a4e8a8f1b44989685e668489b0a25437733756c5a34a1d6", ctor: (pk) => [pk] },
 };
 
-const SHAKE_VERIFIER = JSON.parse(readFileSync(`${KEYS}/browser-state.json`, "utf8")).shakeClass;
+const SHAKE_VERIFIER = process.env.PQ_VERIFIER_CLASS || JSON.parse(readFileSync(`${KEYS}/browser-state.json`, "utf8")).shakeClass;
 const state = existsSync(STATE_FILE) ? JSON.parse(readFileSync(STATE_FILE, "utf8")) : {};
 const save = () => writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 const log = (...a) => console.log(...a);
@@ -162,7 +163,7 @@ async function run(name, deployerAcc) {
     // Fee bound for the migration (MIGRATION_L2_MAX at 1.5x the current price) must fit the balance.
     const balance = await strkBalance(s.address);
     if (balance < 9n * 10n ** 18n) await send(deployerAcc, transferCall(s.address, 9n * 10n ** 18n - balance), 3000000n);
-    s.before = { class: info.classHash, balance: (await strkBalance(s.address)).toString() }; save();
+    s.before = { class: info.classHash, balance: (await strkBalance(s.address)).toString(), verifierClass: SHAKE_VERIFIER }; save();
     const calls = migrationCalls(info, k, { migratableClass: state.migratableClass, verifierClass: SHAKE_VERIFIER });
     try {
       s.migration = await send(new Account({ provider, address: s.address, signer: k.ecdsaPrivateKey }), calls, MIGRATION_L2_MAX); save();
