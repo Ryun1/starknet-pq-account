@@ -18,6 +18,9 @@ pqbench_falcon_512_pf_record = { path = "../vendor/provably-fast/falcon-512/crat
 [dev-dependencies]
 cairo_test = "2.18.0"
 
+# Library target so bench/pf04 can depend on this package and build its classes.
+[lib]
+
 [[target.starknet-contract]]
 # Mainnet's audited list; fail on anything else (Scarb only warns by default).
 allowed-libfuncs-deny = true
