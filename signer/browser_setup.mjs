@@ -5,7 +5,7 @@
 //   2. new mnemonic -> keys (pq_keys.mjs, profile v0.1); OZ account funded, deployed, migrated in
 //      place with that verifier and the noble-derived Falcon key
 //   3. one hybrid transfer signed exactly the way the browser page signs (noble + adapter)
-//   4. writes the page config (public data only) to site/browser-wallet.config.json
+//   4. writes the page config (public data only) to signer/browser-wallet.config.json
 import { Account, CallData, RpcProvider, Signer, cairo, ec, hash, num } from "starknet";
 import { generateMnemonic } from "@scure/bip39";
 import { wordlist } from "@scure/bip39/wordlists/english";
@@ -118,9 +118,10 @@ async function main() {
     log("transfer signed with noble Falcon:", `${VOYAGER}/tx/${x.transaction_hash}`, rc.execution_status || "", rc.actual_fee ? fmt(BigInt(rc.actual_fee.amount)) : "");
   }
 
-  // 4. page config: public data only
-  writeFileSync(PAGE_CONFIG, JSON.stringify({ rpc: RPC, account: address, strk: STRK, recipient: deployerAddress, voyager: VOYAGER }, null, 2));
-  log("page config written");
+  // 4. page config: public data only. The page finds the account from the words, and the
+  // verifier labels come from the manifest at build time.
+  writeFileSync(PAGE_CONFIG, JSON.stringify({ rpc: RPC, strk: STRK, recipient: deployerAddress, voyager: VOYAGER }, null, 2) + "\n");
+  log("page config written; rebuild the page with: node scripts/build_page.mjs");
 }
 
 main().catch((e) => { console.error("ERROR:", e?.message || e); let c = e?.cause; while (c) { console.error("  cause:", c.message || c); c = c.cause; } process.exit(1); });

@@ -3,10 +3,11 @@
 //
 //   node signer/verifiers_check.mjs
 import { spawnSync } from "node:child_process";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { verifierLabel } from "./page_verifier.mjs";
 import { ALLOWED_VERIFIERS, MIGRATABLE_CLASS, RELEASE, pinnedVerifier, selectedVerifier, verifierClass } from "./verifiers.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -34,6 +35,17 @@ check("selectedVerifier: PQ_VERIFIER picks the id", selectedVerifier({ PQ_VERIFI
 check("selectedVerifier: PQ_VERIFIER_CLASS must be pinned", selectedVerifier({ PQ_VERIFIER_CLASS: SMALL }).id === "shake-pf-small-v1");
 throws("selectedVerifier: an unpinned PQ_VERIFIER_CLASS is refused", () => selectedVerifier({ PQ_VERIFIER_CLASS: "0x1234" }), /not pinned/);
 throws("selectedVerifier: the scripts sign SHAKE-256, so Poseidon is refused", () => selectedVerifier({ PQ_VERIFIER: "poseidon" }), /not a SHAKE-256 verifier/);
+
+// The page's verifier label (page_verifier.mjs, inlined into docs/index.html by build_page.mjs).
+const LABELS = { [SMALL]: "Provably Fast small (shake-pf-small-v1)", [BASELINE]: "OpenZeppelin SHAKE-256 (shake-baseline)" };
+check("label: small", verifierLabel("0x0" + SMALL.slice(2), LABELS) === "Provably Fast small (shake-pf-small-v1)", verifierLabel(SMALL, LABELS));
+check("label: a class not in the map is named, not guessed", verifierLabel(POSEIDON, LABELS) === `unknown verifier class ${POSEIDON}`, verifierLabel(POSEIDON, LABELS));
+check("label: no verifier means not migrated", verifierLabel(null, LABELS) === "not migrated");
+const page = readFileSync(join(HERE, "../docs/index.html"), "utf8");
+const pageConfig = JSON.parse(page.match(/^const CONFIG = (.*);$/m)[1]);
+check("the built page maps each pinned verifier to its label",
+  pageConfig.verifiers?.[SMALL] === "Provably Fast small (shake-pf-small-v1)" && pageConfig.verifiers?.[BASELINE] === "OpenZeppelin SHAKE-256 (shake-baseline)" && pageConfig.verifiers?.[POSEIDON] === "Poseidon (poseidon)",
+  JSON.stringify(pageConfig.verifiers));
 
 // Clean checkout: no state files, nothing sent.
 for (const script of ["wallet_migrate_demo.mjs", "browser_setup.mjs", "public_demo_setup.mjs"]) {
