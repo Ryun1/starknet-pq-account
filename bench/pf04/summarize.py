@@ -187,8 +187,7 @@ def main() -> None:
     for c, s in sizes.items():
         print(f"| `{c}` | {s['casm_bytecode_felts']:,} | {s['sierra_program_felts']:,} | "
               f"{s['contract_class_object_bytes']:,} | {s['compiled_class_object_bytes']:,} |")
-    if unbudgeted:
-        print(f"\nmetrics without a budget: {unbudgeted}")
+    budget_errors += [f"{k}: {metrics[k]} has no budget" for k in unbudgeted]
     if limit_errors or budget_errors:
         sys.exit("\n".join(["NETWORK LIMIT EXCEEDED: " + e for e in limit_errors] +
                            ["BUDGET EXCEEDED: " + e for e in budget_errors]))

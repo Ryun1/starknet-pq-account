@@ -48,6 +48,11 @@ jobs:
       - uses: foundry-rs/setup-snfoundry@v4
         with:
           starknet-foundry-version: "0.59.0"
+      # setup-snfoundry installs the latest universal-sierra-compiler; pin the one budgets.json
+      # was measured with (it compiles the test classes, so it changes gas).
+      - uses: software-mansion/setup-universal-sierra-compiler@v1
+        with:
+          universal-sierra-compiler-version: "2.10.3"
       - name: Account-level gas, class sizes and libfuncs within network limits and budgets
         run: bench/pf04/run.sh --check
 

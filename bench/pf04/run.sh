@@ -5,8 +5,9 @@
 #   bench/pf04/run.sh            # measure, check budgets, rewrite results.json
 #   bench/pf04/run.sh --check    # measure and check budgets only (CI)
 #
-# Needs scarb 2.18.0, snforge 0.59.0 (with universal-sierra-compiler) and python3. Nothing is sent
-# anywhere. Takes about two minutes on an M-series Mac.
+# Needs scarb 2.18.0, snforge 0.59.0, universal-sierra-compiler 2.10.3 (snforge compiles the test
+# classes with it, so it changes gas) and python3. Nothing is sent anywhere. Takes one to five
+# minutes on an M-series Mac, depending on what is already compiled.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -22,6 +23,7 @@ need() {
 }
 need scarb 2.18.0
 need snforge 0.59.0
+need universal-sierra-compiler 2.10.3
 
 echo "== paired gas tests"
 python3 -I "$HERE/gen_tests.py"
@@ -54,6 +56,7 @@ echo "all classes build"
   echo "uname=$(uname -srm)"
   echo "scarb=$(scarb --version | tr '\n' ' ')"
   echo "snforge=$(snforge --version)"
+  echo "usc=$(universal-sierra-compiler --version)"
 } > "$WORK/env.txt"
 
 out=$HERE/results.json

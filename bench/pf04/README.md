@@ -10,7 +10,7 @@ receipt. Full-transaction figures from Sepolia are in [Sepolia receipts](#sepoli
 ## Reproduce
 
 ```sh
-# scarb 2.18.0 and snforge 0.59.0 (with universal-sierra-compiler) on PATH
+# scarb 2.18.0, snforge 0.59.0 and universal-sierra-compiler 2.10.3 on PATH
 bench/pf04/run.sh            # rewrites results.json, fails on a limit or budget
 bench/pf04/run.sh --check    # what CI runs: same checks, results.json untouched
 ```
@@ -40,7 +40,8 @@ It takes one to five minutes, depending on what is already compiled. Nothing is 
 
 ## Results
 
-Run on 2026-10-27, Darwin arm64, scarb 2.18.0 / cairo 2.18.0 / Sierra 1.8.0, snforge 0.59.0. Full
+Run on 2026-10-27, Darwin arm64, scarb 2.18.0 / cairo 2.18.0 / Sierra 1.8.0, snforge 0.59.0,
+universal-sierra-compiler 2.10.3. Full
 figures in `results.json`. L2 gas:
 
 | Path | baseline | compact | record | compact saving |
@@ -66,7 +67,7 @@ Sepolia and mainnet both ran Starknet 0.14.4 on 2026-10-27 (`starknet_getBlockWi
 
 | Limit | Value | Source | Worst here | Headroom |
 | --- | ---: | --- | ---: | ---: |
-| Validation Sierra gas | 100,000,000 | versioned constants 0.14.4 `validate_max_sierra_gas` | 28,106,704 compact | 71.9% |
+| Validation Sierra gas | 100,000,000 | versioned constants 0.14.4 `validate_max_sierra_gas` | 27,915,024 compact | 72.1% |
 | Validation steps | 1,000,000 | versioned constants 0.14.4 `validate_max_n_steps` | 182,602 compact | 81.7% |
 | CASM bytecode felts | 81,920 | sierra compiler `DEFAULT_MAX_BYTECODE_SIZE` | 71,580 compact / 77,902 record | 10,340 / 4,018 |
 | Sierra program felts | 81,920 | gateway `max_contract_bytecode_size` | 71,809 compact / 76,146 record | 10,111 / 5,774 |
@@ -74,8 +75,8 @@ Sepolia and mainnet both ran Starknet 0.14.4 on 2026-10-27 (`starknet_getBlockWi
 | Compiled class object bytes | 4,089,446 | class manager `max_compiled_contract_class_object_size` | 2,141,080 compact / 2,329,159 record | 47.6% / 43.0% |
 | Signature felts | 4,000 | gateway `max_signature_length` | 62 | |
 
-Validation with the baseline uses up to 52.4M of the 100M cap (47.6% headroom); with either
-candidate, about 28M.
+Validation (`__validate__` or `__validate_declare__`) with the baseline uses up to 52.2M of the
+100M cap (47.8% headroom); with either candidate, up to 27.9M.
 
 Sources (starkware-libs/sequencer): `crates/blockifier/resources/blockifier_versioned_constants_0_14_4.json`
 at `f971cfda`, and `apollo_gateway_config/src/config.rs`,
@@ -101,7 +102,9 @@ sequencer compiles declared classes against its own bundled list (`DEFAULT_ALLOW
 = Bundled`), which was narrowed on 2026-09-16, so `run.sh` also builds every class from a clean
 copy against that list: `network_libfuncs.json`, from
 `crates/apollo_compile_to_casm/resources/allowed_libfuncs.json` at `ced8be53` (Apache-2.0,
-SHA-256 `3b4ebcfa…eb0ff9dc`). All classes build. Removing `keccak_syscall` from the list makes the
+SHA-256 `3b4ebcfa…eb0ff9dc`). All classes build. The bundled option first appeared on `main` on
+2026-09-16 and the deployed 0.14.4 build may predate it and use the audited list instead; the
+classes pass both, so either way they compile. Removing `keccak_syscall` from the list makes the
 two candidate verifier classes fail, so the check is live. Scarb does not rebuild when only the
 list changes, which is why the check uses a fresh copy.
 

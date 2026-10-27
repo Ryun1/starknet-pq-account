@@ -1,10 +1,11 @@
 {
   "description": "PF-04 account-level measurements; see bench/pf04/README.md",
   "env": {
-    "date_utc": "2026-10-27T13:43:32Z",
+    "date_utc": "2026-10-27T13:58:21Z",
     "uname": "Darwin 25.6.0 arm64",
     "scarb": "scarb 2.18.0 (e6144df0f 2026-04-21) cairo: 2.18.0 (https://crates.io/crates/cairo-lang-compiler/2.18.0) sierra: 1.8.0 arch: aarch64-apple-darwin ",
-    "snforge": "snforge 0.59.0"
+    "snforge": "snforge 0.59.0",
+    "usc": "universal-sierra-compiler 2.10.3"
   },
   "method": "snforge L2 gas (Sierra-gas mode): measured test minus its setup_ twin",
   "network_limits": {
