@@ -6,6 +6,8 @@ members = [
     "crates/ntt_pf_compact",
     "crates/falcon_512_pf_record",
     "crates/ntt_pf_record",
+    "crates/falcon_512_pf_small",
+    "crates/ntt_pf_small",
 ]
 
 [workspace.package]

@@ -1,18 +1,17 @@
-// PF-04 on Sepolia: declare the Provably Fast verifier classes and collect the receipts of complete
-// transactions with each verifier. TESTNET ONLY.
+// PF-04 on Sepolia: declare the selected Provably Fast verifier class and collect the receipts of
+// complete transactions with it. TESTNET ONLY.
 //
-//   node pf04_sepolia.mjs declare HybridShakeVerifierPfCompact       # from the deployer
-//   PQ_MATRIX_RUN=pf04-compact PQ_VERIFIER_CLASS=<compact class hash> \
+//   node pf04_sepolia.mjs declare HybridShakeVerifierPfSmall         # from the deployer
+//   PQ_MATRIX_RUN=pf04-small PQ_VERIFIER_CLASS=<small class hash> \
 //     node wallet_migrate_demo.mjs argent-0.5.0 braavos-1.2.0 argent-0.3.1
-//   node pf04_sepolia.mjs declare VerifierSwitchGuard pf04-compact argent-0.5.0
-//                                  # from that migrated account: a declare validated by the compact
+//   node pf04_sepolia.mjs declare VerifierSwitchGuard pf04-small argent-0.5.0
+//                                  # from that migrated account: a declare validated by the small
 //                                  # verifier (a small class, so the declare itself is cheap)
 //   node pf04_sepolia.mjs receipts                                   # writes bench/pf04/sepolia.json
 //
-// Only the selected (compact) verifier is declared on Sepolia: a verifier class costs on the order
-// of 100+ STRK to declare. The record verifier is measured locally (bench/pf04). A record run uses
-// PQ_MATRIX_RUN=pf04-record and is collected the same way. Baseline receipts are the
-// HybridShakeAccount-verifier runs in contracts/docs/wallet-coverage.md.
+// Only the selected (small) verifier is declared: a verifier class costs on the order of 100 STRK
+// to declare, and compact's and record's declares do not fit in a block (bench/pf04/README.md).
+// Baseline receipts are the HybridShakeAccount-verifier runs in contracts/docs/wallet-coverage.md.
 // sepolia.json holds transaction hashes and receipts only, never keys or words.
 import { Account, RpcProvider, config, hash, json } from "starknet";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -24,7 +23,7 @@ const provider = new RpcProvider({ nodeUrl: RPC });
 const STATE_FILE = `${KEYS}/pf04-sepolia-state.json`;
 const OUT = resolve(TARGET, "../../../bench/pf04/sepolia.json");
 const OZ_ACCOUNT_CLASS = "0x05b4b537eaa2399e3aa99c4e2e0208ebd6c71bc1467938cd52c798c601e43564";
-const RUNS = { compact: "pf04-compact", record: "pf04-record" };
+const RUNS = { small: "pf04-small" };
 const PROFILES = { "argent-0.5.0": "argentx", "argent-0.3.1": "argentx", "braavos-1.2.0": "braavos" };
 // Baseline (HybridShakeAccount verifier): contracts/docs/wallet-coverage.md, migratable class 0x4b067679….
 const BASELINE = {

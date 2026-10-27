@@ -14,8 +14,10 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-VERIFIERS = ("baseline", "compact", "record")
+VERIFIERS = ("baseline", "compact", "record", "small")
+SELECTED = "small"
 CLASSES = ("HybridShakeAccount", "HybridShakeVerifierPfCompact", "HybridShakeVerifierPfRecord",
+           "HybridShakeVerifierPfSmall",
            "HybridMigratableAccount", "HybridPoseidonAccount", "VerifierSwitchGuard")
 LINE = re.compile(r"\[(PASS|FAIL)\] \S+::(\w+) .*?l2_gas: ~(\d+)")
 SUMMARY = re.compile(r"Tests: (\d+) passed, (\d+) failed")
@@ -32,7 +34,15 @@ NETWORK_LIMITS = {
     "max_contract_class_object_bytes": 4_089_446,
     "max_compiled_class_object_bytes": 4_089_446,
     "max_signature_length": 4_000,
+    # A declare must fit in one block: sequencer default max_receipt_l2_gas_in_block.
+    "max_receipt_l2_gas_in_block": 5_800_000_000,
 }
+# Versioned constants 0.14.4 archival_data_gas_costs.gas_per_code_byte; code is 32 bytes per CASM
+# and per Sierra felt, plus the ABI. Matches the network's declare estimates to within 0.01%.
+GAS_PER_CODE_BYTE = 1280
+# Measured candidates whose declare does not fit a block. Kept for comparison, never declarable;
+# the check fails if one of them starts to fit (update the docs) or another class stops fitting.
+NOT_DECLARABLE = ("HybridShakeVerifierPfCompact", "HybridShakeVerifierPfRecord")
 
 
 def gas_pairs(log: str) -> dict:
@@ -81,8 +91,10 @@ def class_size(target: Path, name: str) -> dict:
                 "contract_class_version": sierra["contract_class_version"],
                 "entry_points_by_type": sierra["entry_points_by_type"],
                 "abi": json.dumps(sierra["abi"], separators=(",", ":"))}
+    abi_bytes = len(declared["abi"])
     return {"casm_bytecode_felts": len(casm["bytecode"]),
             "sierra_program_felts": len(sierra["sierra_program"]),
+            "declare_code_l2_gas": GAS_PER_CODE_BYTE * (32 * (len(casm["bytecode"]) + len(sierra["sierra_program"])) + abi_bytes),
             "contract_class_object_bytes": len(json.dumps(declared, separators=(",", ":"))),
             "compiled_class_object_bytes": len(json.dumps(casm, separators=(",", ":")))}
 
@@ -142,6 +154,10 @@ def main() -> None:
                        ("compiled_class_object_bytes", "max_compiled_class_object_bytes")):
             if s[k] > NETWORK_LIMITS[cap]:
                 limit_errors.append(f"{c} {k} {s[k]:,} > {NETWORK_LIMITS[cap]:,}")
+        fits = s["declare_code_l2_gas"] <= NETWORK_LIMITS["max_receipt_l2_gas_in_block"]
+        if fits == (c in NOT_DECLARABLE):
+            limit_errors.append(f"{c} declare {s['declare_code_l2_gas']:,} L2 gas "
+                                f"{'now fits' if fits else 'exceeds'} the block cap (NOT_DECLARABLE is stale)")
 
     budgets = json.loads((HERE / "budgets.json").read_text())["max"]
     budget_errors = [f"{k}: {metrics.get(k)} > budget {b}" for k, b in budgets.items()
@@ -161,14 +177,16 @@ def main() -> None:
         "entrypoint_cross_check": cross_check,
         "validate_steps_worst_vector": steps,
         "class_sizes": sizes,
+        "not_declarable": list(NOT_DECLARABLE),
+        "selected": SELECTED,
         "libfuncs": "every class builds with allowed-libfuncs-deny against network_libfuncs.json",
         "metrics": metrics,
     }
     out.write_text(json.dumps(results, indent=2) + "\n")
 
     b = validate["baseline"]["mean"]
-    print("| Path | baseline | compact | record | compact saving |")
-    print("| --- | ---: | ---: | ---: | ---: |")
+    print(f"| Path | {' | '.join(VERIFIERS)} | {SELECTED} saving |")
+    print("| --- |" + " ---: |" * (len(VERIFIERS) + 1))
     rows = [("`__validate__`, migrated account, mean", {v: validate[v]["mean"] for v in VERIFIERS}),
             ("`__validate__`, migrated account, worst", {v: validate[v]["worst"] for v in VERIFIERS})]
     for kind, label in (("declare", "`__validate_declare__`"), ("is_valid", "`is_valid_signature`"),
@@ -176,17 +194,19 @@ def main() -> None:
         rows.append((f"{label}, worst of selected", {v: max(calls[kind][v].values()) for v in VERIFIERS}))
     rows.append(("migration (`upgrade` + `migrate`)", migrate))
     for label, r in rows:
-        print(f"| {label} | {r['baseline']:,} | {r['compact']:,} | {r['record']:,} | "
-              f"{1 - r['compact'] / r['baseline']:.1%} |")
+        print(f"| {label} | {' | '.join(f'{r[v]:,}' for v in VERIFIERS)} | "
+              f"{1 - r[SELECTED] / r['baseline']:.1%} |")
     print(f"\ndirect HybridShakeAccount __validate__: mean {validate['direct']['mean']:,}, "
           f"worst {validate['direct']['worst']:,} (migrated baseline mean {b:,})")
     print(f"steps (worst vector): {steps}")
     print(f"entrypoint cross-check: {cross_check}")
-    print("\n| Class | CASM felts | Sierra felts | Class object bytes | Compiled object bytes |")
-    print("| --- | ---: | ---: | ---: | ---: |")
+    cap = NETWORK_LIMITS["max_receipt_l2_gas_in_block"]
+    print("\n| Class | CASM felts | Sierra felts | Class object bytes | Compiled object bytes | Declare L2 gas | of block cap |")
+    print("| --- | ---: | ---: | ---: | ---: | ---: | ---: |")
     for c, s in sizes.items():
         print(f"| `{c}` | {s['casm_bytecode_felts']:,} | {s['sierra_program_felts']:,} | "
-              f"{s['contract_class_object_bytes']:,} | {s['compiled_class_object_bytes']:,} |")
+              f"{s['contract_class_object_bytes']:,} | {s['compiled_class_object_bytes']:,} | "
+              f"{s['declare_code_l2_gas']:,} | {s['declare_code_l2_gas'] / cap:.1%} |")
     budget_errors += [f"{k}: {metrics[k]} has no budget" for k in unbudgeted]
     if limit_errors or budget_errors:
         sys.exit("\n".join(["NETWORK LIMIT EXCEEDED: " + e for e in limit_errors] +

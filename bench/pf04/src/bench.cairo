@@ -11,6 +11,7 @@ use crate::legacy::LegacyOzLikeAccount::{ILegacyDispatcher, ILegacyDispatcherTra
 pub const BASELINE: felt252 = 'baseline';
 pub const COMPACT: felt252 = 'compact';
 pub const RECORD: felt252 = 'record';
+pub const SMALL: felt252 = 'small';
 
 pub fn class_hash(name: ByteArray) -> ClassHash {
     *declare(name).unwrap().contract_class().class_hash
@@ -21,9 +22,11 @@ pub fn verifier_class(verifier: felt252) -> ClassHash {
         class_hash("HybridShakeAccount")
     } else if verifier == COMPACT {
         class_hash("HybridShakeVerifierPfCompact")
-    } else {
-        assert(verifier == RECORD, 'unknown verifier');
+    } else if verifier == RECORD {
         class_hash("HybridShakeVerifierPfRecord")
+    } else {
+        assert(verifier == SMALL, 'unknown verifier');
+        class_hash("HybridShakeVerifierPfSmall")
     }
 }
 

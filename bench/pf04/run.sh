@@ -30,7 +30,7 @@ python3 -I "$HERE/gen_tests.py"
 (cd "$HERE" && snforge test > "$WORK/gas.log" 2>&1) || { tail -40 "$WORK/gas.log"; exit 1; }
 
 echo "== entrypoint gas report (cross-check)"
-for v in baseline compact record direct; do
+for v in baseline compact record small direct; do
   (cd "$HERE" && snforge test "validate_${v}_" --gas-report > "$WORK/report-$v.log" 2>&1)
 done
 

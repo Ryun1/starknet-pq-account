@@ -13,7 +13,8 @@ set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 BASE=$HERE/../../cairo-pq-verifiers/crates
-CANDIDATES="compact:fj_3a0b1c78817845a68e1e907928a541e4 record:fj_c3459a8b07a54bd5828d3fdde899c4e0"
+CANDIDATES="compact:fj_3a0b1c78817845a68e1e907928a541e4 record:fj_c3459a8b07a54bd5828d3fdde899c4e0
+  small:fj_dee1326c0eef48e6989ed0338e9e9785"
 
 (cd "$HERE" && shasum -a 256 -c --quiet SHA256SUMS)
 

@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
-VERIFIERS = [("baseline", "Baseline"), ("compact", "Compact"), ("record", "Record")]
+VERIFIERS = [("baseline", "Baseline"), ("compact", "Compact"), ("record", "Record"), ("small", "Small")]
 
 
 def felts(values: list[str]) -> str:
@@ -26,6 +26,7 @@ def main() -> None:
         "use pqbench_falcon_512::Falcon512ShakeVerifier as Baseline;\n"
         "use pqbench_falcon_512_pf_compact::Falcon512ShakeVerifier as Compact;\n"
         "use pqbench_falcon_512_pf_record::Falcon512ShakeVerifier as Record;\n"
+        "use pqbench_falcon_512_pf_small::Falcon512ShakeVerifier as Small;\n"
     ]
     for v in vectors:
         n = v["id"]

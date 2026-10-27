@@ -1,7 +1,7 @@
 {
   "description": "PF-04 account-level measurements; see bench/pf04/README.md",
   "env": {
-    "date_utc": "2026-10-27T13:58:21Z",
+    "date_utc": "2026-10-27T15:07:50Z",
     "uname": "Darwin 25.6.0 arm64",
     "scarb": "scarb 2.18.0 (e6144df0f 2026-04-21) cairo: 2.18.0 (https://crates.io/crates/cairo-lang-compiler/2.18.0) sierra: 1.8.0 arch: aarch64-apple-darwin ",
     "snforge": "snforge 0.59.0",
@@ -15,7 +15,8 @@
     "max_sierra_program_felts": 81920,
     "max_contract_class_object_bytes": 4089446,
     "max_compiled_class_object_bytes": 4089446,
-    "max_signature_length": 4000
+    "max_signature_length": 4000,
+    "max_receipt_l2_gas_in_block": 5800000000
   },
   "validate": {
     "baseline": {
@@ -132,6 +133,44 @@
         "26": 27614917
       }
     },
+    "small": {
+      "mean": 27215883,
+      "worst": 28722966,
+      "best": 26223037,
+      "mean_by_blocks": {
+        "8": 26231313,
+        "9": 27892774
+      },
+      "per_vector": {
+        "0": 26233177,
+        "1": 26234577,
+        "2": 26232477,
+        "3": 26232037,
+        "4": 27826023,
+        "5": 27834323,
+        "6": 27826843,
+        "7": 27833683,
+        "8": 27827393,
+        "9": 26232137,
+        "10": 26235147,
+        "11": 26223037,
+        "12": 26231337,
+        "13": 27830993,
+        "14": 27862516,
+        "15": 27828563,
+        "16": 27850386,
+        "17": 27836393,
+        "18": 26227977,
+        "19": 26227007,
+        "20": 26235537,
+        "21": 27850366,
+        "22": 27834093,
+        "23": 27836843,
+        "24": 27835473,
+        "25": 27847526,
+        "26": 28722966
+      }
+    },
     "direct": {
       "mean": 50045745,
       "worst": 51827243,
@@ -187,6 +226,10 @@
     "record": {
       "0": 25145708,
       "26": 27609517
+    },
+    "small": {
+      "0": 26227777,
+      "26": 28717566
     }
   },
   "is_valid": {
@@ -201,6 +244,10 @@
     "record": {
       "0": 25342788,
       "26": 27806597
+    },
+    "small": {
+      "0": 26424857,
+      "26": 28914646
     }
   },
   "reject": {
@@ -215,12 +262,17 @@
     "record": {
       "0": 26915914,
       "26": 25324868
+    },
+    "small": {
+      "0": 27116653,
+      "26": 25519647
     }
   },
   "migrate": {
     "baseline": 69386419,
     "compact": 44272637,
-    "record": 43971120
+    "record": 43971120,
+    "small": 45057399
   },
   "entrypoint_cross_check": {
     "baseline": {
@@ -247,6 +299,14 @@
         "max": 96090
       }
     },
+    "small": {
+      "entrypoint_mean": 27119793,
+      "entrypoint_worst": 28626876,
+      "paired_minus_entrypoint": {
+        "min": 96090,
+        "max": 96090
+      }
+    },
     "direct": {
       "entrypoint_mean": 49949655,
       "entrypoint_worst": 51731153,
@@ -259,46 +319,65 @@
   "validate_steps_worst_vector": {
     "baseline": 331338,
     "compact": 182602,
-    "record": 179553
+    "record": 179553,
+    "small": 189908
   },
   "class_sizes": {
     "HybridShakeAccount": {
       "casm_bytecode_felts": 53237,
       "sierra_program_felts": 53532,
+      "declare_code_l2_gas": 4377213440,
       "contract_class_object_bytes": 2038866,
       "compiled_class_object_bytes": 1439349
     },
     "HybridShakeVerifierPfCompact": {
       "casm_bytecode_felts": 71580,
       "sierra_program_felts": 71809,
+      "declare_code_l2_gas": 5874137600,
       "contract_class_object_bytes": 3149439,
       "compiled_class_object_bytes": 2141080
     },
     "HybridShakeVerifierPfRecord": {
       "casm_bytecode_felts": 77902,
       "sierra_program_felts": 76146,
+      "declare_code_l2_gas": 6310728960,
       "contract_class_object_bytes": 3422453,
       "compiled_class_object_bytes": 2329159
+    },
+    "HybridShakeVerifierPfSmall": {
+      "casm_bytecode_felts": 64163,
+      "sierra_program_felts": 68569,
+      "declare_code_l2_gas": 5437624320,
+      "contract_class_object_bytes": 3350894,
+      "compiled_class_object_bytes": 1741663
     },
     "HybridMigratableAccount": {
       "casm_bytecode_felts": 7719,
       "sierra_program_felts": 3546,
+      "declare_code_l2_gas": 468300800,
       "contract_class_object_bytes": 181970,
       "compiled_class_object_bytes": 177227
     },
     "HybridPoseidonAccount": {
       "casm_bytecode_felts": 49043,
       "sierra_program_felts": 51261,
+      "declare_code_l2_gas": 4112410880,
       "contract_class_object_bytes": 1900820,
       "compiled_class_object_bytes": 1331138
     },
     "VerifierSwitchGuard": {
       "casm_bytecode_felts": 1164,
       "sierra_program_felts": 978,
+      "declare_code_l2_gas": 88408320,
       "contract_class_object_bytes": 36318,
       "compiled_class_object_bytes": 27626
     }
   },
+  "not_declarable": [
+    "HybridShakeVerifierPfCompact",
+    "HybridShakeVerifierPfRecord"
+  ],
+  "selected": "small",
   "libfuncs": "every class builds with allowed-libfuncs-deny against network_libfuncs.json",
   "metrics": {
     "validate.baseline.mean": 50396185,
@@ -307,42 +386,59 @@
     "validate.compact.worst": 27915024,
     "validate.record.mean": 26130688,
     "validate.record.worst": 27614917,
+    "validate.small.mean": 27215883,
+    "validate.small.worst": 28722966,
     "validate.direct.mean": 50045745,
     "validate.direct.worst": 51827243,
     "declare.baseline.worst": 52172283,
     "declare.compact.worst": 27909624,
     "declare.record.worst": 27609517,
+    "declare.small.worst": 28717566,
     "is_valid.baseline.worst": 52369363,
     "is_valid.compact.worst": 28106704,
     "is_valid.record.worst": 27806597,
+    "is_valid.small.worst": 28914646,
     "reject.baseline.worst": 52411463,
     "reject.compact.worst": 27231021,
     "reject.record.worst": 26915914,
+    "reject.small.worst": 27116653,
     "migrate.baseline": 69386419,
     "migrate.compact": 44272637,
     "migrate.record": 43971120,
+    "migrate.small": 45057399,
     "size.HybridShakeAccount.casm_bytecode_felts": 53237,
     "size.HybridShakeAccount.sierra_program_felts": 53532,
+    "size.HybridShakeAccount.declare_code_l2_gas": 4377213440,
     "size.HybridShakeAccount.contract_class_object_bytes": 2038866,
     "size.HybridShakeAccount.compiled_class_object_bytes": 1439349,
     "size.HybridShakeVerifierPfCompact.casm_bytecode_felts": 71580,
     "size.HybridShakeVerifierPfCompact.sierra_program_felts": 71809,
+    "size.HybridShakeVerifierPfCompact.declare_code_l2_gas": 5874137600,
     "size.HybridShakeVerifierPfCompact.contract_class_object_bytes": 3149439,
     "size.HybridShakeVerifierPfCompact.compiled_class_object_bytes": 2141080,
     "size.HybridShakeVerifierPfRecord.casm_bytecode_felts": 77902,
     "size.HybridShakeVerifierPfRecord.sierra_program_felts": 76146,
+    "size.HybridShakeVerifierPfRecord.declare_code_l2_gas": 6310728960,
     "size.HybridShakeVerifierPfRecord.contract_class_object_bytes": 3422453,
     "size.HybridShakeVerifierPfRecord.compiled_class_object_bytes": 2329159,
+    "size.HybridShakeVerifierPfSmall.casm_bytecode_felts": 64163,
+    "size.HybridShakeVerifierPfSmall.sierra_program_felts": 68569,
+    "size.HybridShakeVerifierPfSmall.declare_code_l2_gas": 5437624320,
+    "size.HybridShakeVerifierPfSmall.contract_class_object_bytes": 3350894,
+    "size.HybridShakeVerifierPfSmall.compiled_class_object_bytes": 1741663,
     "size.HybridMigratableAccount.casm_bytecode_felts": 7719,
     "size.HybridMigratableAccount.sierra_program_felts": 3546,
+    "size.HybridMigratableAccount.declare_code_l2_gas": 468300800,
     "size.HybridMigratableAccount.contract_class_object_bytes": 181970,
     "size.HybridMigratableAccount.compiled_class_object_bytes": 177227,
     "size.HybridPoseidonAccount.casm_bytecode_felts": 49043,
     "size.HybridPoseidonAccount.sierra_program_felts": 51261,
+    "size.HybridPoseidonAccount.declare_code_l2_gas": 4112410880,
     "size.HybridPoseidonAccount.contract_class_object_bytes": 1900820,
     "size.HybridPoseidonAccount.compiled_class_object_bytes": 1331138,
     "size.VerifierSwitchGuard.casm_bytecode_felts": 1164,
     "size.VerifierSwitchGuard.sierra_program_felts": 978,
+    "size.VerifierSwitchGuard.declare_code_l2_gas": 88408320,
     "size.VerifierSwitchGuard.contract_class_object_bytes": 36318,
     "size.VerifierSwitchGuard.compiled_class_object_bytes": 27626
   }

@@ -4,7 +4,7 @@
 Inputs: bench/pf01/corpus.json (Falcon halves), bench/pf04/fixtures.json (ECDSA halves) and
 contracts/src/tests_wallets_fixture.cairo (the migration key-possession proof).
 
-Per corpus vector, for each verifier (baseline, compact, record): `__validate__` of a migrated
+Per corpus vector, for each verifier (baseline, compact, record, small): `__validate__` of a migrated
 account (library call into the verifier class), plus `__validate__` of a directly deployed
 `HybridShakeAccount`. On the SELECTED vectors also `__validate_declare__`, `is_valid_signature`,
 and a rejected signature (valid ECDSA, Falcon signature of another message: the most expensive
@@ -19,7 +19,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERIFIERS = ("baseline", "compact", "record")
+VERIFIERS = ("baseline", "compact", "record", "small")
 # The first eight-block vector and the most expensive nine-block one (569 words).
 SELECTED = (0, 26)
 
