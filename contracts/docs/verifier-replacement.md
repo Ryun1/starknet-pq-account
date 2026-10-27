@@ -74,6 +74,8 @@ that the verifier pointer and keys are unchanged afterwards.
 | --- | --- |
 | baseline SHAKE → `HybridShakeVerifierPfCompact`, then a transaction validated by it | installed, validates |
 | compact → baseline | installed |
+| baseline SHAKE → `HybridShakeVerifierPfSmall`, then a hybrid and an ECDSA-only transaction | installed; hybrid validates, ECDSA-only rejected |
+| small → baseline, then a transaction | pointer and keys restored, validates |
 | `HybridPoseidonAccount` (same key, other hash-to-point) | reverts: `Guard: signature rejected` |
 | zero class hash | reverts: `Migratable: invalid verifier` |
 | undeclared class hash | reverts: `CLASS_HASH_NOT_DECLARED` |
@@ -97,16 +99,17 @@ The Cairo tests set the transaction hash and signature by hand, so they can't sh
 binds the signature to the calls. `signer/verifier_switch_devnet.mjs` sends real transactions to
 a local devnet that forks Sepolia (nothing reaches Sepolia; the command is in the file header).
 For each of the four migratable classes below, it deploys a fresh account with a public test key
-and the deployed `HybridShakeAccount` verifier, declares `HybridShakeVerifierPfCompact` and the
-guard on the fork, and runs these checks. The protocol validates every transaction with its
+and the deployed `HybridShakeAccount` verifier, uses the candidate (`PQ_SWITCH_CANDIDATE`, default
+`HybridShakeVerifierPfSmall`, declared on Sepolia; other classes are declared on the fork) and a
+fresh guard, and runs these checks. The protocol validates every transaction with its
 real hash and signature.
 
 | Check | Result on all four classes |
 | --- | --- |
 | hybrid transfer, baseline verifier | succeeds |
 | starknet.js default (unsigned) fee estimate of a compatible switch | fails: `Guard: signature rejected` |
-| `switchVerifier` to compact | simulated, sent, succeeds |
-| hybrid transfer validated by compact | succeeds |
+| `switchVerifier` to the candidate | simulated, sent, succeeds |
+| hybrid transfer validated by the candidate | succeeds |
 | `switchVerifier` to `HybridPoseidonAccount` | refused after simulation, nothing sent |
 | the same switch sent anyway | reverted on chain; pointer and keys unchanged |
 | control: a signed switch back, simulated with its own calls | validates |
@@ -116,7 +119,9 @@ real hash and signature.
 | `switchVerifier` back to baseline | succeeds; keys unchanged |
 | guard called by a contract other than the named account | `Guard: caller is not account` |
 
-On 2026-10-27, with devnet 0.10.1 forked at Sepolia block 17230151: 45 of 45 checks pass. With the
+On 2026-10-27, with devnet 0.10.1 forked at Sepolia block 17230151: 45 of 45 checks pass with
+compact. Again on 2026-10-27 at block 17238820 (PF-06): 45 of 45 with small
+(`bench/pf06/devnet.txt`) and 45 of 45 with compact. With the
 guard's signature check removed, the Poseidon verifier is installed and the account is locked:
 every later check fails with `Account: invalid signature`, including the switch back.
 
@@ -144,10 +149,26 @@ working on each of the four classes.
 | `0x2255fc213bf39d1df2129c9e068b363f2b11a27b70b4b2c48df8ea4275f1c92` | 15 | `HybridShakeAccount` (this commit rebuilds to the same hash): can switch to an optimized SHAKE-256 verifier |
 | `0x7f10b6f2f70e72ef87e97844b5f6f13d384c92afcfed2a1233a03524d359d6f` | 2 | `HybridPoseidonAccount`: needs a scheme change, not supported by the guarded switch |
 
-Class hashes built at this commit with Scarb 2.18.0, not declared anywhere yet (that's PF-07):
+Class hashes built with Scarb 2.18.0:
 
-| Class | Class hash | CASM felts |
-| --- | --- | ---: |
-| `HybridShakeVerifierPfCompact` | `0x5e121c050ad841f727873ee3412aedcfb2d7c1c9f8c79a53a73251e79d9d4c7` | 71,580 |
-| `HybridShakeVerifierPfRecord` | `0x281a32f3b7c2eee62405318cd8b074a44ff17f6c804a003f80276b0dc3c905a` | 77,902 |
-| `VerifierSwitchGuard` | `0x44779ad7a4ea11318759272383a06d06fdf1b7c007ba1e5f38a2096e6e26178` | 1,164 |
+| Class | Class hash | CASM felts | On Sepolia |
+| --- | --- | ---: | --- |
+| `HybridShakeVerifierPfSmall` | `0x333aa6a603a1edcf37867d774d65220528e684ed496f5d8a73ce24fcafb0fb1` | 64,163 | declared (PF-04) |
+| `VerifierSwitchGuard` | `0x44779ad7a4ea11318759272383a06d06fdf1b7c007ba1e5f38a2096e6e26178` | 1,164 | declared (PF-04); one instance at `0x5093253fe6ee74bce57ae826a72bc94ddf02b6fbe20db5512e744a9a304945e` (PF-06) |
+| `HybridShakeVerifierPfCompact` | `0x5e121c050ad841f727873ee3412aedcfb2d7c1c9f8c79a53a73251e79d9d4c7` | 71,580 | cannot be declared: over the block's L2 gas limit (`bench/pf04`) |
+| `HybridShakeVerifierPfRecord` | `0x281a32f3b7c2eee62405318cd8b074a44ff17f6c804a003f80276b0dc3c905a` | 77,902 | cannot be declared, as compact |
+
+On Sepolia (PF-06, `bench/pf06`): an Argent 0.5.0 account migrated with the baseline verifier was
+switched to small through that guard, made a hybrid transfer, rejected an ECDSA-only one, refused
+the Poseidon verifier in simulation, switched back and made another transfer. Each switch costs
+81–87M L2 gas, since it runs both verifiers once.
+
+## Supported routes to the small verifier
+
+| Account | Route | Evidence |
+| --- | --- | --- |
+| Migrated, any of the four migratable classes above, on the SHAKE verifier `0x2255fc21…` (15 accounts) | guarded switch (`switchVerifier`) | devnet on all four classes; Sepolia on `0x4b067679…` |
+| Migrated, on the Poseidon verifier `0x7f10b6f2…` (2 accounts) | not supported | a scheme change; the guard rejects it |
+| Not migrated yet, any wallet class in `wallet-coverage.md` | migrate with `verifierClass` = small | Sepolia: Argent 0.5.0, Argent 0.3.1, Braavos 1.2.0 (`bench/pf04`); Cairo: all three callback paths |
+| Directly deployed `HybridShakeAccount` | none | no verifier setter and no upgrade entry point: it stays on the baseline verifier; no in-place replacement is offered |
+| Any migrated account, raw `set_verifier_class_hash` or `upgrade` | possible, unguarded | bypasses the guard; not covered and not recommended |

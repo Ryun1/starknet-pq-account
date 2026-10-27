@@ -250,16 +250,21 @@ export async function verifierSwitchCalls(provider, address, verifierClass, { gu
  * estimates with `skipValidate: true` by default, which signs nothing, so the guard sees an
  * empty signature and rejects even a compatible verifier; `account.execute(calls)` without
  * resource bounds fails in fee estimation for the same reason.
+ *
+ * `tip` (fri per L2 gas), if given, is used for both the simulation and the send. Without it,
+ * starknet.js estimates the recommended tip for each call; never pass 0n on Sepolia, which evicts
+ * zero-tip transactions.
  */
-export async function switchVerifier(account, verifierClass, { guard, allowed, dryRun = false }) {
+export async function switchVerifier(account, verifierClass, { guard, allowed, dryRun = false, tip }) {
+  const withTip = tip === undefined ? {} : { tip };
   const calls = await verifierSwitchCalls(account.provider, account.address, verifierClass, { guard, allowed });
   const { simulated_transactions: [sim] } = await account.simulateTransaction(
-    [{ type: "INVOKE", payload: calls }], { skipValidate: false })
+    [{ type: "INVOKE", payload: calls }], { skipValidate: false, ...withTip })
     .catch((e) => { throw new Error(`guarded verifier switch would fail: ${e.message}`); });
   const trace = sim.transaction_trace;
   const reason = trace.execute_invocation?.revert_reason ?? trace.validate_invocation?.revert_reason;
   if (reason) throw new Error(`guarded verifier switch would revert: ${reason}`);
   if (dryRun) return { calls, simulation: sim };
-  const { transaction_hash } = await account.execute(calls, { resourceBounds: sim.resourceBounds });
+  const { transaction_hash } = await account.execute(calls, { resourceBounds: sim.resourceBounds, ...withTip });
   return { calls, simulation: sim, transaction_hash };
 }

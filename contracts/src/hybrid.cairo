@@ -258,8 +258,9 @@ pub mod HybridPoseidonAccount {
     }
 }
 
-/// Hybrid account using the standard FIPS 206 SHAKE-256 Falcon verifier (interoperable
-/// with any standards-compliant Falcon signer; ~4x the verification gas of Poseidon).
+/// Hybrid account using the round-three Falcon-512 verifier with SHAKE-256 hash-to-point
+/// (interoperable with Falcon-512 signers using that hash-to-point, such as falcon.py and the
+/// browser signer; ~4x the verification gas of Poseidon). Not FN-DSA (FIPS 206).
 #[starknet::contract(account)]
 pub mod HybridShakeAccount {
     use pqbench_falcon_512::Falcon512ShakeVerifier;
@@ -332,6 +333,34 @@ pub mod HybridShakeVerifierPfCompact {
 #[starknet::contract]
 pub mod HybridShakeVerifierPfRecord {
     use pqbench_falcon_512_pf_record::Falcon512ShakeVerifier;
+    use super::HybridAccountComponent;
+
+    component!(path: HybridAccountComponent, storage: account, event: AccountEvent);
+
+    #[abi(embed_v0)]
+    impl VerifierImpl =
+        HybridAccountComponent::VerifierImpl<ContractState, Falcon512ShakeVerifier>;
+
+    #[storage]
+    struct Storage {
+        #[substorage(v0)]
+        account: HybridAccountComponent::Storage,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        AccountEvent: HybridAccountComponent::Event,
+    }
+}
+
+/// As `HybridShakeVerifierPfCompact`, with the Provably Fast `fj_dee1326c0eef48e6989ed0338e9e9785`
+/// verifier: about 3% more verification gas than compact, but its declare (about 5.44e9 L2 gas) fits
+/// in a Starknet block, which compact's and record's (5.87e9, 6.31e9) do not (bench/pf04).
+#[starknet::contract]
+pub mod HybridShakeVerifierPfSmall {
+    use pqbench_falcon_512_pf_small::Falcon512ShakeVerifier;
     use super::HybridAccountComponent;
 
     component!(path: HybridAccountComponent, storage: account, event: AccountEvent);
