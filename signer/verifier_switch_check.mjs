@@ -5,7 +5,7 @@
 //
 // The on-chain behaviour of the switch itself is tested in contracts/src/tests_guard.cairo.
 import { readFileSync } from "node:fs";
-import { verifierSwitchCalls } from "./pq_account_kit.mjs";
+import { switchVerifier, verifierSwitchCalls } from "./pq_account_kit.mjs";
 import { TARGET } from "./config.mjs";
 
 const abi = (name) => JSON.parse(readFileSync(`${TARGET}/pq_hybrid_${name}.contract_class.json`, "utf8")).abi;
@@ -73,5 +73,24 @@ registered = 1n;
 // chain (tests_guard.cairo: incompatible_scheme_reverts_the_whole_transaction).
 const other = await verifierSwitchCalls(provider, ACCOUNT, "0xb3", { guard: GUARD, allowed });
 check("other-scheme verifier passes the read-only checks (the guard catches it)", other.length === 2);
+
+// switchVerifier passes the tip to both the simulation and the send: Sepolia evicts zero-tip
+// transactions, so a guarded switch sent without one is never included.
+const seen = {};
+const simBounds = { l2_gas: { max_amount: "0x1", max_price_per_unit: "0x1" } };
+const stub = {
+  provider, address: ACCOUNT,
+  async simulateTransaction(txs, details) {
+    seen.simulate = details;
+    return { simulated_transactions: [{ transaction_trace: {}, resourceBounds: simBounds }] };
+  },
+  async execute(calls, details) {
+    seen.execute = details;
+    return { transaction_hash: "0x1" };
+  },
+};
+await switchVerifier(stub, "0xb2", { guard: GUARD, allowed, tip: 123n });
+check("switchVerifier simulates with validation and the tip", seen.simulate?.skipValidate === false && seen.simulate?.tip === 123n, JSON.stringify(seen.simulate, (k, v) => typeof v === "bigint" ? `${v}n` : v));
+check("switchVerifier sends with the simulated bounds and the tip", seen.execute?.tip === 123n && seen.execute?.resourceBounds === simBounds, JSON.stringify(seen.execute, (k, v) => typeof v === "bigint" ? `${v}n` : v));
 
 process.exit(failed ? 1 : 0);

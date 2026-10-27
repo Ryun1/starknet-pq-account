@@ -250,16 +250,19 @@ export async function verifierSwitchCalls(provider, address, verifierClass, { gu
  * estimates with `skipValidate: true` by default, which signs nothing, so the guard sees an
  * empty signature and rejects even a compatible verifier; `account.execute(calls)` without
  * resource bounds fails in fee estimation for the same reason.
+ *
+ * `tip` (fri per L2 gas) is used for both the simulation and the send. Sepolia evicts zero-tip
+ * transactions, so pass the `recommendedTip` from `provider.getEstimateTip("latest", ...)` there.
  */
-export async function switchVerifier(account, verifierClass, { guard, allowed, dryRun = false }) {
+export async function switchVerifier(account, verifierClass, { guard, allowed, dryRun = false, tip = 0n }) {
   const calls = await verifierSwitchCalls(account.provider, account.address, verifierClass, { guard, allowed });
   const { simulated_transactions: [sim] } = await account.simulateTransaction(
-    [{ type: "INVOKE", payload: calls }], { skipValidate: false })
+    [{ type: "INVOKE", payload: calls }], { skipValidate: false, tip })
     .catch((e) => { throw new Error(`guarded verifier switch would fail: ${e.message}`); });
   const trace = sim.transaction_trace;
   const reason = trace.execute_invocation?.revert_reason ?? trace.validate_invocation?.revert_reason;
   if (reason) throw new Error(`guarded verifier switch would revert: ${reason}`);
   if (dryRun) return { calls, simulation: sim };
-  const { transaction_hash } = await account.execute(calls, { resourceBounds: sim.resourceBounds });
+  const { transaction_hash } = await account.execute(calls, { resourceBounds: sim.resourceBounds, tip });
   return { calls, simulation: sim, transaction_hash };
 }
