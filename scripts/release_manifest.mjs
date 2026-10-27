@@ -110,6 +110,7 @@ function write() {
     },
     default_verifier: "shake-pf-small-v1",
     guard_instance: old.guard_instance ?? "0x5093253fe6ee74bce57ae826a72bc94ddf02b6fbe20db5512e744a9a304945e",
+    legacy_account_classes: old.legacy_account_classes ?? {},
   };
   writeFileSync(MANIFEST, JSON.stringify(manifest, null, 2) + "\n");
   console.log(`wrote ${MANIFEST} (${Object.keys(classes).length} classes, source ${commit.slice(0, 7)})`);
@@ -160,6 +161,22 @@ async function chain() {
     } catch (e) {
       bad++;
       console.log(`FAIL ${name} ${c.class_hash}: ${e.message.split("\n")[0]}`);
+    }
+  }
+  // Earlier HybridMigratableAccount builds that deployed accounts still run (not rebuildable from
+  // this commit): each must be declared, and each listed account must still run it.
+  if (!m.legacy_account_classes) { bad++; console.log("FAIL legacy_account_classes: missing from the manifest"); }
+  for (const [h, c] of Object.entries(m.legacy_account_classes ?? {})) {
+    try {
+      await provider.getClassByHash(h);
+      for (const a of c.accounts) {
+        const runs = await provider.getClassHashAt(a);
+        if (!same(runs, h)) throw new Error(`${a} now runs ${runs}`);
+      }
+      console.log(`ok   legacy ${h} is declared; ${c.accounts.length} listed account(s) run it`);
+    } catch (e) {
+      bad++;
+      console.log(`FAIL legacy ${h}: ${e.message.split("\n")[0]}`);
     }
   }
   const guardClass = await provider.getClassHashAt(m.guard_instance).catch((e) => e.message);

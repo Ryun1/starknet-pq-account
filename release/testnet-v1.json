@@ -92,5 +92,33 @@
     "poseidon": "HybridPoseidonAccount"
   },
   "default_verifier": "shake-pf-small-v1",
-  "guard_instance": "0x5093253fe6ee74bce57ae826a72bc94ddf02b6fbe20db5512e744a9a304945e"
+  "guard_instance": "0x5093253fe6ee74bce57ae826a72bc94ddf02b6fbe20db5512e744a9a304945e",
+  "legacy_account_classes": {
+    "0x7b6d5ed4cbb6c7a2633dd9139c25ffb76bb608cafbba9e424a277a885432b25": {
+      "role": "account",
+      "note": "Earlier HybridMigratableAccount build, declared on Sepolia and still run by existing accounts. Not rebuildable from this release's commit; it has set_verifier_class_hash and is_valid_signature, so the guarded switch works on it (contracts/docs/verifier-replacement.md).",
+      "accounts": [
+        "0x343e3df576edca452f2cc6ac5247fc38a3641912f545e25468e3b7e7de1c0db"
+      ],
+      "accounts_note": "the public demo account"
+    },
+    "0x660679aa09bef2ef29e1a2ebe21ee85d87bacde8746430b380425db5dd3c31b": {
+      "role": "account",
+      "note": "Earlier HybridMigratableAccount build, declared on Sepolia and still run by existing accounts. Not rebuildable from this release's commit; it has set_verifier_class_hash and is_valid_signature, so the guarded switch works on it (contracts/docs/verifier-replacement.md).",
+      "accounts": [
+        "0x61228909093cb162adc6e487f816a5c5845b219341914bf1ae0b4894c80023a",
+        "0x2d21d503e80d0725042bde6c2e9be84fad2c7f951e86628f263cc918e2b2c43"
+      ],
+      "accounts_note": "README Argent and Braavos demo accounts"
+    },
+    "0xae4154b7e35c9475f4875757bcfa2b19ca88fc2e9bd9fa793e82a91ef5815f": {
+      "role": "account",
+      "note": "Earlier HybridMigratableAccount build, declared on Sepolia and still run by existing accounts. Not rebuildable from this release's commit; it has set_verifier_class_hash and is_valid_signature, so the guarded switch works on it (contracts/docs/verifier-replacement.md).",
+      "accounts": [
+        "0x54370be5a940849f13c01f269d95d06c57d15495da594f3e01dfb6eebdb4c41",
+        "0x595808b02d0dafb5bb25b547300b886f359d4063cda64c4020431ceee9e8753"
+      ],
+      "accounts_note": "README in-place OpenZeppelin migration; browser_setup account (one more is listed in verifier-replacement.md)"
+    }
+  }
 }

@@ -219,13 +219,17 @@ checks, read-only, that these words still give the keys stored on the account.
 - Testnet only. An independent review is still outstanding
   ([#9](https://github.com/Ryun1/starknet-pq-account/issues/9)).
 - Unaudited. The Poseidon Falcon variant uses a Poseidon hash-to-point (cheap, non-standard); the
-  SHAKE-256 variant follows the standard and costs about 3.4x the gas.
+  SHAKE-256 variants follow the standard. A transfer costs about 1.9x the Poseidon one's gas with
+  the small verifier (the default), and about 3.4x with the OpenZeppelin baseline.
 - Changing a migrated account's verifier with `set_verifier_class_hash` alone can lock it. Use the
   guarded switch (`VerifierSwitchGuard`, `switchVerifier` in the kit), which reverts unless the
   new verifier accepts the switch transaction's own signature. It works only between verifiers of
   the same scheme; see [`contracts/docs/verifier-replacement.md`](contracts/docs/verifier-replacement.md).
   The switch needs the active verifier to work: it validates the switch transaction itself, so it
   is no fallback if the active verifier breaks.
+- Existing accounts run one of three earlier `HybridMigratableAccount` builds, the public demo
+  account included (`0x7b6d5ed4…`). They are declared and listed in the manifest
+  (`legacy_account_classes`, checked by `--chain`), but cannot be rebuilt from this release.
 - Not supported by the guarded switch: accounts on the Poseidon verifier (a scheme change), and
   `HybridShakeAccount` deployed directly rather than through migration.
 - The compact and record Provably Fast variants cannot be declared on Sepolia: their declares

@@ -49,12 +49,22 @@ const WALLETS = {
 
 const VERIFIER = selectedVerifier();
 const SHAKE_VERIFIER = VERIFIER.classHash;
+const state = existsSync(STATE_FILE) ? JSON.parse(readFileSync(STATE_FILE, "utf8")) : {};
+const save = () => writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+// A run keeps the classes it started with: resuming it with others would mix them in one record.
+if (state.migratableClass && BigInt(state.migratableClass) !== BigInt(MIGRATABLE_CLASS)) {
+  throw new Error(`${STATE_FILE} was started with migratable class ${state.migratableClass}, not ${MIGRATABLE_CLASS}; start a new run (PQ_MATRIX_RUN)`);
+}
+for (const [name, w] of Object.entries(state)) {
+  const used = w?.before?.verifierClass;
+  if (used && BigInt(used) !== BigInt(SHAKE_VERIFIER)) {
+    throw new Error(`${STATE_FILE} was started with verifier ${used} (${name}), not ${SHAKE_VERIFIER}; set PQ_VERIFIER to match, or start a new run (PQ_MATRIX_RUN)`);
+  }
+}
 if (process.argv.includes("--print-config")) {
   console.log(`verifier: ${VERIFIER.id} ${SHAKE_VERIFIER}\nmigratable class: ${MIGRATABLE_CLASS}`);
   process.exit(0);
 }
-const state = existsSync(STATE_FILE) ? JSON.parse(readFileSync(STATE_FILE, "utf8")) : {};
-const save = () => writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 const log = (...a) => console.log(...a);
 const fmt = (wei) => (Number(wei) / 1e18).toFixed(6) + " STRK";
 const provider = new RpcProvider({ nodeUrl: RPC });

@@ -9,7 +9,7 @@ integration from a clean checkout.
 
 ## Contents
 
-[`testnet-v1.json`](testnet-v1.json) pins, for every class:
+[`testnet-v1.json`](testnet-v1.json) pins, for every class this release builds:
 
 | Class | Role | Class hash | On Sepolia |
 | --- | --- | --- | --- |
@@ -20,7 +20,22 @@ integration from a clean checkout.
 | `VerifierSwitchGuard` | guard | `0x44779ad7a4ea11318759272383a06d06fdf1b7c007ba1e5f38a2096e6e26178` | declared ([0x687a8500…](https://sepolia.voyager.online/tx/0x687a8500c3732f619db3a0f8db15ae271a8391282cb52f91b0f3cab69169e23)); instance `0x5093253f…945e` |
 | `HybridShakeVerifierPfCompact`, `HybridShakeVerifierPfRecord` | verifiers | see the manifest | cannot be declared (over the block's L2 gas cap) |
 
-For each it also records the Blake2s compiled class hash (what a declare signs since Starknet
+It also lists, under `legacy_account_classes`, three earlier `HybridMigratableAccount` builds
+that existing accounts still run, with the accounts known to use each:
+
+| Account class | Run by |
+| --- | --- |
+| `0x7b6d5ed4cbb6c7a2633dd9139c25ffb76bb608cafbba9e424a277a885432b25` | the public demo account `0x343e3df5…c0db` (the switch and browser evidence below ran on it) |
+| `0x660679aa09bef2ef29e1a2ebe21ee85d87bacde8746430b380425db5dd3c31b` | the README's Argent and Braavos demo accounts |
+| `0xae4154b7e35c9475f4875757bcfa2b19ca88fc2e9bd9fa793e82a91ef5815f` | the README's in-place OpenZeppelin migration, the browser-setup account |
+
+Their sources are earlier commits of this repository, and this commit doesn't rebuild them, so
+they have no artifact hashes. `--chain` checks that each is declared and that each listed account
+still runs it. All three have `set_verifier_class_hash` and `is_valid_signature`, so the guarded
+switch works on them ([`verifier-replacement.md`](../contracts/docs/verifier-replacement.md#deployed-accounts)).
+New migrations use the pinned `HybridMigratableAccount`.
+
+For each built class it also records the Blake2s compiled class hash (what a declare signs since Starknet
 0.14.1) and the SHA-256 of the Sierra and CASM artifacts. It pins the sources (OpenZeppelin
 cairo-pq-verifiers `bece5c07…ae40`, the three Provably Fast patch digests) and the toolchain
 (Scarb and Cairo 2.18.0, Sierra 1.8.0, snforge 0.59.0, universal-sierra-compiler 2.10.3,

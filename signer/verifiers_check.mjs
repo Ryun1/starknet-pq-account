@@ -3,7 +3,7 @@
 //
 //   node signer/verifiers_check.mjs
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -58,6 +58,22 @@ for (const script of ["wallet_migrate_demo.mjs", "browser_setup.mjs", "public_de
   check(`${script} --print-config, empty keys dir`, r.status === 0 && out.includes(`verifier: shake-pf-small-v1 ${SMALL}`) && out.includes(`migratable class: ${MIGRATABLE}`), out.trim().split("\n").join(" | "));
   const u = run({ PQ_VERIFIER: "nope" });
   check(`${script} refuses an unknown PQ_VERIFIER`, u.status !== 0 && /unknown verifier "nope"/.test(u.stderr), (u.stdout + u.stderr).trim().split("\n").pop());
+}
+
+// Resuming a run started with another migratable class or verifier is refused, not silently mixed.
+{
+  const keys = mkdtempSync(join(tmpdir(), "pq-old-run-"));
+  writeFileSync(join(keys, "wallet-matrix-state-old.json"), JSON.stringify({ migratableClass: "0x660679aa09bef2ef29e1a2ebe21ee85d87bacde8746430b380425db5dd3c31b" }));
+  writeFileSync(join(keys, "wallet-matrix-state-oldv.json"), JSON.stringify({ migratableClass: MIGRATABLE, "argent-0.5.0": { before: { verifierClass: BASELINE } } }));
+  const run = (tag, env = {}) => spawnSync(process.execPath, [join(HERE, "wallet_migrate_demo.mjs"), "--print-config"], {
+    encoding: "utf8", env: { ...process.env, PQ_VERIFIER: "", PQ_VERIFIER_CLASS: "", PQ_KEYS_DIR: keys, PQ_RPC: "http://127.0.0.1:9", PQ_MATRIX_RUN: tag, ...env },
+  });
+  const a = run("old");
+  check("resuming a run on another migratable class is refused", a.status !== 0 && /was started with migratable class 0x660679aa/.test(a.stderr), (a.stdout + a.stderr).trim().split("\n").find((l) => /Error|migratable/.test(l)));
+  const b = run("oldv");
+  check("resuming a run on another verifier is refused", b.status !== 0 && /was started with verifier 0x2255/.test(b.stderr), (b.stdout + b.stderr).trim().split("\n").find((l) => /Error|verifier/.test(l)));
+  const c = run("oldv", { PQ_VERIFIER: "shake-baseline" });
+  check("resuming it with its own verifier works", c.status === 0, (c.stdout + c.stderr).trim().split("\n")[0]);
 }
 
 process.exit(failed ? 1 : 0);
