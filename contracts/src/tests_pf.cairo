@@ -1,17 +1,19 @@
 //! PF-02: the Provably Fast verifier classes accept the same keys, signatures and storage as
 //! the baseline `HybridShakeAccount`, through `HybridMigratableAccount`'s library call.
 //!
-//! Every check runs on all three verifier classes (baseline, compact, record) so a difference
+//! Every check runs on all four verifier classes (baseline, compact, record, small) so a difference
 //! between them shows up as a failing index.
 
 use pqbench_falcon_512::Falcon512ShakeVerifier as Baseline;
 use pqbench_falcon_512::fixtures::shake as falcon_py;
 use pqbench_falcon_512_pf_compact::Falcon512ShakeVerifier as Compact;
 use pqbench_falcon_512_pf_record::Falcon512ShakeVerifier as Record;
+use pqbench_falcon_512_pf_small::Falcon512ShakeVerifier as Small;
 use starknet::syscalls::deploy_syscall;
 use starknet::{ClassHash, ContractAddress, SyscallResultTrait};
 use crate::hybrid::{
-    HybridShakeAccount, HybridShakeVerifierPfCompact, HybridShakeVerifierPfRecord, verify_hybrid,
+    HybridShakeAccount, HybridShakeVerifierPfCompact, HybridShakeVerifierPfRecord,
+    HybridShakeVerifierPfSmall, verify_hybrid,
 };
 use crate::migratable::LegacyOzLikeAccount::{ILegacyDispatcher, ILegacyDispatcherTrait};
 use crate::migratable::{
@@ -29,6 +31,7 @@ fn verifiers() -> Array<ClassHash> {
         HybridShakeAccount::TEST_CLASS_HASH.try_into().unwrap(),
         HybridShakeVerifierPfCompact::TEST_CLASS_HASH.try_into().unwrap(),
         HybridShakeVerifierPfRecord::TEST_CLASS_HASH.try_into().unwrap(),
+        HybridShakeVerifierPfSmall::TEST_CLASS_HASH.try_into().unwrap(),
     ]
 }
 
@@ -205,6 +208,25 @@ fn migration_with_a_wrong_key_proof_reverts_on_the_record_verifier() {
 }
 
 #[test]
+#[should_panic]
+fn migration_with_a_wrong_key_proof_reverts_on_the_small_verifier() {
+    let (address, _) = deploy_syscall(
+        LegacyOzLikeAccount::TEST_CLASS_HASH, 0, array![wallet::ECDSA_PK].span(), false,
+    )
+        .unwrap_syscall();
+    starknet::testing::set_contract_address(address);
+    ILegacyDispatcher { contract_address: address }
+        .upgrade(HybridMigratableAccount::TEST_CLASS_HASH.try_into().unwrap());
+    IMigratableDispatcher { contract_address: address }
+        .migrate(
+            wallet::ECDSA_PK,
+            wallet::falcon_pk(),
+            HybridShakeVerifierPfSmall::TEST_CLASS_HASH.try_into().unwrap(),
+            hybrid(wallet::WRONG_ECDSA_R, wallet::WRONG_ECDSA_S, wallet::falcon_sig()),
+        );
+}
+
+#[test]
 fn each_verifier_accepts_the_browser_signature() {
     let mut salt = 0;
     for verifier in verifiers() {
@@ -227,14 +249,17 @@ fn candidates_agree_with_the_baseline_on_the_falcon_py_fixture() {
     assert!(Baseline::verify(msg, pk.span(), sig.span()));
     assert!(Compact::verify(msg, pk.span(), sig.span()));
     assert!(Record::verify(msg, pk.span(), sig.span()));
+    assert!(Small::verify(msg, pk.span(), sig.span()));
     for i in array![0_u32, 28, 29, 30, 31, 59] {
         let bad = tamper(sig.span(), i);
         assert!(!Baseline::verify(msg, pk.span(), bad.span()), "felt {i}");
         assert!(!Compact::verify(msg, pk.span(), bad.span()), "felt {i}");
         assert!(!Record::verify(msg, pk.span(), bad.span()), "felt {i}");
+        assert!(!Small::verify(msg, pk.span(), bad.span()), "felt {i}");
     }
     assert!(!Compact::verify(msg + 1, pk.span(), sig.span()));
     assert!(!Record::verify(msg + 1, pk.span(), sig.span()));
+    assert!(!Small::verify(msg + 1, pk.span(), sig.span()));
 }
 
 #[test]
@@ -243,6 +268,7 @@ fn candidates_accept_the_browser_signature_directly() {
     let pk = browser::falcon_pk();
     assert!(verify_hybrid::<Compact>(browser::MSG, browser::ECDSA_PK, pk.span(), sig.span()));
     assert!(verify_hybrid::<Record>(browser::MSG, browser::ECDSA_PK, pk.span(), sig.span()));
+    assert!(verify_hybrid::<Small>(browser::MSG, browser::ECDSA_PK, pk.span(), sig.span()));
 }
 
 #[test]
@@ -252,6 +278,7 @@ fn a_deployed_verifier_class_has_no_keys_and_rejects() {
     let mut salt = 0;
     for class in array![
         HybridShakeVerifierPfCompact::TEST_CLASS_HASH, HybridShakeVerifierPfRecord::TEST_CLASS_HASH,
+        HybridShakeVerifierPfSmall::TEST_CLASS_HASH,
     ] {
         let (address, _) = deploy_syscall(class, salt, array![].span(), false).unwrap_syscall();
         let verifier = IHybridVerifierDispatcher { contract_address: address };

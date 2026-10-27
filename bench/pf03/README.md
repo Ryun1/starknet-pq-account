@@ -1,7 +1,7 @@
 # PF-03: differential correctness (part 1, test suite)
 
 Every vector in `vectors.json` goes through OpenZeppelin's baseline Falcon-512 SHAKE-256 verifier
-and both pinned Provably Fast candidates (issue #4), and each answer must equal the challenge's
+and the pinned Provably Fast candidates (issue #4; `small`, `fj_dee1326c`, added in PF-04), and each answer must equal the challenge's
 reference verifier (`falcon512.py`, SHA-256 `54624238…ce713e2`). The reference is the authority,
 not the unaudited baseline. CI runs it on every push (`falcon-differential` job).
 
@@ -46,7 +46,7 @@ Reference verdicts: 20 VALID, 53 HINT, 41 ENCODING, 11 NORM, 7 LENGTH, 4 SALT_RA
 
 ## Results
 
-**All three verifiers agree with the reference on all 136 vectors** (544 tests pass).
+**All four verifiers agree with the reference on all 136 vectors** (680 tests pass).
 
 Gas is cairo-test's estimate for `verify` alone (the vector's inputs-only test subtracted), not
 Starknet L2 gas.
@@ -56,6 +56,7 @@ Starknet L2 gas.
 | baseline | 50,180,218 | 50,235,878 | 1.001 | salt_b + 1 |
 | compact | 25,935,832 | 25,936,782 | 1.000 | 574-word vector, public key felt 24 random |
 | record | 25,636,875 | 25,611,212 | 0.999 | 574-word vector, public key felt 24 random |
+| small | 26,730,581 | 26,603,531 | 0.995 | 574-word vector, public key felt 24 random |
 
 Most expensive rejection by reference reason:
 
@@ -64,19 +65,20 @@ Most expensive rejection by reference reason:
 | baseline | 1,899,240 | 50,088,498 | 8,750 | 50,235,878 | 1,914,640 |
 | compact | 25,936,782 | 25,905,086 | 18,820 | 25,155,146 | 15,820 |
 | record | 25,611,212 | 25,591,886 | 16,140 | 24,840,389 | 12,740 |
+| small | 26,603,531 | 26,372,571 | 18,610 | 25,033,768 | 15,610 |
 
 ## Findings
 
-1. **No disagreement.** Neither candidate accepts anything the reference rejects or rejects
+1. **No disagreement.** No candidate accepts anything the reference rejects or rejects
    anything it accepts, on these vectors. That is evidence, not proof: see coverage limits.
 2. **Rejection cost stays under the challenge's 1.25x rule** for every verifier (worst invalid at
    most 1.001x the worst valid). It is a regression target, not a proof of account safety.
 3. **The candidates check encodings late.** The baseline rejects a non-canonical key or signature
-   within 1.9M gas; both candidates first do the full SHAKE and NTT work (up to 25.9M) and reject
+   within 1.9M gas; all three candidates first do the full SHAKE and NTT work (up to 26.6M) and reject
    at the end. They still reject all 41 such inputs. Rejections are cheap only for wrong lengths
    and out-of-range salts.
 4. **The high-word slow path starts by 565 words.** Valid 565-word signatures cost about 790k more
-   than a 545-word one on both candidates; the 574-word vector is the worst valid case. This
+   than a 545-word one on compact and record (small was not part of that measurement); the 574-word vector is the worst valid case. This
    refines PF-01's estimate of "about 560".
 
 ## Coverage limits

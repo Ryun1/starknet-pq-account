@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
-VERIFIERS = ["baseline", "compact", "record"]
+VERIFIERS = ["baseline", "compact", "record", "small"]
 LINE = re.compile(r"test \S+::v(\d+)_(\w+) \.\.\. (ok|fail)(?: \(gas usage est\.: (\d+)\))?")
 
 
@@ -52,7 +52,7 @@ def main() -> None:
         }
     out.write_text(json.dumps({"vectors": len(vectors), "verifiers": per_verifier}, indent=1) + "\n")
 
-    print(f"All {len(vectors)} vectors: baseline, compact and record agree with the reference.")
+    print(f"All {len(vectors)} vectors: {', '.join(VERIFIERS)} agree with the reference.")
     print("| Verifier | Worst valid | Worst invalid | Ratio | Worst invalid input |")
     print("| --- | ---: | ---: | ---: | --- |")
     for name, r in per_verifier.items():
