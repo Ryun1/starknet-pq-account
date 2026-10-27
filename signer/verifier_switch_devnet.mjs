@@ -31,6 +31,8 @@ const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
 // Public test mnemonic: TESTNET / DEVNET ONLY, never fund it anywhere real.
 const MNEMONIC = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
 
+// What a failed signature check in __validate__ looks like ('Account: invalid signature').
+const INVALID_SIG = /validate.*invalid signature/is;
 const provider = new RpcProvider({ nodeUrl: `${DEVNET}/rpc` });
 const rpc = async (method, params = {}) => {
   const r = await (await fetch(`${DEVNET}/rpc`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) })).json();
@@ -127,11 +129,18 @@ for (const [cls, label] of Object.entries(MIGRATABLE)) {
   const replay = await rejects(() => provider.invokeFunction(
     { contractAddress: address, calldata: transaction.getExecuteCalldata(calls, "1"), signature: lifted },
     { ...details, nonce }));
-  check(cls, "signature lifted from another switch is rejected in validation", replay !== null && (await pointer()) === COMPACT);
+  // Control: the same signature with the calls it was made for passes validation (simulated only).
+  const own = await provider.getSimulateTransaction([{ type: "INVOKE", contractAddress: address, calldata: transaction.getExecuteCalldata(back, "1"), signature: lifted, ...details }], { skipValidate: false })
+    .then((r) => r.simulated_transactions[0].transaction_trace).catch((e) => ({ error: String(e.message) }));
+  check(cls, "control: that signature validates with its own calls", !own.error && !own.validate_invocation?.revert_reason && !own.execute_invocation?.revert_reason,
+    own.error?.slice(0, 300) ?? "");
+  check(cls, "signature lifted from another switch is rejected in validation", INVALID_SIG.test(replay ?? "") && (await pointer()) === COMPACT,
+    replay === null ? "accepted" : INVALID_SIG.test(replay) ? "" : replay.slice(0, 300));
 
   const ecdsaOnly = new Account({ provider, address, signer: keys.ecdsaPrivateKey, cairoVersion: "1" });
   const eo = await rejects(() => ecdsaOnly.execute(back, { resourceBounds: on.simulation.resourceBounds }));
-  check(cls, "ECDSA-only switch is rejected in validation", eo !== null && (await pointer()) === COMPACT);
+  check(cls, "ECDSA-only switch is rejected in validation", INVALID_SIG.test(eo ?? "") && (await pointer()) === COMPACT,
+    eo === null ? "accepted" : INVALID_SIG.test(eo) ? "" : eo.slice(0, 300));
 
   const outsider = await rejects(() => deployer.execute([{ contractAddress: address, entrypoint: "set_verifier_class_hash", calldata: [POSEIDON] }]));
   check(cls, "outsider calling the setter is refused", /only self/.test(outsider ?? "") && (await pointer()) === COMPACT);

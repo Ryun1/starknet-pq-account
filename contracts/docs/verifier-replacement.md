@@ -109,13 +109,14 @@ real hash and signature.
 | hybrid transfer validated by compact | succeeds |
 | `switchVerifier` to `HybridPoseidonAccount` | refused after simulation, nothing sent |
 | the same switch sent anyway | reverted on chain; pointer and keys unchanged |
-| a switch carrying the signature of another switch | rejected in `__validate__` |
-| ECDSA-only switch | rejected in `__validate__` |
+| control: a signed switch back, simulated with its own calls | validates |
+| the same signature carrying a different switch | rejected in `__validate__`: `Account: invalid signature` |
+| ECDSA-only switch | rejected in `__validate__`: `Account: invalid signature` |
 | outsider calls `set_verifier_class_hash` | `Migratable: only self` |
 | `switchVerifier` back to baseline | succeeds; keys unchanged |
 | guard called by a contract other than the named account | `Guard: caller is not account` |
 
-On 2026-10-27, with devnet 0.10.1 forked at Sepolia block 17229801: 41 of 41 checks pass. With the
+On 2026-10-27, with devnet 0.10.1 forked at Sepolia block 17230151: 45 of 45 checks pass. With the
 guard's signature check removed, the Poseidon verifier is installed and the account is locked:
 every later check fails with `Account: invalid signature`, including the switch back.
 
