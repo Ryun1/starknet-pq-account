@@ -45,7 +45,7 @@ jobs:
       - uses: software-mansion/setup-scarb@v1
         with:
           scarb-version: "2.18.0"
-      - uses: foundry-rs/setup-snfoundry@v4
+      - uses: foundry-rs/setup-snfoundry@v5
         with:
           starknet-foundry-version: "0.59.0"
       # setup-snfoundry installs the latest universal-sierra-compiler; pin the one budgets.json
