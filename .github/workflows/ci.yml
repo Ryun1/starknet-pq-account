@@ -26,7 +26,11 @@ jobs:
           node-version: "24"
       - name: Kit verifier-switch gates
         working-directory: signer
-        run: npm install --no-package-lock --no-audit --no-fund && node verifier_switch_check.mjs
+        run: npm install --no-package-lock --no-audit --no-fund && node verifier_switch_check.mjs && node verifiers_check.mjs
+      - name: Built classes match the release manifest
+        run: node scripts/release_manifest.mjs --check
+      - name: docs/index.html is built from its template
+        run: node scripts/build_page.mjs --check
 
   falcon-differential:
     runs-on: ubuntu-24.04

@@ -4,6 +4,8 @@
 //   const info = await inspectAccount(provider, address);          // which wallet, can it move?
 //   const keys = prepareKeys(deriveAccountKeys(words, 0, "argentx"), roots);
 //   const calls = migrationCalls(info, keys, { migratableClass, verifierClass });
+//   // migratableClass and verifierClass: the pinned hashes in release/testnet-v1.json
+//   // (verifiers.mjs: MIGRATABLE_CLASS, verifierClass("shake-pf-small-v1"))
 //   await new Account({ provider, address, signer: keys.ecdsaPrivateKey }).execute(calls);
 //   // from now on: new Account({ provider, address, signer: new HybridSigner(keys) })
 //   // later, to change verifier (same scheme only):
