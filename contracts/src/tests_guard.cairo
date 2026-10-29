@@ -9,6 +9,7 @@ use starknet::{ClassHash, ContractAddress, SyscallResult, SyscallResultTrait};
 use crate::guard::{IVerifierSwitchGuardDispatcher, IVerifierSwitchGuardDispatcherTrait, VerifierSwitchGuard};
 use crate::hybrid::{
     HybridPoseidonAccount, HybridShakeAccount, HybridShakeVerifierPfCompact, HybridShakeVerifierPfSmall,
+    HybridShakeVerifierPfSmallKeyRead,
 };
 use crate::migratable::LegacyOzLikeAccount::{ILegacyDispatcher, ILegacyDispatcherTrait};
 use crate::migratable::{
@@ -63,6 +64,10 @@ fn compact() -> ClassHash {
 
 fn small() -> ClassHash {
     HybridShakeVerifierPfSmall::TEST_CLASS_HASH.try_into().unwrap()
+}
+
+fn small_key_read() -> ClassHash {
+    HybridShakeVerifierPfSmallKeyRead::TEST_CLASS_HASH.try_into().unwrap()
 }
 
 fn hybrid(r: felt252, s: felt252) -> Array<felt252> {
@@ -186,6 +191,23 @@ fn small_back_to_baseline_restores_the_pointer_and_keys() {
     signed(account, switch_calls(account, guard, baseline())).unwrap_syscall();
     assert_unchanged(account);
     signed(account, array![]).unwrap_syscall();
+}
+
+#[test]
+fn small_to_small_key_read_and_back_keeps_the_keys() {
+    // PF-11: the route a deployed small-verifier account takes. Same storage layout, so the
+    // keys read the same through either class.
+    let (account, guard) = setup();
+    signed(account, switch_calls(account, guard, small())).unwrap_syscall();
+    signed(account, switch_calls(account, guard, small_key_read())).unwrap_syscall();
+    assert_eq!(
+        IMigratableDispatcher { contract_address: account }.get_verifier_class_hash(), small_key_read(),
+    );
+    signed(account, array![]).unwrap_syscall();
+    assert!(transact(account, array![], array![wallet::ECDSA_R, wallet::ECDSA_S]).is_err());
+    signed(account, switch_calls(account, guard, small())).unwrap_syscall();
+    signed(account, switch_calls(account, guard, baseline())).unwrap_syscall();
+    assert_unchanged(account);
 }
 
 #[test]

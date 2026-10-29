@@ -21,6 +21,7 @@ build-external-contracts = [
     "pq_hybrid::hybrid::HybridShakeVerifierPfCompact",
     "pq_hybrid::hybrid::HybridShakeVerifierPfRecord",
     "pq_hybrid::hybrid::HybridShakeVerifierPfSmall",
+    "pq_hybrid::hybrid::HybridShakeVerifierPfSmallKeyRead",
     "pq_hybrid::migratable::HybridMigratableAccount",
 ]
 

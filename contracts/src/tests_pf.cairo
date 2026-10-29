@@ -13,7 +13,7 @@ use starknet::syscalls::deploy_syscall;
 use starknet::{ClassHash, ContractAddress, SyscallResultTrait};
 use crate::hybrid::{
     HybridShakeAccount, HybridShakeVerifierPfCompact, HybridShakeVerifierPfRecord,
-    HybridShakeVerifierPfSmall, verify_hybrid,
+    HybridShakeVerifierPfSmall, HybridShakeVerifierPfSmallKeyRead, verify_hybrid,
 };
 use crate::migratable::LegacyOzLikeAccount::{ILegacyDispatcher, ILegacyDispatcherTrait};
 use crate::migratable::{
@@ -32,6 +32,7 @@ fn verifiers() -> Array<ClassHash> {
         HybridShakeVerifierPfCompact::TEST_CLASS_HASH.try_into().unwrap(),
         HybridShakeVerifierPfRecord::TEST_CLASS_HASH.try_into().unwrap(),
         HybridShakeVerifierPfSmall::TEST_CLASS_HASH.try_into().unwrap(),
+        HybridShakeVerifierPfSmallKeyRead::TEST_CLASS_HASH.try_into().unwrap(),
     ]
 }
 
@@ -302,6 +303,7 @@ fn a_deployed_verifier_class_has_no_keys_and_rejects() {
     for class in array![
         HybridShakeVerifierPfCompact::TEST_CLASS_HASH, HybridShakeVerifierPfRecord::TEST_CLASS_HASH,
         HybridShakeVerifierPfSmall::TEST_CLASS_HASH,
+        HybridShakeVerifierPfSmallKeyRead::TEST_CLASS_HASH,
     ] {
         let (address, _) = deploy_syscall(class, salt, array![].span(), false).unwrap_syscall();
         let verifier = IHybridVerifierDispatcher { contract_address: address };
