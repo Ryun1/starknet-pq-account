@@ -12,6 +12,8 @@ pub const BASELINE: felt252 = 'baseline';
 pub const COMPACT: felt252 = 'compact';
 pub const RECORD: felt252 = 'record';
 pub const SMALL: felt252 = 'small';
+/// Small with the Falcon key's length read once (PF-11).
+pub const SMALLKR: felt252 = 'smallkr';
 
 pub fn class_hash(name: ByteArray) -> ClassHash {
     *declare(name).unwrap().contract_class().class_hash
@@ -24,9 +26,11 @@ pub fn verifier_class(verifier: felt252) -> ClassHash {
         class_hash("HybridShakeVerifierPfCompact")
     } else if verifier == RECORD {
         class_hash("HybridShakeVerifierPfRecord")
-    } else {
-        assert(verifier == SMALL, 'unknown verifier');
+    } else if verifier == SMALL {
         class_hash("HybridShakeVerifierPfSmall")
+    } else {
+        assert(verifier == SMALLKR, 'unknown verifier');
+        class_hash("HybridShakeVerifierPfSmallKeyRead")
     }
 }
 

@@ -14,10 +14,10 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-VERIFIERS = ("baseline", "compact", "record", "small")
+VERIFIERS = ("baseline", "compact", "record", "small", "smallkr")
 SELECTED = "small"
 CLASSES = ("HybridShakeAccount", "HybridShakeVerifierPfCompact", "HybridShakeVerifierPfRecord",
-           "HybridShakeVerifierPfSmall",
+           "HybridShakeVerifierPfSmall", "HybridShakeVerifierPfSmallKeyRead",
            "HybridMigratableAccount", "HybridPoseidonAccount", "VerifierSwitchGuard")
 LINE = re.compile(r"\[(PASS|FAIL)\] \S+::(\w+) .*?l2_gas: ~(\d+)")
 SUMMARY = re.compile(r"Tests: (\d+) passed, (\d+) failed")

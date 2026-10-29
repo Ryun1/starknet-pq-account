@@ -1,7 +1,7 @@
 {
   "description": "PF-04 account-level measurements; see bench/pf04/README.md",
   "env": {
-    "date_utc": "2026-10-27T15:07:50Z",
+    "date_utc": "2026-10-29T11:40:51Z",
     "uname": "Darwin 25.6.0 arm64",
     "scarb": "scarb 2.18.0 (e6144df0f 2026-04-21) cairo: 2.18.0 (https://crates.io/crates/cairo-lang-compiler/2.18.0) sierra: 1.8.0 arch: aarch64-apple-darwin ",
     "snforge": "snforge 0.59.0",
@@ -171,6 +171,44 @@
         "26": 28722966
       }
     },
+    "smallkr": {
+      "mean": 26549273,
+      "worst": 28056356,
+      "best": 25556427,
+      "mean_by_blocks": {
+        "8": 25564703,
+        "9": 27226164
+      },
+      "per_vector": {
+        "0": 25566567,
+        "1": 25567967,
+        "2": 25565867,
+        "3": 25565427,
+        "4": 27159413,
+        "5": 27167713,
+        "6": 27160233,
+        "7": 27167073,
+        "8": 27160783,
+        "9": 25565527,
+        "10": 25568537,
+        "11": 25556427,
+        "12": 25564727,
+        "13": 27164383,
+        "14": 27195906,
+        "15": 27161953,
+        "16": 27183776,
+        "17": 27169783,
+        "18": 25561367,
+        "19": 25560397,
+        "20": 25568927,
+        "21": 27183756,
+        "22": 27167483,
+        "23": 27170233,
+        "24": 27168863,
+        "25": 27180916,
+        "26": 28056356
+      }
+    },
     "direct": {
       "mean": 50045745,
       "worst": 51827243,
@@ -230,6 +268,10 @@
     "small": {
       "0": 26227777,
       "26": 28717566
+    },
+    "smallkr": {
+      "0": 25561167,
+      "26": 28050956
     }
   },
   "is_valid": {
@@ -248,6 +290,10 @@
     "small": {
       "0": 26424857,
       "26": 28914646
+    },
+    "smallkr": {
+      "0": 25758247,
+      "26": 28248036
     }
   },
   "reject": {
@@ -266,13 +312,18 @@
     "small": {
       "0": 27116653,
       "26": 25519647
+    },
+    "smallkr": {
+      "0": 26450043,
+      "26": 24853037
     }
   },
   "migrate": {
     "baseline": 69386419,
     "compact": 44272637,
     "record": 43971120,
-    "small": 45057399
+    "small": 45057399,
+    "smallkr": 44390789
   },
   "entrypoint_cross_check": {
     "baseline": {
@@ -307,6 +358,14 @@
         "max": 96090
       }
     },
+    "smallkr": {
+      "entrypoint_mean": 26453183,
+      "entrypoint_worst": 27960266,
+      "paired_minus_entrypoint": {
+        "min": 96090,
+        "max": 96090
+      }
+    },
     "direct": {
       "entrypoint_mean": 49949655,
       "entrypoint_worst": 51731153,
@@ -320,7 +379,8 @@
     "baseline": 331338,
     "compact": 182602,
     "record": 179553,
-    "small": 189908
+    "small": 189908,
+    "smallkr": 183384
   },
   "class_sizes": {
     "HybridShakeAccount": {
@@ -350,6 +410,13 @@
       "declare_code_l2_gas": 5437624320,
       "contract_class_object_bytes": 3350894,
       "compiled_class_object_bytes": 1741663
+    },
+    "HybridShakeVerifierPfSmallKeyRead": {
+      "casm_bytecode_felts": 63912,
+      "sierra_program_felts": 68420,
+      "declare_code_l2_gas": 5421249280,
+      "contract_class_object_bytes": 3341785,
+      "compiled_class_object_bytes": 1735081
     },
     "HybridMigratableAccount": {
       "casm_bytecode_felts": 7719,
@@ -388,24 +455,30 @@
     "validate.record.worst": 27614917,
     "validate.small.mean": 27215883,
     "validate.small.worst": 28722966,
+    "validate.smallkr.mean": 26549273,
+    "validate.smallkr.worst": 28056356,
     "validate.direct.mean": 50045745,
     "validate.direct.worst": 51827243,
     "declare.baseline.worst": 52172283,
     "declare.compact.worst": 27909624,
     "declare.record.worst": 27609517,
     "declare.small.worst": 28717566,
+    "declare.smallkr.worst": 28050956,
     "is_valid.baseline.worst": 52369363,
     "is_valid.compact.worst": 28106704,
     "is_valid.record.worst": 27806597,
     "is_valid.small.worst": 28914646,
+    "is_valid.smallkr.worst": 28248036,
     "reject.baseline.worst": 52411463,
     "reject.compact.worst": 27231021,
     "reject.record.worst": 26915914,
     "reject.small.worst": 27116653,
+    "reject.smallkr.worst": 26450043,
     "migrate.baseline": 69386419,
     "migrate.compact": 44272637,
     "migrate.record": 43971120,
     "migrate.small": 45057399,
+    "migrate.smallkr": 44390789,
     "size.HybridShakeAccount.casm_bytecode_felts": 53237,
     "size.HybridShakeAccount.sierra_program_felts": 53532,
     "size.HybridShakeAccount.declare_code_l2_gas": 4377213440,
@@ -426,6 +499,11 @@
     "size.HybridShakeVerifierPfSmall.declare_code_l2_gas": 5437624320,
     "size.HybridShakeVerifierPfSmall.contract_class_object_bytes": 3350894,
     "size.HybridShakeVerifierPfSmall.compiled_class_object_bytes": 1741663,
+    "size.HybridShakeVerifierPfSmallKeyRead.casm_bytecode_felts": 63912,
+    "size.HybridShakeVerifierPfSmallKeyRead.sierra_program_felts": 68420,
+    "size.HybridShakeVerifierPfSmallKeyRead.declare_code_l2_gas": 5421249280,
+    "size.HybridShakeVerifierPfSmallKeyRead.contract_class_object_bytes": 3341785,
+    "size.HybridShakeVerifierPfSmallKeyRead.compiled_class_object_bytes": 1735081,
     "size.HybridMigratableAccount.casm_bytecode_felts": 7719,
     "size.HybridMigratableAccount.sierra_program_felts": 3546,
     "size.HybridMigratableAccount.declare_code_l2_gas": 468300800,

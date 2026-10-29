@@ -43,11 +43,14 @@ pub fn verify_hybrid<impl Falcon: PqSignatureVerifier>(
 
 #[starknet::component]
 pub mod HybridAccountComponent {
+    use core::pedersen::pedersen;
     use pqbench_interface::PqSignatureVerifier;
     use starknet::account::Call;
     use starknet::storage::{
         MutableVecTrait, StoragePointerReadAccess, StoragePointerWriteAccess, Vec, VecTrait,
     };
+    use starknet::storage_access::storage_base_address_from_felt252;
+    use starknet::{Store, SyscallResultTrait};
     use crate::utils::execution;
     use crate::utils::interface::{
         IHybridAccount, IHybridDeployable, IHybridPublicKeys, IHybridVerifier,
@@ -135,6 +138,30 @@ pub mod HybridAccountComponent {
         }
     }
 
+    /// As `VerifierImpl`, reading the Falcon key with `read_falcon_public_key_once` (PF-11).
+    #[embeddable_as(VerifierKeyReadImpl)]
+    impl VerifierKeyRead<
+        TContractState,
+        impl Falcon: PqSignatureVerifier,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+    > of IHybridVerifier<ComponentState<TContractState>> {
+        fn is_valid_signature(
+            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>,
+        ) -> felt252 {
+            execution::signature_result(
+                verify_hybrid::<
+                    Falcon,
+                >(
+                    hash,
+                    self.ecdsa_public_key.read(),
+                    self.read_falcon_public_key_once().span(),
+                    signature.span(),
+                ),
+            )
+        }
+    }
+
     #[embeddable_as(DeployableImpl)]
     impl Deployable<
         TContractState,
@@ -211,6 +238,22 @@ pub mod HybridAccountComponent {
             let mut i = 0;
             while i != len {
                 key.append(self.falcon_public_key.at(i).read());
+                i += 1;
+            }
+            key
+        }
+
+        /// As `read_falcon_public_key`, reading the length once. `Vec::at` reads it again for
+        /// every element to check bounds, 29 storage reads per signature. Same storage layout:
+        /// element `i` is at `pedersen(base, i)`, so migrated accounts read the same key.
+        fn read_falcon_public_key_once(self: @ComponentState<TContractState>) -> Array<felt252> {
+            let base = self.falcon_public_key.__base_address__;
+            let len = self.falcon_public_key.len();
+            let mut key = array![];
+            let mut i: u64 = 0;
+            while i != len {
+                let address = storage_base_address_from_felt252(pedersen(base, i.into()));
+                key.append(Store::<felt252>::read(0, address).unwrap_syscall());
                 i += 1;
             }
             key
@@ -368,6 +411,33 @@ pub mod HybridShakeVerifierPfSmall {
     #[abi(embed_v0)]
     impl VerifierImpl =
         HybridAccountComponent::VerifierImpl<ContractState, Falcon512ShakeVerifier>;
+
+    #[storage]
+    struct Storage {
+        #[substorage(v0)]
+        account: HybridAccountComponent::Storage,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        AccountEvent: HybridAccountComponent::Event,
+    }
+}
+
+/// As `HybridShakeVerifierPfSmall`, reading the Falcon key's length once instead of once per
+/// element (PF-11). Same storage layout, so the guarded switch can install it over small.
+#[starknet::contract]
+pub mod HybridShakeVerifierPfSmallKeyRead {
+    use pqbench_falcon_512_pf_small::Falcon512ShakeVerifier;
+    use super::HybridAccountComponent;
+
+    component!(path: HybridAccountComponent, storage: account, event: AccountEvent);
+
+    #[abi(embed_v0)]
+    impl VerifierImpl =
+        HybridAccountComponent::VerifierKeyReadImpl<ContractState, Falcon512ShakeVerifier>;
 
     #[storage]
     struct Storage {

@@ -97,6 +97,7 @@ differs slightly from the size of the file Scarb writes.
 | `HybridShakeVerifierPfCompact` | 71,580 | 71,809 | 3,149,439 | 2,141,080 | 5,874,137,600 | 101.3% |
 | `HybridShakeVerifierPfRecord` | 77,902 | 76,146 | 3,422,453 | 2,329,159 | 6,310,728,960 | 108.8% |
 | `HybridShakeVerifierPfSmall` | 64,163 | 68,569 | 3,350,894 | 1,741,663 | 5,437,624,320 | 93.8% |
+| `HybridShakeVerifierPfSmallKeyRead` | 63,912 | 68,420 | 3,341,785 | 1,735,081 | 5,421,249,280 | 93.5% |
 | `HybridMigratableAccount` | 7,719 | 3,546 | 181,970 | 177,227 | 468,300,800 | 8.1% |
 | `HybridPoseidonAccount` | 49,043 | 51,261 | 1,900,820 | 1,331,138 | 4,112,410,880 | 70.9% |
 | `VerifierSwitchGuard` | 1,164 | 978 | 36,318 | 27,626 | 88,408,320 | 1.5% |
@@ -154,6 +155,29 @@ SHA-256 `3b4ebcfa…eb0ff9dc`). All classes build. The bundled option first appe
 classes pass both, so either way they compile. Removing `keccak_syscall` from the list makes the
 candidate verifier classes fail, so the check is live. Scarb does not rebuild when only the list
 changes, which is why the check uses a fresh copy.
+
+### PF-11: reading the Falcon key once
+
+`HybridShakeVerifierPfSmallKeyRead` ("smallkr" in the tests) is small with one change: the key is
+read with its length read once (`read_falcon_public_key_once` in `contracts/src/hybrid.cairo`).
+`Vec::at` reads the length again for every element to check bounds, 29 storage reads per signature.
+The storage layout is the same, so a migrated account reads the same key, and the guarded switch
+installs it over small (`small_to_small_key_read_and_back_keeps_the_keys` in `tests_guard.cairo`).
+The other classes are byte-identical to `testnet-v1`.
+
+| Path | small | smallkr | Change |
+| --- | ---: | ---: | ---: |
+| `__validate__`, migrated account, mean | 27,215,883 | 26,549,273 | -666,610 (-2.4%) |
+| `__validate__`, migrated account, worst | 28,722,966 | 28,056,356 | -666,610 |
+| `is_valid_signature`, worst | 28,914,646 | 28,248,036 | -666,610 |
+| rejected signature, worst | 27,116,653 | 26,450,043 | -666,610 |
+| migration (`upgrade` + `migrate`) | 45,057,399 | 44,390,789 | -666,610 |
+| validation steps, worst vector | 189,908 | 183,384 | -6,524 |
+| declare L2 gas | 5,437,624,320 | 5,421,249,280 | 93.5% of the cap |
+
+The saving is the same on every vector, as expected of a fixed number of storage reads, and
+matches the -666,710 starkience reported on Provably Fast for the same change (thread
+bt1_fc46cf7e03432c994fa443ec). The class is not declared on Sepolia yet.
 
 ## Selection
 
