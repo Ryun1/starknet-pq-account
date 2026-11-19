@@ -26,6 +26,9 @@ const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d
 const OZ_ACCOUNT_CLASS = "0x05b4b537eaa2399e3aa99c4e2e0208ebd6c71bc1467938cd52c798c601e43564";
 const FUND = 30n * 10n ** 18n;
 const INDEX = 1;
+// A cap, not the fee: about 60M is expected on Sepolia (bench/pf14), and starknet-devnet 0.9.0
+// counts about 2.4 times what Sepolia charged for the same Falcon-512 transfer.
+const TRANSFER_L2_MAX = 250000000n;
 const template = readFileSync(new URL("./browser-wallet.template.html", import.meta.url), "utf8");
 const WORDS = template.match(/const PUBLIC_DEMO_MNEMONIC = "([^"]+)"/)[1];
 const ROOTS = JSON.parse(readFileSync(new URL("./falcon1024_ntt_roots.json", import.meta.url), "utf8"));
@@ -40,18 +43,19 @@ async function balance(a) {
   return BigInt(r[0]) + (BigInt(r[1]) << 128n);
 }
 async function classAt(a) { try { return BigInt(await provider.getClassHashAt(a)); } catch { return null; } }
-async function bounds(l2Max) {
+async function bounds(l2Max, dataMax) {
   const b = await provider.getBlockWithTxHashes("latest");
   return {
     l1_gas: { max_amount: 0n, max_price_per_unit: BigInt(b.l1_gas_price.price_in_fri) * 2n },
-    l1_data_gas: { max_amount: 5000n, max_price_per_unit: BigInt(b.l1_data_gas_price.price_in_fri) * 2n },
+    l1_data_gas: { max_amount: dataMax, max_price_per_unit: BigInt(b.l1_data_gas_price.price_in_fri) * 2n },
     l2_gas: { max_amount: l2Max, max_price_per_unit: (BigInt(b.l2_gas_price.price_in_fri) * 3n) / 2n },
   };
 }
 const tip = async () => (await provider.getEstimateTip("latest", { maxBlocks: 5 })).recommendedTip;
-async function send(acc, calls, l2Max) {
+// dataMax: L1 data gas for the state diff. The migration writes the 57-felt key (about 6,000).
+async function send(acc, calls, l2Max, dataMax = 5000n) {
   const nonce = await provider.getNonceForAddress(acc.address, "latest");
-  const r = await acc.execute(calls, { nonce, tip: await tip(), resourceBounds: await bounds(l2Max) });
+  const r = await acc.execute(calls, { nonce, tip: await tip(), resourceBounds: await bounds(l2Max, dataMax) });
   const rc = await provider.waitForTransaction(r.transaction_hash);
   if (rc.execution_status !== "SUCCEEDED") throw new Error(`${r.transaction_hash} ${rc.execution_status} ${rc.revert_reason || ""}`);
   console.log(`  ${VOYAGER}/tx/${r.transaction_hash}  l2 gas ${rc.execution_resources?.l2_gas}`);
@@ -96,7 +100,7 @@ if ((await classAt(address)) === BigInt(OZ_ACCOUNT_CLASS)) {
   state.migrationTx = await send(oz, [
     { contractAddress: address, entrypoint: "upgrade", calldata: [V2] },
     { contractAddress: address, entrypoint: "migrate", calldata: migrationArgs(keys, VERIFIER, "0x0") },
-  ], 250000000n);
+  ], 250000000n, 20000n);
   save();
   await sleep(2000);
 }
@@ -105,7 +109,7 @@ if ((await classAt(address)) !== BigInt(V2)) throw new Error("account is not on 
 // 4. hybrid transfer, then ECDSA only
 if (!state.hybridTransferTx) {
   console.log("hybrid ECDSA + Falcon-1024 transfer");
-  state.hybridTransferTx = await send(new Account({ provider, address, signer: new HybridSigner(keys) }), transferCall(deployerAddress, 10n ** 16n), 120000000n);
+  state.hybridTransferTx = await send(new Account({ provider, address, signer: new HybridSigner(keys) }), transferCall(deployerAddress, 10n ** 16n), TRANSFER_L2_MAX);
   save();
 }
 if (!state.ecdsaOnlyRejected) {
@@ -114,7 +118,7 @@ if (!state.ecdsaOnlyRejected) {
     async signRaw(h) { const e = ec.starkCurve.sign(num.toHex(h), keys.ecdsaPrivateKey); return [num.toHex(e.r), num.toHex(e.s)]; }
   }
   try {
-    const hash_ = await send(new Account({ provider, address, signer: new EcdsaOnly(keys.ecdsaPrivateKey) }), transferCall(deployerAddress, 10n ** 16n), 120000000n);
+    const hash_ = await send(new Account({ provider, address, signer: new EcdsaOnly(keys.ecdsaPrivateKey) }), transferCall(deployerAddress, 10n ** 16n), TRANSFER_L2_MAX);
     throw new Error(`ECDSA-only transfer was ACCEPTED: ${hash_}`);
   } catch (e) {
     const m = String(e.message || e);
