@@ -116,13 +116,35 @@ python3 -I bench/pf14/gen_vectors.py --falcon-py /path/to/falcon.py \
 `setPqKeyCalls` and `migrationArgs` work unchanged with Falcon-1024 keys. Packing at n = 1024 is 56
 felts of 18 coefficients and a last felt of sixteen (nine low, seven high). The NTT needs falcon.py's
 roots up to n = 1024: `signer/falcon1024_ntt_roots.json` (`scripts/export_ntt_roots.py --max-n 1024`);
-`falcon_ntt_roots.json` and the browser page are unchanged. Backup profile v0.2:
+`falcon_ntt_roots.json` is unchanged. Backup profile v0.2:
 [key-backup-v0.2.md](../../contracts/docs/key-backup-v0.2.md).
+
+## Demo page
+
+`docs/index.html` (GitHub Pages) signs with Falcon-1024 too. It reads the account's on-chain key:
+57 felts means Falcon-1024 (backup v0.2), otherwise Falcon-512 (v0.1), so a user's own words work
+for either. A second button opens the Falcon-1024 demo account, the public demo words at account
+index 1 (`0x6cc8174385000e9451849a43266798b22ad91edd529ba3bc3f1b693e0bc3218`). The page's signing
+code, sliced from the built page, gives the same keys as `signer/pq_keys.mjs` and signatures the
+board's reference verifiers accept, at both n.
+
+Setting up that account on Sepolia (from the deployer key in `.keys/`):
+
+```sh
+(cd contracts && scarb build)
+cd signer
+node pf04_sepolia.mjs declare HybridMigratableAccountV2
+node pf04_sepolia.mjs declare HybridShakeVerifierFalcon1024   # about 4.43e9 L2 gas, ~100 STRK
+node falcon1024_demo_setup.mjs   # fund, deploy, [upgrade(V2), migrate] to Falcon-1024, hybrid
+                                 # transfer, ECDSA-only transfer rejected; writes sepolia.json
+```
+
+Until that has run, the page's Falcon-1024 button reports that the keys do not control a migrated
+account.
 
 ## Not done
 
-- A9, Sepolia receipts: declaring the verifier (about 4.43e9 L2 gas) and V2, and switching test
-  accounts, needs the user's authorization.
+- A9, Sepolia receipts: scripted, not yet run (needs the deployer key). See [Demo page](#demo-page).
 - No class hash for Falcon-1024 in `KNOWN_VERIFIERS` or the release manifest until it is declared;
   the per-scheme allow list and the manifest's `scheme` field wait for that (PF-13 step 9).
 - Part B (ML-DSA-87 write-up).

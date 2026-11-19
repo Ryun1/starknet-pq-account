@@ -25,4 +25,5 @@ Test vector (the public BIP39 test mnemonic `abandon` x 11 + `about`, profile `p
 | ECDSA public key | `0x5d97a4a9174d9158c3886717a70112c5e60b17318a1d3ae17f563f1cf8292f4` (same as v0.1) |
 | SHA-256 of the 1,793-byte Falcon-1024 public key | `d14527e61098ec1c65435148886c783d064dd193339720d3d5b544b4ecff864a` |
 
-The browser page (`docs/index.html`) does not offer v0.2.
+The browser page (`docs/index.html`) restores v0.2 keys when the account's on-chain key is 57 felts,
+and its Falcon-1024 demo account is the public demo words at index 1.
