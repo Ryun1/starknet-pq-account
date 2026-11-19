@@ -27,6 +27,10 @@
   .brand:hover { text-decoration:none; }
   .brand svg { width:28px; height:28px; display:block; }
   .top nav { margin-left:auto; display:flex; align-items:center; gap:8px; }
+  .menu { display:flex; gap:2px; margin-left:24px; padding:3px; border-radius:999px; background:var(--bg); }
+  .menu a { padding:5px 14px; border-radius:999px; color:var(--sub); font-size:14px; font-weight:600; white-space:nowrap; }
+  .menu a:hover { color:var(--ink); text-decoration:none; }
+  .menu a.on { background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.08); }
   .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:var(--bg); color:var(--sub); font-size:13px; font-weight:600; white-space:nowrap; }
   .pill.warn { background:#fff4e5; color:#b45f00; }
   .top nav a { padding:7px 14px; border-radius:999px; background:var(--ink); color:#fff; font-size:14px; font-weight:600; }
@@ -122,6 +126,10 @@
     body { font-size:16px; }
     .top-in { padding:12px 16px; }
     .top .pill.hide-s { display:none; }
+    .top-in { flex-wrap:wrap; row-gap:10px; }
+    .brand { white-space:nowrap; }
+    .menu { order:3; flex-basis:100%; margin-left:0; }
+    .menu a { flex:1; text-align:center; }
     .wrap { padding:32px 12px 72px; }
     .hero { padding:8px 6px 0; }
     h1 { font-size:30px; }
@@ -149,6 +157,10 @@
     <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="120" fill="#191f28"/><g transform="translate(256,256) scale(0.88) translate(-256,-256) translate(-6,-6)"><circle cx="220" cy="220" r="120" fill="none" stroke="#f2f4f6" stroke-width="32"/><g fill="#8b95a1"><circle cx="365" cy="305" r="16"/><circle cx="425" cy="305" r="16"/><circle cx="305" cy="365" r="16"/><circle cx="365" cy="365" r="16"/><circle cx="425" cy="365" r="16"/><circle cx="305" cy="425" r="16"/><circle cx="365" cy="425" r="16"/><circle cx="425" cy="425" r="16"/></g><circle cx="304.85" cy="304.85" r="30" fill="#191f28"/><circle cx="304.85" cy="304.85" r="22" fill="#3182f6"/></g></svg>
     starknet-pq-account
   </a>
+  <div class="menu" role="tablist">
+    <a href="#hybrid" data-show="hybrid" role="tab">Hybrid demo</a>
+    <a href="#falcon-only" data-show="falcon-only" role="tab">Falcon only</a>
+  </div>
   <nav>
     <span class="pill">Sepolia</span>
     <span class="pill warn hide-s">Not audited</span>
@@ -196,7 +208,7 @@
     </div>
   </section>
 
-  <section class="card">
+  <section class="card" data-view="hybrid">
     <div class="card-h"><span class="num">2</span><h2>Send 0.01 STRK</h2></div>
     <p class="desc">Signed in this tab with both keys. Then try the same transfer with ECDSA only, the way an attacker with a quantum computer would. The account should reject it.</p>
     <div class="actions">
@@ -206,17 +218,17 @@
     <div id="log" class="log">Waiting for keys.</div>
   </section>
 
-  <section class="card">
-    <div class="card-h"><span class="num">3</span><h2>Suppose Falcon were broken</h2></div>
+  <section class="card" data-view="falcon-only" hidden>
+    <div class="card-h"><span class="num">2</span><h2>Suppose Falcon were broken</h2></div>
     <p class="desc">Falcon is young, and this verifier is unaudited contest code. Here the attacker can make a valid Falcon signature but does not have the ECDSA key, so the classical half is left empty. The account should reject it: the classical key still guards it.</p>
     <div class="actions">
-      <button id="falcon-only" class="weak" disabled>Try Falcon only</button>
+      <button id="falcon-send" class="weak" disabled>Try Falcon only</button>
     </div>
     <div id="falcon-log" class="log">Waiting for keys.</div>
   </section>
 
-  <section class="card">
-    <div class="card-h"><span class="num">4</span><h2>Lock the keys with a passkey</h2><span class="opt">Optional</span></div>
+  <section class="card" data-view="hybrid">
+    <div class="card-h"><span class="num">3</span><h2>Lock the keys with a passkey</h2><span class="opt">Optional</span></div>
     <p class="desc">Face ID, Windows Hello or a security key. The seed is encrypted with the passkey's PRF output and stays in this browser, so next time you unlock instead of typing the words. The words stay the backup.</p>
     <div class="actions">
       <button id="pk-save" class="weak" disabled>Lock with a passkey</button>
@@ -399,7 +411,7 @@ async function activate(newSeed, source, index = 0) {
     .then((h) => { $("verifier").textContent = verifierLabel(h, CONFIG.verifiers); });
   const match = !!onchain && JSON.stringify(onchain.slice(1).map((x) => num.toHex(x))) === JSON.stringify(mine);
   $("check").innerHTML = match ? `<span class="ok">Falcon key on-chain matches the key restored from ${source}</span>` : '<span class="bad">On-chain key does not match</span>';
-  $("send").disabled = !match; $("attack").disabled = !match; $("falcon-only").disabled = !match; $("pk-save").disabled = !match;
+  $("send").disabled = !match; $("attack").disabled = !match; $("falcon-send").disabled = !match; $("pk-save").disabled = !match;
   falconLog(match ? "Ready." : "Waiting for keys.");
   log(match ? "Ready." : "These keys do not control a migrated account.", match ? "ok" : "bad");
 }
@@ -490,6 +502,18 @@ $("pk-unlock").addEventListener("click", async () => {
 $("pk-forget").addEventListener("click", () => { writeStore(null); refreshPasskeyUi(); pkLog("Forgotten on this device. The passkey itself can be removed in your device settings."); });
 refreshPasskeyUi();
 
+// --- the two flows in the header menu: #hybrid (default) and #falcon-only; keys are shared ---
+function showView() {
+  const view = location.hash === "#falcon-only" ? "falcon-only" : "hybrid";
+  document.querySelectorAll("[data-view]").forEach((el) => { el.hidden = el.dataset.view !== view; });
+  document.querySelectorAll("[data-show]").forEach((a) => {
+    a.classList.toggle("on", a.dataset.show === view);
+    a.setAttribute("aria-selected", String(a.dataset.show === view));
+  });
+}
+window.addEventListener("hashchange", showView);
+showView();
+
 async function send(mode) {
   const acc = new Account({ provider, address, signer: new HybridSigner(keys.ecdsaPrivateKey, mode) });
   const nonce = await provider.getNonceForAddress(address, "latest");
@@ -517,8 +541,8 @@ $("attack").addEventListener("click", async () => {
   finally { $("attack").disabled = false; }
 });
 const falconLog = (msg, cls) => { const el = $("falcon-log"); el.textContent = msg; el.className = "log " + (cls || ""); };
-$("falcon-only").addEventListener("click", async () => {
-  $("falcon-only").disabled = true;
+$("falcon-send").addEventListener("click", async () => {
+  $("falcon-send").disabled = true;
   try {
     falconLog(`Signing with Falcon-${keys.n} only (no ECDSA signature) and sending...`);
     const r = await send("falcon");
@@ -528,7 +552,7 @@ $("falcon-only").addEventListener("click", async () => {
     if (/validate/i.test(m) && /panicked|invalid signature/i.test(m)) falconLog(`Rejected as expected: __validate__ refused a valid Falcon-${keys.n} signature without the ECDSA signature.\n` + tail, "ok");
     else falconLog("Not sent, for a reason unrelated to the signature check:\n" + tail, "bad");
   }
-  finally { $("falcon-only").disabled = false; }
+  finally { $("falcon-send").disabled = false; }
 });
 </script>
 </body>
