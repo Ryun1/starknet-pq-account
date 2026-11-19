@@ -13,7 +13,7 @@ gas (76.4% of the block cap)**, validation **51.3M mean, 54.6M worst (45% under 
 ### Validation and calls (`gas/`, snforge L2 gas)
 
 `HybridMigratableAccountV2` on the Falcon-1024 verifier, over the 19 valid vectors of
-`vectors.json` (9 falcon.py, 10 noble, on four keys; 10 need 16 SHAKE blocks and 9 need 17).
+`vectors.json` (9 falcon.py, 10 noble, on four keys; 8 need 16 SHAKE blocks and 11 need 17).
 
 | Path | L2 gas | of the 100M validation cap |
 | --- | ---: | ---: |
@@ -41,15 +41,20 @@ The record's patch in this project's verifier class, measured by `../pf04/screen
 
 | Job | Board mean | CASM felts | Sierra felts | Class bytes | Declare L2 gas | of 5.8e9 block cap |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `fk_c4038d6e` | 49,040,871 | 76,723 | 71,897 | 3,775,923 | 6,088,400,640 | 105.0% |
+| `fk_7da1a28f` | 49,088,548 | 77,183 | 74,703 | 3,924,115 | 6,222,176,000 | 107.3% |
+| `fk_840bc1b4` | 49,098,057 | 77,631 | 74,513 | 3,917,039 | 6,232,743,680 | 107.5% |
+| `fk_9918c4fd` | 49,104,657 | 77,712 | 74,545 | 3,920,843 | 6,237,372,160 | 107.5% |
 | `fk_29560355` (record, **selected**) | 49,132,102 | 59,762 | 48,437 | 3,077,705 | 4,432,756,480 | 76.4% |
 | `fk_f5cc81df` | 49,158,543 | 59,689 | 47,812 | 3,018,060 | 4,404,166,400 | 75.9% |
 | `fk_91eb8438` | 49,231,281 | 58,452 | 48,025 | 3,028,444 | 4,362,223,360 | 75.2% |
 | `fk_e13dd2c3` | 50,265,081 | 57,189 | 43,212 | 2,830,343 | 4,113,350,400 | 70.9% |
 | `fk_1553544a` | 115,218,933 | 38,324 | 46,817 | 2,016,029 | 3,488,300,800 | 60.1% |
 
-Every unbroken entry screened fits a block, unlike Falcon-512's record (PF-04), so the selection
-rule (the cheapest-to-validate unbroken entry whose declare is at most 95% of the cap and that builds
-against both libfunc lists) picks the record. `HybridMigratableAccountV2` is 593,775,360 (10.2%).
+The selection rule is the cheapest-to-validate unbroken entry whose declare is at most 95% of the
+cap and that builds against both libfunc lists. The four unbroken entries cheaper than the record
+(over the board's 75% account budget, so not records) need 105–107.5% of the block cap and cannot
+be declared. The record is the cheapest that fits, so it is selected. `HybridMigratableAccountV2` is 593,775,360 (10.2%).
 
 ### Correctness (differential, cairo-test)
 

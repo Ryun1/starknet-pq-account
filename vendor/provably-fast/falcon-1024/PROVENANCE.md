@@ -50,9 +50,13 @@ The baseline job scores 143,304,166.
 (SHA-256 `4e27468c21c7b12d7edaf0fa0dd8ccf7809fd2487638a71566554a1a593a1dad`).
 
 - `fk_29560355` was the record, submitted 2026-11-16, `attacks_withstood: 1`, not broken.
-- The lane had six breaks, all `COSTLY_REJECTION`, none against this job or its ancestors in the
-  snapshot. Check `breaks` and the board again before relying on it; a later break does not change
-  these pinned bytes.
+- The lane had six breaks, all `COSTLY_REJECTION` (a rejection costing more than 1.25 times the
+  target's worst valid verification), none against this job. All six were against its own
+  ancestors through `builds_on` (`fk_6eba4efb`, `fk_a02e7ae9`, `fk_557f4fd8`, `fk_b619640e`,
+  `fk_343e4f21`, `fk_1280c59e`). Every break's input joins all later
+  checks, so this job passed those inputs when it was scored; the lineage is why its rejection
+  cost deserves a look in any review. Check `breaks` and the board again before relying on it; a
+  later break does not change these pinned bytes.
 
 ## Contributors
 
@@ -64,8 +68,9 @@ self-reported; the board's contributor lists are the authority for credit.
 ## Declare size
 
 As `HybridShakeVerifierFalcon1024`, 59,762 CASM and 48,437 Sierra felts: 4.43e9 declare L2 gas, 76.4%
-of the 5.8e9 block cap (bench/pf14). Four other unbroken entries screened between 60.1% and 75.9%;
-the record is the cheapest to validate and fits, so it is the one pinned.
+of the 5.8e9 block cap (bench/pf14). The four unbroken entries cheaper to validate need 105–107.5%
+and cannot be declared; four more expensive ones screened between 60.1% and 75.9%. The record is
+the cheapest that fits, so it is the one pinned.
 
 ## Known review limitations
 
