@@ -4,6 +4,7 @@ Issue #22. A Falcon-1024 verifier class, `HybridShakeVerifierFalcon1024`, for
 `HybridMigratableAccountV2` ([scheme-switch.md](../../contracts/docs/scheme-switch.md)), built on the
 Provably Fast Falcon-1024 record `fk_29560355` ([PROVENANCE](../../vendor/provably-fast/falcon-1024/PROVENANCE.md)).
 Experimental, unaudited, testnet only; nothing here is declared on Sepolia.
+Part B, ML-DSA-87 (no class; the trigger to revisit): [ml-dsa-87.md](ml-dsa-87.md).
 
 Acceptance criterion 1, "Falcon-1024 declare gas and validation gas measured": declare **4.43e9 L2
 gas (76.4% of the block cap)**, validation **51.3M mean, 54.6M worst (45% under the 100M cap)**.
@@ -94,6 +95,7 @@ bench/pf14/run.sh          # differential: scarb 2.18.0, python3
 bench/pf14/gas/run.sh      # gas, steps, class sizes, network libfuncs; writes gas/results.json
 bench/pf14/gas/run.sh --check   # CI: same, against gas/budgets.json
 bench/pf04/screen.sh --lane falcon1024 fk_2956035507114a6c89165c8cc8e8fe56 ...   # declare screen
+bench/pf04/screen.sh --lane mldsa87 mk_94cd1f15e1c94f189f3a3579bb166377 ...      # Part B
 ```
 
 `gas/run.sh` needs snforge 0.59.0 and universal-sierra-compiler **2.10.2**, the version
@@ -149,6 +151,5 @@ account.
 - A9, Sepolia receipts: scripted, not yet run (needs the deployer key). See [Demo page](#demo-page).
 - No class hash for Falcon-1024 in `KNOWN_VERIFIERS` or the release manifest until it is declared;
   the per-scheme allow list and the manifest's `scheme` field wait for that (PF-13 step 9).
-- Part B (ML-DSA-87 write-up).
 - A review of the record patch. It is minified contest code, attacked (one hammer round) but not
   audited.
