@@ -1,0 +1,28 @@
+# ARCH-01: PQ-only against hybrid validation gas on HybridMigratableAccountV2, measured with
+# snforge as bench/pf14/gas does. src/fixtures/ is copied from contracts/src by run.sh.
+[package]
+name = "arch01_gas"
+version = "0.1.0"
+edition = "2024_07"
+cairo-version = "2.18.0"
+license = "MIT"
+
+[dependencies]
+starknet = "2.18.0"
+pq_hybrid = { path = "../../contracts" }
+
+[dev-dependencies]
+snforge_std = "0.59.0"
+assert_macros = "2.18.0"
+
+[[target.starknet-contract]]
+build-external-contracts = [
+    "pq_hybrid::hybrid::FalconOnlyVerifierFalcon1024",
+    "pq_hybrid::hybrid::FalconOnlyVerifierPfSmall",
+    "pq_hybrid::hybrid::HybridShakeVerifierFalcon1024",
+    "pq_hybrid::hybrid::HybridShakeVerifierPfSmallKeyRead",
+    "pq_hybrid::migratable_v2::HybridMigratableAccountV2",
+]
+
+[cairo]
+enable-gas = true

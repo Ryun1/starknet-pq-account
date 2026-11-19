@@ -162,6 +162,25 @@ pub mod HybridAccountComponent {
         }
     }
 
+    /// PQ-only (ARCH-01): the signature is the PQ signature alone, no ECDSA felts. The ECDSA key
+    /// stays in storage, unread. Installed with V2's `set_pq_key`, whose proof it checks the same
+    /// way, so the account class does not change.
+    #[embeddable_as(PqOnlyVerifierImpl)]
+    impl PqOnlyVerifier<
+        TContractState,
+        impl Pq: PqSignatureVerifier,
+        +HasComponent<TContractState>,
+        +Drop<TContractState>,
+    > of IHybridVerifier<ComponentState<TContractState>> {
+        fn is_valid_signature(
+            self: @ComponentState<TContractState>, hash: felt252, signature: Array<felt252>,
+        ) -> felt252 {
+            execution::signature_result(
+                Pq::verify(hash, self.read_falcon_public_key_once().span(), signature.span()),
+            )
+        }
+    }
+
     #[embeddable_as(DeployableImpl)]
     impl Deployable<
         TContractState,
@@ -468,6 +487,63 @@ pub mod HybridShakeVerifierFalcon1024 {
     #[abi(embed_v0)]
     impl VerifierImpl =
         HybridAccountComponent::VerifierKeyReadImpl<ContractState, Falcon1024Verifier>;
+
+    #[storage]
+    struct Storage {
+        #[substorage(v0)]
+        account: HybridAccountComponent::Storage,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        AccountEvent: HybridAccountComponent::Event,
+    }
+}
+
+/// PQ-only (ARCH-01) verifier class for `HybridMigratableAccountV2`: Falcon-512 SHAKE-256 alone,
+/// with the verifier of `HybridShakeVerifierPfSmall`. Signature: the 60 Falcon felts, no ECDSA.
+/// An account switches to it with `set_pq_key`, whose proof is then a Falcon-only signature over
+/// `rotation_hash`. EXPERIMENTAL: drops ECDSA's defence in depth against a Falcon or verifier bug
+/// (contracts/docs/pq-only.md).
+#[starknet::contract]
+pub mod FalconOnlyVerifierPfSmall {
+    use pqbench_falcon_512_pf_small::Falcon512ShakeVerifier;
+    use super::HybridAccountComponent;
+
+    component!(path: HybridAccountComponent, storage: account, event: AccountEvent);
+
+    #[abi(embed_v0)]
+    impl VerifierImpl =
+        HybridAccountComponent::PqOnlyVerifierImpl<ContractState, Falcon512ShakeVerifier>;
+
+    #[storage]
+    struct Storage {
+        #[substorage(v0)]
+        account: HybridAccountComponent::Storage,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        AccountEvent: HybridAccountComponent::Event,
+    }
+}
+
+/// As `FalconOnlyVerifierPfSmall`, with the Falcon-1024 verifier of
+/// `HybridShakeVerifierFalcon1024`: 57-felt key, 116-felt signature, no ECDSA.
+#[starknet::contract]
+pub mod FalconOnlyVerifierFalcon1024 {
+    use pqbench_falcon_1024_pf_record::Falcon1024Verifier;
+    use super::HybridAccountComponent;
+
+    component!(path: HybridAccountComponent, storage: account, event: AccountEvent);
+
+    #[abi(embed_v0)]
+    impl VerifierImpl =
+        HybridAccountComponent::PqOnlyVerifierImpl<ContractState, Falcon1024Verifier>;
 
     #[storage]
     struct Storage {

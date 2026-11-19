@@ -26,6 +26,10 @@ mod tests_guard;
 #[cfg(test)]
 mod tests_pf;
 #[cfg(test)]
+mod tests_pq_only;
+#[cfg(test)]
+mod tests_pq_only_fixture;
+#[cfg(test)]
 mod tests_migration;
 #[cfg(test)]
 mod tests_rotation_fixture;
