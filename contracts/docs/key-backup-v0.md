@@ -39,6 +39,9 @@ The same mnemonic gives the same Falcon key in Node (`signer/pq_keys.mjs`) and i
 from the mnemonic and its Falcon public key matches the key registered on-chain. The caveat above
 still applies: the key is defined by this library's key generation procedure.
 
+Profile v0.2 (Falcon-1024, PF-14) is the same with another salt, info and key generation:
+[key-backup-v0.2.md](key-backup-v0.2.md).
+
 ## Wallet ECDSA profiles: keep the words a user already has
 
 To migrate an existing wallet account, the classical key must be the one that account already

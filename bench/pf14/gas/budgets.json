@@ -1,0 +1,23 @@
+{
+  "description": "Regression budgets for bench/pf14/gas (measured + 1%, capped at the network limit), same rule as bench/pf04/budgets.json. Change only with the reason in the commit.",
+  "max": {
+    "declare.worst": 55186527,
+    "is_valid.worst": 55575700,
+    "migrate": 85165896,
+    "reject.worst": 48117894,
+    "set_pq_key": 79554781,
+    "size.HybridMigratableAccountV2.casm_bytecode_felts": 9846,
+    "size.HybridMigratableAccountV2.compiled_class_object_bytes": 226745,
+    "size.HybridMigratableAccountV2.contract_class_object_bytes": 240507,
+    "size.HybridMigratableAccountV2.declare_code_l2_gas": 599713114,
+    "size.HybridMigratableAccountV2.sierra_program_felts": 4610,
+    "size.HybridShakeVerifierFalcon1024.casm_bytecode_felts": 60360,
+    "size.HybridShakeVerifierFalcon1024.compiled_class_object_bytes": 1803294,
+    "size.HybridShakeVerifierFalcon1024.contract_class_object_bytes": 2474884,
+    "size.HybridShakeVerifierFalcon1024.declare_code_l2_gas": 4477084045,
+    "size.HybridShakeVerifierFalcon1024.sierra_program_felts": 48922,
+    "steps.worst_vector": 356477,
+    "validate.mean": 51854944,
+    "validate.worst": 55192082
+  }
+}

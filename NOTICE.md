@@ -15,11 +15,16 @@
     built and tested only; it cannot be declared on Sepolia.
   - `record-fj_c3459a8b07a54bd5828d3fdde899c4e0.patch` (`23f3c793…d7b2f9`): `HybridShakeVerifierPfRecord`,
     built and tested only, as compact.
+- `vendor/cairo-pq-verifiers/crates/falcon_1024/`: the Provably Fast Falcon-1024 lane's baseline crate, written
+  for that challenge on the NTT engine above, from its bundle at commit `bf7fd8785a189164d638e7f7c11d261c9e864d56`
+  (a child of `bece5c07`), MIT, unchanged. `vendor/provably-fast/falcon-1024/`: the lane's record patch
+  `record-fk_2956035507114a6c89165c8cc8e8fe56.patch` (`1df60496…c98b`), MIT, by the contributors listed in its
+  `PROVENANCE.md`, and the crates generated from it: `HybridShakeVerifierFalcon1024`, built and tested only (PF-14).
 - `contracts/src/utils/execution.cairo` and `contracts/src/utils/interface.cairo` are adapted from the same
   repository (MIT).
 - Falcon key generation and signing use [falcon.py](https://github.com/tprest/falcon.py) by Thomas Prest
   (MIT License), commit `5145a818c9512b4a443507d3375e75dae3076af6`. It is not vendored; point `FALCON_PY_DIR`
   at a checkout of that commit. `signer/falcon_ntt_roots.json` holds falcon.py's NTT root constants
-  (exported by `scripts/export_ntt_roots.py`).
-- Browser and Node Falcon-512 signing use [@noble/post-quantum](https://github.com/paulmillr/noble-post-quantum)
+  (exported by `scripts/export_ntt_roots.py`); `signer/falcon1024_ntt_roots.json` the same up to n = 1024.
+- Browser and Node Falcon-512 and Falcon-1024 signing use [@noble/post-quantum](https://github.com/paulmillr/noble-post-quantum)
   0.6.1 (MIT License), loaded as a dependency or from jsDelivr; it is not vendored.

@@ -1,52 +1,64 @@
 #!/usr/bin/env bash
 # PF-04: declare size of Provably Fast board entries as this project's verifier class.
 #
-#   bench/pf04/screen.sh JOB_ID...
+#   bench/pf04/screen.sh JOB_ID...                    # Falcon-512 lane (fj_ ids)
+#   bench/pf04/screen.sh --lane falcon1024 JOB_ID...  # Falcon-1024 lane (fk_ ids, PF-14)
 #
 # For each job: download its patch from the board into a temporary copy of this repository, put it
-# in the compact slot, build contracts/, and print the CASM and Sierra felts of
-# `HybridShakeVerifierPfCompact` and its declare L2 gas against the block cap (see summarize.py).
-# The board reports CASM only, which does not predict the declare size. Nothing in the repository
-# is changed. Needs scarb 2.18.0, curl, rsync and python3; about 45 seconds per job.
+# in the lane's slot (Falcon-512: compact; Falcon-1024: record), build contracts/, and print the
+# CASM and Sierra felts of the slot's verifier class and its declare L2 gas against the block cap
+# (see summarize.py). The board reports CASM only, which does not predict the declare size. Nothing
+# in the repository is changed. Needs scarb 2.18.0, curl, rsync and python3; about 45 seconds per
+# job.
 set -euo pipefail
 
 REPO=$(cd "$(dirname "$0")/../.." && pwd)
-[ $# -gt 0 ] || { echo "usage: screen.sh JOB_ID..." >&2; exit 1; }
+LANE=falcon
+if [ "${1:-}" = "--lane" ]; then LANE=${2:-}; shift 2; fi
+case $LANE in
+  falcon)
+    API=falcon; ID='^fj_[0-9a-f]{32}$'; CRATES='falcon_512|ntt'; DIR=falcon-512
+    SLOT=compact-fj_3a0b1c78817845a68e1e907928a541e4.patch; CLASS=HybridShakeVerifierPfCompact ;;
+  falcon1024)
+    API=falcon1024; ID='^fk_[0-9a-f]{32}$'; CRATES='falcon_1024|ntt'; DIR=falcon-1024
+    SLOT=record-fk_2956035507114a6c89165c8cc8e8fe56.patch; CLASS=HybridShakeVerifierFalcon1024 ;;
+  *) echo "unknown lane: $LANE" >&2; exit 1 ;;
+esac
+[ $# -gt 0 ] || { echo "usage: screen.sh [--lane falcon|falcon1024] JOB_ID..." >&2; exit 1; }
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
-SLOT=compact-fj_3a0b1c78817845a68e1e907928a541e4.patch
 
 for job in "$@"; do
-  [[ $job =~ ^fj_[0-9a-f]{32}$ ]] || { echo "not a job id: $job" >&2; exit 1; }
+  [[ $job =~ $ID ]] || { echo "not a job id: $job" >&2; exit 1; }
   w=$WORK/$job
   mkdir -p "$w"
   rsync -a --exclude target --exclude node_modules --exclude .git --exclude .keys \
     --exclude .snfoundry_cache "$REPO/" "$w/"
-  f=$w/vendor/provably-fast/falcon-512
-  curl -sf -o "$f/$SLOT" "https://postquantum.provably.fast/api/participation/falcon/jobs/$job/patch"
+  f=$w/vendor/provably-fast/$DIR
+  curl -sf -o "$f/$SLOT" "https://postquantum.provably.fast/api/participation/$API/jobs/$job/patch"
   # Untrusted input: the patch may only modify or create Cairo sources of the two crates. Check the
   # paths git apply itself will write (both sides, via --numstat), and reject renames, copies, mode
   # changes and deletions (--summary), before make_crates.sh applies it.
-  allowed='^crates/(falcon_512|ntt)/src/[A-Za-z0-9_/]+\.cairo$'
-  paths=$(git apply --numstat "$f/$SLOT" | cut -f3-) || { echo "$job: not a valid patch, skipped" >&2; continue; }
+  allowed="^crates/($CRATES)/src/[A-Za-z0-9_/]+\\.cairo\$"
+  paths=$(git -C "$WORK" apply --numstat "$f/$SLOT" | cut -f3-) || { echo "$job: not a valid patch, skipped" >&2; continue; }
   if [ -z "$paths" ] || grep -Ev "$allowed" <<< "$paths" >&2; then
     echo "$job: patch touches other files, skipped" >&2; continue
   fi
-  if git apply --summary "$f/$SLOT" | grep -Ev '^ create mode 100644 crates/(falcon_512|ntt)/src/[A-Za-z0-9_/]+\.cairo$' | grep . >&2; then
+  if git -C "$WORK" apply --summary "$f/$SLOT" | grep -Ev "^ create mode 100644 crates/($CRATES)/src/[A-Za-z0-9_/]+\\.cairo\$" | grep . >&2; then
     echo "$job: patch renames, copies, deletes or changes modes, skipped" >&2; continue
   fi
-  (cd "$f" && shasum -a 256 compact-*.patch record-*.patch small-*.patch > SHA256SUMS)
+  (cd "$f" && shasum -a 256 *.patch > SHA256SUMS)
   "$f/make_crates.sh" > /dev/null
   (cd "$w/contracts" && scarb build > "$w/build.log" 2>&1) || { echo "$job: build failed" >&2; continue; }
-  python3 -I - "$w/contracts/target/dev" "$job" <<'PY'
-import json, sys
-target, job = sys.argv[1], sys.argv[2]
-name = "HybridShakeVerifierPfCompact"
+  python3 -I - "$w/contracts/target/dev" "$job" "$CLASS" <<'PY'
+import json, os, sys
+target, job, name = sys.argv[1], sys.argv[2], sys.argv[3]
 sierra = json.load(open(f"{target}/pq_hybrid_{name}.contract_class.json"))
 casm = json.load(open(f"{target}/pq_hybrid_{name}.compiled_contract_class.json"))
 abi = len(json.dumps(sierra["abi"], separators=(",", ":")))
 c, s = len(casm["bytecode"]), len(sierra["sierra_program"])
 gas = 1280 * (32 * (c + s) + abi)
-print(f"{job} casm={c} sierra={s} declare_l2_gas={gas} of_block_cap={gas / 5.8e9:.1%}")
+size = os.path.getsize(f"{target}/pq_hybrid_{name}.contract_class.json")
+print(f"{job} casm={c} sierra={s} class_bytes={size} declare_l2_gas={gas} of_block_cap={gas / 5.8e9:.1%}")
 PY
 done

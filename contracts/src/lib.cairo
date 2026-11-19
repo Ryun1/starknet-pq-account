@@ -17,6 +17,8 @@ mod tests_browser;
 #[cfg(test)]
 mod tests_consumer;
 #[cfg(test)]
+mod tests_falcon1024_fixture;
+#[cfg(test)]
 mod tests_guard;
 #[cfg(test)]
 mod tests_pf;

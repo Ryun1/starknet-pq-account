@@ -452,3 +452,33 @@ pub mod HybridShakeVerifierPfSmallKeyRead {
         AccountEvent: HybridAccountComponent::Event,
     }
 }
+
+/// Falcon-1024 (NIST level 5) verifier class for `HybridMigratableAccountV2` (PF-14), with the
+/// Provably Fast Falcon-1024 record (`fk_2956035507114a6c89165c8cc8e8fe56`, see
+/// vendor/provably-fast/falcon-1024). 57-felt key, 116-felt Falcon signature in the Falcon-512 hint
+/// layout at n = 1024. The account stores the key in the same `falcon_public_key` Vec, so a V2
+/// account switches to it with `set_pq_key`; the verifier rejects a 29-felt key.
+#[starknet::contract]
+pub mod HybridShakeVerifierFalcon1024 {
+    use pqbench_falcon_1024_pf_record::Falcon1024Verifier;
+    use super::HybridAccountComponent;
+
+    component!(path: HybridAccountComponent, storage: account, event: AccountEvent);
+
+    #[abi(embed_v0)]
+    impl VerifierImpl =
+        HybridAccountComponent::VerifierKeyReadImpl<ContractState, Falcon1024Verifier>;
+
+    #[storage]
+    struct Storage {
+        #[substorage(v0)]
+        account: HybridAccountComponent::Storage,
+    }
+
+    #[event]
+    #[derive(Drop, starknet::Event)]
+    enum Event {
+        #[flat]
+        AccountEvent: HybridAccountComponent::Event,
+    }
+}

@@ -4,13 +4,14 @@
 //!
 //! Real signatures are the SHAKE-256 Falcon-512 fixtures. The second scheme is a mock with a
 //! 3-felt key and no cryptography: it exercises the account (a key of another length, a setup
-//! class, a proof checked by the new verifier), not a verifier. Falcon-1024 and ML-DSA-44 add
-//! real ones (PF-14, PF-13).
+//! class, a proof checked by the new verifier), not a verifier. Falcon-1024 (PF-14) is the first
+//! real second scheme: 57-felt key, `HybridShakeVerifierFalcon1024`, no setup class
+//! (tests_falcon1024_fixture.cairo). ML-DSA-44 (PF-13) adds another.
 
 use starknet::account::Call;
 use starknet::syscalls::{call_contract_syscall, deploy_syscall, get_class_hash_at_syscall};
 use starknet::{ClassHash, ContractAddress, SyscallResult, SyscallResultTrait};
-use crate::hybrid::{HybridPoseidonAccount, HybridShakeAccount};
+use crate::hybrid::{HybridPoseidonAccount, HybridShakeAccount, HybridShakeVerifierFalcon1024};
 use crate::migratable::LegacyOzLikeAccount::{ILegacyDispatcher, ILegacyDispatcherTrait};
 use crate::migratable::{
     IMigratableDispatcher, IMigratableDispatcherTrait, LegacyOzLikeAccount, registration_hash,
@@ -19,6 +20,10 @@ use crate::migratable::{
 use crate::migratable_v2::{
     HybridMigratableAccountV2, IMigratableV2Dispatcher, IMigratableV2DispatcherTrait,
     MigrationDataV2,
+};
+use crate::tests_falcon1024_fixture::{
+    F1024_ROTATION_HASH, falcon1024_pk, falcon1024_registration_proof, falcon1024_rotation_proof,
+    falcon1024_sig,
 };
 use crate::tests_migration::{deploy_legacy, hybrid_sig, migrate};
 use crate::tests_rotation_fixture::{
@@ -112,6 +117,10 @@ fn v2() -> ClassHash {
 
 fn shake() -> ClassHash {
     HybridShakeAccount::TEST_CLASS_HASH
+}
+
+fn falcon1024() -> ClassHash {
+    HybridShakeVerifierFalcon1024::TEST_CLASS_HASH
 }
 
 fn mock_verifier() -> ClassHash {
@@ -531,4 +540,113 @@ fn fresh_deployment_with_both_keys() {
     calldata.append(0);
     let (account, _) = deploy_syscall(v2(), 0, calldata.span(), false).unwrap_syscall();
     assert_unchanged(account);
+}
+
+// ---------------------------------------------------------------- Falcon-1024 (PF-14)
+
+/// The account holds the Falcon-1024 key and verifier, accepts its signatures and refuses
+/// Falcon-512 ones.
+fn assert_on_falcon1024(account: ContractAddress) {
+    let m = IMigratableV2Dispatcher { contract_address: account };
+    assert_eq!(m.get_falcon_public_key(), falcon1024_pk());
+    assert_eq!(m.get_verifier_class_hash(), falcon1024());
+    assert_eq!(m.get_ecdsa_public_key(), ECDSA_PK);
+    let a = IHybridAccountDispatcher { contract_address: account };
+    assert_eq!(a.is_valid_signature(MSG, falcon1024_sig()), starknet::VALIDATED);
+    assert_eq!(a.is_valid_signature(MSG, hybrid_sig()), 0);
+    assert_reverts_with(signed(account, array![]), INVALID_SIGNATURE);
+    transact(account, array![], falcon1024_sig()).unwrap_syscall();
+}
+
+#[test]
+fn falcon512_to_falcon1024_and_back() {
+    let account = v2_account();
+    let up = set_pq_key_call(
+        account, falcon1024_pk(), falcon1024(), class(0), falcon1024_rotation_proof(),
+    );
+    signed(account, array![up]).unwrap_syscall();
+    assert_on_falcon1024(account);
+    assert_eq!(
+        IHybridAccountDispatcher { contract_address: account }
+            .is_valid_signature(F1024_ROTATION_HASH, falcon1024_rotation_proof()),
+        starknet::VALIDATED,
+    );
+
+    // Back to Falcon-512 key B, in a transaction signed with Falcon-1024: 57 felts to 29.
+    let down = set_pq_key_call(account, falcon_pk_b(), shake(), class(0), falcon_rotation_proof());
+    transact(account, array![down], falcon1024_sig()).unwrap_syscall();
+    let m = IMigratableV2Dispatcher { contract_address: account };
+    assert_eq!(m.get_falcon_public_key(), falcon_pk_b());
+    assert_eq!(m.get_verifier_class_hash(), shake());
+    let a = IHybridAccountDispatcher { contract_address: account };
+    assert_eq!(
+        a.is_valid_signature(FALCON_ROTATION_HASH, falcon_rotation_proof()), starknet::VALIDATED,
+    );
+    assert_eq!(a.is_valid_signature(MSG, falcon1024_sig()), 0);
+    assert_reverts_with(transact(account, array![], falcon1024_sig()), INVALID_SIGNATURE);
+}
+
+#[test]
+fn v1_account_moves_to_falcon1024_in_one_transaction() {
+    let account = v1_account();
+    let calls = array![
+        upgrade_call(account),
+        set_pq_key_call(
+            account, falcon1024_pk(), falcon1024(), class(0), falcon1024_rotation_proof(),
+        ),
+    ];
+    signed(account, calls).unwrap_syscall();
+    assert_eq!(get_class_hash_at_syscall(account).unwrap_syscall(), v2());
+    assert_on_falcon1024(account);
+}
+
+#[test]
+fn falcon512_key_under_the_falcon1024_verifier_reverts() {
+    // A valid Falcon-512 key and proof: the 1024 verifier refuses the 29-felt key.
+    assert_set_pq_key_reverts(
+        falcon_pk_b(),
+        falcon1024(),
+        class(0),
+        falcon_rotation_proof(),
+        HybridMigratableAccountV2::INVALID_PROOF,
+    );
+}
+
+#[test]
+fn falcon1024_key_under_a_falcon512_verifier_reverts() {
+    assert_set_pq_key_reverts(
+        falcon1024_pk(),
+        shake(),
+        class(0),
+        falcon1024_rotation_proof(),
+        HybridMigratableAccountV2::INVALID_PROOF,
+    );
+}
+
+#[test]
+fn raw_verifier_switch_to_falcon1024_reverts() {
+    let account = v2_account();
+    let call = Call {
+        to: account,
+        selector: selector!("set_verifier_class_hash"),
+        calldata: array![falcon1024().into()].span(),
+    };
+    assert_reverts_with(
+        signed(account, array![call]), HybridMigratableAccountV2::INCOMPATIBLE_VERIFIER,
+    );
+    assert_unchanged(account);
+}
+
+#[test]
+fn migrates_straight_to_falcon1024() {
+    let account = deploy(ArgentLikeAccount::TEST_CLASS_HASH);
+    IArgentLikeDispatcher { contract_address: account }
+        .upgrade(
+            v2(),
+            migration_data(
+                falcon1024_pk(), falcon1024(), class(0), falcon1024_registration_proof(),
+            ),
+        );
+    assert!(IMigratableV2Dispatcher { contract_address: account }.is_falcon_registered());
+    assert_on_falcon1024(account);
 }
