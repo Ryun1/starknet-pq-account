@@ -160,7 +160,7 @@
   <div class="hero">
   <p class="eyebrow">Testnet demo</p>
   <h1>Add a <em>post-quantum key</em> to the Starknet account you already have</h1>
-  <p class="lead">One transaction upgrades an existing account in place. The address and the funds stay the same. From then on, every transaction needs an ECDSA signature and a Falcon-512 signature, or Falcon-1024 (NIST level 5) for the second demo account.</p>
+  <p class="lead">One transaction upgrades an existing account in place. The address and the funds stay the same. From then on, every transaction needs an ECDSA signature and a Falcon-512 signature.</p>
   <p class="lead">The account below started as a plain OpenZeppelin account on Sepolia. Keys are derived in this tab and never leave it.</p>
 
   <div class="stats">
@@ -173,8 +173,11 @@
   <p class="label">Try it on Sepolia</p>
   <section class="card">
     <div class="card-h"><span class="num">1</span><h2>Restore both keys from one mnemonic</h2></div>
-    <p class="desc">The demo accounts' 24 words are public on purpose, so anyone can try them. They are topped up with Sepolia STRK now and then. The same words hold a Falcon-512 account and, at the next index, a Falcon-1024 account.</p>
-    <div class="actions"><button id="demo">Use the Falcon-512 demo account</button><button id="demo1024" class="weak">Use the Falcon-1024 demo account</button></div>
+    <p class="desc">The demo account's 24 words are public on purpose, so anyone can try it. It is topped up with Sepolia STRK now and then. The same words also hold a Falcon-1024 account, NIST's level 5.</p>
+    <div class="actions">
+      <button id="demo">Use the public demo account</button>
+      <button id="demo1024" class="weak">Try Falcon-1024</button>
+    </div>
 
     <dl id="keys" class="keys" hidden>
       <div><dt>Account</dt><dd id="acct"></dd></div>
@@ -217,17 +220,17 @@
   <p class="label">How it works</p>
   <section class="more">
     <h3>What the account checks</h3>
-    <p class="point">Every transaction carries 62 felts with Falcon-512, 118 with Falcon-1024. Both halves are checked against the same transaction hash.</p>
+    <p class="point">Every transaction carries 62 felts (118 with Falcon-1024). Both halves are checked against the same transaction hash.</p>
     <div class="sig"><i class="e"></i><i class="f"></i><i class="s"></i><i class="h"></i></div>
     <div class="sig-legend">
       <span class="lg-e">ECDSA r, s (2)</span>
-      <span class="lg-f">Falcon s2 (29, or 57)</span>
+      <span class="lg-f">Falcon-512 s2 (29)</span>
       <span class="lg-s">Salt (2)</span>
-      <span class="lg-h">s2 × h hint (29, or 57)</span>
+      <span class="lg-h">s2 × h hint (29)</span>
     </div>
     <ul class="checks">
       <li><b>1</b><div>ECDSA over the transaction hash<br><span>against the account's stored STARK key</span></div></li>
-      <li><b>2</b><div>Falcon over the same hash<br><span>by library call to the account's verifier class: OpenZeppelin cairo-pq-verifiers or the Provably Fast small verifier for Falcon-512, the Provably Fast Falcon-1024 record for Falcon-1024</span></div></li>
+      <li><b>2</b><div>Falcon-512 over the same hash<br><span>by library call to the account's verifier class: OpenZeppelin cairo-pq-verifiers, or the Provably Fast small verifier</span></div></li>
       <li class="both"><b>3</b><div>Both have to pass<br><span>a valid ECDSA signature alone is rejected in __validate__</span></div></li>
     </ul>
   </section>
@@ -371,7 +374,7 @@ async function activate(newSeed, source, index = 0) {
   const onchain = await provider.callContract({ contractAddress: address, entrypoint: "get_falcon_public_key", calldata: [] }, "latest").catch(() => null);
   keys = { ...ecdsa, ...falconKeysFromSeed(seed, index, onchain && onchain.length === 58 ? 1024 : 512) };
   const mine = pack(ntt(decodePublicKey(keys.falconPublicKey))).map((x) => num.toHex(x));
-  $("scheme").textContent = keys.n === 1024 ? "Falcon-1024, NIST level 5 (backup profile v0.2)" : "Falcon-512 (backup profile v0.1)";
+  $("scheme").textContent = keys.n === 1024 ? "Falcon-1024 (NIST level 5)" : "Falcon-512";
   $("ecpk").textContent = keys.ecdsaPublicKey; $("fpk").textContent = mine[0]; $("keys").hidden = false;
   $("verifier").textContent = "checking...";
   // Signing is the same for every SHAKE-256 verifier; this only shows which one the account uses.
