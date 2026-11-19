@@ -52,6 +52,16 @@ jobs:
       - name: Falcon-1024 baseline and pinned record agree with the reference on every vector
         run: bench/pf14/run.sh
 
+  mldsa44-differential:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.18.0"
+      - name: ML-DSA-44 baseline, pinned record and cached check agree with the reference on every vector
+        run: bench/pf13/correctness/run.sh
+
   pf14-budgets:
     runs-on: ubuntu-24.04
     steps:

@@ -53,7 +53,7 @@ board's, on the record's `sa0::Za` (the same `BoundedInt<0, 0xffffff>` as the bo
 Checked 2026-11-19 in a scratch build of the baseline + patch + cache: the crate's 70 felt tests
 (`tests/felts.cairo`, each asserting the reference's verdict) pass through `precompute` +
 `verify_cached` as they do through `MlDsa44Verifier::verify` (191 tests passed in all, the crate's
-own included). Not yet in CI (PF-13 step 7).
+own included). In CI since PF-13 step 7: `bench/pf13/correctness`.
 
 ## Board state at download
 
