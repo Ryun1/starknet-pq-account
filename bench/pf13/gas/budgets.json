@@ -1,0 +1,29 @@
+{
+  "description": "Regression budgets for bench/pf13/gas (measured + 1%, capped at the network limit), same rule as bench/pf04/budgets.json. Change only with the reason in the commit.",
+  "max": {
+    "declare.worst": 41037357,
+    "is_valid.worst": 41301714,
+    "migrate": 424555885,
+    "reject.worst": 41301230,
+    "set_pq_key": 418280680,
+    "size.HybridMigratableAccountV2.casm_bytecode_felts": 9846,
+    "size.HybridMigratableAccountV2.compiled_class_object_bytes": 226745,
+    "size.HybridMigratableAccountV2.contract_class_object_bytes": 240507,
+    "size.HybridMigratableAccountV2.declare_code_l2_gas": 599713114,
+    "size.HybridMigratableAccountV2.sierra_program_felts": 4610,
+    "size.HybridMlDsa44Verifier.casm_bytecode_felts": 50660,
+    "size.HybridMlDsa44Verifier.compiled_class_object_bytes": 1306381,
+    "size.HybridMlDsa44Verifier.contract_class_object_bytes": 2244035,
+    "size.HybridMlDsa44Verifier.declare_code_l2_gas": 3822026164,
+    "size.HybridMlDsa44Verifier.sierra_program_felts": 42630,
+    "size.MlDsa44KeySetup.casm_bytecode_felts": 28843,
+    "size.MlDsa44KeySetup.compiled_class_object_bytes": 765675,
+    "size.MlDsa44KeySetup.contract_class_object_bytes": 1022373,
+    "size.MlDsa44KeySetup.declare_code_l2_gas": 2033490368,
+    "size.MlDsa44KeySetup.sierra_program_felts": 20791,
+    "steps.set_pq_key": 1476155,
+    "steps.worst_vector": 340878,
+    "validate.mean": 40871240,
+    "validate.worst": 41042912
+  }
+}

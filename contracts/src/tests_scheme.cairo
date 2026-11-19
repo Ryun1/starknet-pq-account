@@ -25,7 +25,12 @@ use crate::tests_falcon1024_fixture::{
     F1024_ROTATION_HASH, falcon1024_pk, falcon1024_registration_proof, falcon1024_rotation_proof,
     falcon1024_sig,
 };
+use crate::mldsa::{HybridMlDsa44Verifier, MALFORMED_KEY, MlDsa44KeySetup};
 use crate::tests_migration::{deploy_legacy, hybrid_sig, migrate};
+use crate::tests_mldsa_fixture::{
+    MLDSA_ROTATION_HASH, mldsa_pk, mldsa_pk_b, mldsa_registration_proof, mldsa_rotation_proof,
+    mldsa_rotation_proof_b, mldsa_sig, mldsa_sig_b,
+};
 use crate::tests_rotation_fixture::{
     ECDSA_ROTATION_HASH, FALCON_ROTATION_HASH, ecdsa_rotation_proof, falcon_pk_b,
     falcon_rotation_proof,
@@ -649,4 +654,127 @@ fn migrates_straight_to_falcon1024() {
         );
     assert!(IMigratableV2Dispatcher { contract_address: account }.is_falcon_registered());
     assert_on_falcon1024(account);
+}
+
+// ---------------------------------------------------------------- ML-DSA-44 (PF-13)
+
+fn mldsa() -> ClassHash {
+    HybridMlDsa44Verifier::TEST_CLASS_HASH
+}
+
+fn mldsa_setup() -> ClassHash {
+    MlDsa44KeySetup::TEST_CLASS_HASH
+}
+
+/// The account holds the ML-DSA-44 key and verifier, accepts its signatures and refuses
+/// Falcon-512 ones.
+fn assert_on_mldsa(account: ContractAddress) {
+    let m = IMigratableV2Dispatcher { contract_address: account };
+    assert_eq!(m.get_falcon_public_key(), mldsa_pk());
+    assert_eq!(m.get_verifier_class_hash(), mldsa());
+    assert_eq!(m.get_ecdsa_public_key(), ECDSA_PK);
+    let a = IHybridAccountDispatcher { contract_address: account };
+    assert_eq!(a.is_valid_signature(MSG, mldsa_sig()), starknet::VALIDATED);
+    assert_eq!(a.is_valid_signature(MSG, mldsa_sig_b()), 0);
+    assert_eq!(a.is_valid_signature(MSG, hybrid_sig()), 0);
+    assert_reverts_with(signed(account, array![]), INVALID_SIGNATURE);
+    transact(account, array![], mldsa_sig()).unwrap_syscall();
+}
+
+fn to_mldsa(account: ContractAddress) -> Call {
+    set_pq_key_call(account, mldsa_pk(), mldsa(), mldsa_setup(), mldsa_rotation_proof())
+}
+
+#[test]
+fn falcon512_to_mldsa_and_back() {
+    let account = v2_account();
+    signed(account, array![to_mldsa(account)]).unwrap_syscall();
+    assert_on_mldsa(account);
+    assert_eq!(
+        IHybridAccountDispatcher { contract_address: account }
+            .is_valid_signature(MLDSA_ROTATION_HASH, mldsa_rotation_proof()),
+        starknet::VALIDATED,
+    );
+
+    // Back to Falcon-512 key B, signed with ML-DSA: 43 felts to 29, no setup.
+    let down = set_pq_key_call(account, falcon_pk_b(), shake(), class(0), falcon_rotation_proof());
+    transact(account, array![down], mldsa_sig()).unwrap_syscall();
+    let m = IMigratableV2Dispatcher { contract_address: account };
+    assert_eq!(m.get_falcon_public_key(), falcon_pk_b());
+    assert_eq!(m.get_verifier_class_hash(), shake());
+    assert_reverts_with(transact(account, array![], mldsa_sig()), INVALID_SIGNATURE);
+}
+
+#[test]
+fn v1_account_moves_to_mldsa_in_one_transaction() {
+    let account = v1_account();
+    signed(account, array![upgrade_call(account), to_mldsa(account)]).unwrap_syscall();
+    assert_eq!(get_class_hash_at_syscall(account).unwrap_syscall(), v2());
+    assert_on_mldsa(account);
+}
+
+#[test]
+fn migrates_straight_to_mldsa() {
+    let account = deploy(ArgentLikeAccount::TEST_CLASS_HASH);
+    IArgentLikeDispatcher { contract_address: account }
+        .upgrade(v2(), migration_data(mldsa_pk(), mldsa(), mldsa_setup(), mldsa_registration_proof()));
+    assert!(IMigratableV2Dispatcher { contract_address: account }.is_falcon_registered());
+    assert_on_mldsa(account);
+}
+
+#[test]
+fn mldsa_without_its_setup_reverts() {
+    assert_set_pq_key_reverts(
+        mldsa_pk(), mldsa(), class(0), mldsa_rotation_proof(), HybridMigratableAccountV2::INVALID_PROOF,
+    );
+}
+
+#[test]
+fn mldsa_setup_on_a_falcon_key_reverts() {
+    assert_set_pq_key_reverts(
+        falcon_pk_b(), mldsa(), mldsa_setup(), falcon_rotation_proof(), MALFORMED_KEY,
+    );
+}
+
+#[test]
+fn mldsa_key_under_a_falcon512_verifier_reverts() {
+    assert_set_pq_key_reverts(
+        mldsa_pk(), shake(), mldsa_setup(), mldsa_rotation_proof(), HybridMigratableAccountV2::INVALID_PROOF,
+    );
+}
+
+#[test]
+fn raw_verifier_switch_to_mldsa_reverts() {
+    let account = v2_account();
+    let call = Call {
+        to: account,
+        selector: selector!("set_verifier_class_hash"),
+        calldata: array![mldsa().into()].span(),
+    };
+    assert_reverts_with(
+        signed(account, array![call]), HybridMigratableAccountV2::INCOMPATIBLE_VERIFIER,
+    );
+    assert_unchanged(account);
+}
+
+#[test]
+fn mldsa_rotation_needs_the_setup_again() {
+    // The cache is for key A: key B without the setup is refused (its digest does not match), key
+    // B with the setup is accepted, and key A's signatures are then refused.
+    let account = v2_account();
+    signed(account, array![to_mldsa(account)]).unwrap_syscall();
+    let stale = set_pq_key_call(account, mldsa_pk_b(), mldsa(), class(0), mldsa_rotation_proof_b());
+    assert_reverts_with(
+        transact(account, array![stale], mldsa_sig()), HybridMigratableAccountV2::INVALID_PROOF,
+    );
+    assert_on_mldsa(account);
+
+    let rotate = set_pq_key_call(
+        account, mldsa_pk_b(), mldsa(), mldsa_setup(), mldsa_rotation_proof_b(),
+    );
+    transact(account, array![rotate], mldsa_sig()).unwrap_syscall();
+    let a = IHybridAccountDispatcher { contract_address: account };
+    assert_eq!(a.is_valid_signature(MSG, mldsa_sig_b()), starknet::VALIDATED);
+    assert_eq!(a.is_valid_signature(MSG, mldsa_sig()), 0);
+    transact(account, array![], mldsa_sig_b()).unwrap_syscall();
 }

@@ -9,6 +9,7 @@ pub mod guard;
 pub mod hybrid;
 pub mod migratable;
 pub mod migratable_v2;
+pub mod mldsa;
 pub mod utils;
 
 #[cfg(test)]
@@ -27,6 +28,8 @@ mod tests_guard;
 mod tests_pf;
 #[cfg(test)]
 mod tests_migration;
+#[cfg(test)]
+mod tests_mldsa_fixture;
 #[cfg(test)]
 mod tests_rotation_fixture;
 #[cfg(test)]
