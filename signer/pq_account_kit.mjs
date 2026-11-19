@@ -10,6 +10,8 @@
 //   // from now on: new Account({ provider, address, signer: new HybridSigner(keys) })
 //   // later, to change verifier (same scheme only):
 //   await switchVerifier(hybridAccount, newVerifier, { guard, allowed });   // simulates, then sends
+//   // on HybridMigratableAccountV2, to change the PQ key or its scheme:
+//   await sendSimulated(hybridAccount, setPqKeyCalls(address, keys, newKeys, { verifierClass }));
 import { Signer, ec, hash, num, shortString } from "starknet";
 import { deriveAccountKeys } from "./pq_keys.mjs";
 import { makeNtt, publicKeyFelts, signatureFelts, signTxHash } from "./falcon_adapter.mjs";
@@ -32,10 +34,10 @@ export const KNOWN_VERIFIERS = {
   "0x333aa6a603a1edcf37867d774d65220528e684ed496f5d8a73ce24fcafb0fb1": "HybridShakeVerifierPfSmall (SHAKE-256, Provably Fast small patch; shake-pf-small-v1)",
 };
 
-function assertAllowedVerifier(verifierClass, allowedVerifiers) {
+function assertAllowedVerifier(verifierClass, allowedVerifiers, what = "verifier") {
   const allowed = Object.keys(allowedVerifiers).map((h) => BigInt(h));
   if (!allowed.includes(BigInt(verifierClass))) {
-    throw new Error(`verifier class ${num.toHex(verifierClass)} is not in allowedVerifiers`);
+    throw new Error(`${what} class ${num.toHex(verifierClass)} is not in allowedVerifiers`);
   }
 }
 
@@ -66,10 +68,14 @@ export class HybridSigner extends Signer {
   async signRaw(msgHash) { return hybridSignature(msgHash, this.keys); }
 }
 
-/** Serialized MigrationData / migrate() arguments, with the proof. */
-export function migrationArgs(keys, verifierClass) {
+/**
+ * Serialized MigrationData / migrate() arguments, with the proof. With `setupClass` the layout is
+ * HybridMigratableAccountV2's, which takes one ("0x0" for a scheme without setup).
+ */
+export function migrationArgs(keys, verifierClass, setupClass) {
   const proof = hybridSignature(registrationHash(keys.ecdsaPublicKey, keys.falconFelts), keys);
-  return [keys.ecdsaPublicKey, num.toHex(keys.falconFelts.length), ...keys.falconFelts, verifierClass, num.toHex(proof.length), ...proof];
+  const setup = setupClass === undefined ? [] : [num.toHex(setupClass)];
+  return [keys.ecdsaPublicKey, num.toHex(keys.falconFelts.length), ...keys.falconFelts, verifierClass, ...setup, num.toHex(proof.length), ...proof];
 }
 
 /**
@@ -77,14 +83,16 @@ export function migrationArgs(keys, verifierClass) {
  * migration would remove protections the user set up (info.drops) and the caller has not passed
  * acceptDroppedProtections: true after showing them to the user.
  */
-export function migrationCalls(info, keys, { migratableClass, verifierClass, acceptDroppedProtections = false, allowedVerifiers = KNOWN_VERIFIERS }) {
+export function migrationCalls(info, keys, { migratableClass, verifierClass, setupClass, acceptDroppedProtections = false, allowedVerifiers = KNOWN_VERIFIERS }) {
   if (!info.migratable) throw new Error(`not migratable: ${info.reason}`);
   if (info.drops?.length && !acceptDroppedProtections) {
     throw new Error(`migration removes: ${info.drops.join("; ")}. Show this to the user and pass acceptDroppedProtections: true to continue.`);
   }
   // The key-possession proof is checked by this same class, so it means nothing if the class is not trusted.
   assertAllowedVerifier(verifierClass, allowedVerifiers);
-  const args = migrationArgs(keys, verifierClass);
+  // Only when migrating to HybridMigratableAccountV2. The setup class runs in the account's storage too.
+  if (setupClass !== undefined && BigInt(setupClass) !== 0n) assertAllowedVerifier(setupClass, allowedVerifiers, "setup");
+  const args = migrationArgs(keys, verifierClass, setupClass);
   if (info.kind === "argent") {
     // Argent's upgrade(class, data) checks SRC6 and library-calls perform_upgrade (0.4+) or,
     // after replacing the class, execute_after_upgrade (0.3.x) with the same data.
@@ -118,6 +126,29 @@ export function rotationCalls(address, current, next) {
       calldata: [next.ecdsaPublicKey, num.toHex(proof.length), ...proof] });
   }
   return calls;
+}
+
+/**
+ * HybridMigratableAccountV2: the calls that replace the PQ key and its verifier, for a key
+ * rotation (same verifier) or a change of scheme. `current` and `next` are prepareKeys output;
+ * `next.falconFelts` is the new PQ key's felts whatever the scheme. Sign the transaction with the
+ * CURRENT keys and send it with sendSimulated. The proof is signed by the current ECDSA key and
+ * the NEW PQ key and checked on chain by the NEW verifier, so a key, verifier or setup that does
+ * not work reverts instead of locking the account.
+ *
+ * `setupClass`: for schemes that store work derived from the key; it and the verifier run in the
+ * account's storage, so both must be in `allowedVerifiers`. `upgradeTo`: the V2 class hash, for
+ * an account still on an earlier migratable class; the upgrade goes first in the same transaction.
+ * (V2 has no rotate_falcon_public_key: this replaces the Falcon half of rotationCalls.)
+ */
+export function setPqKeyCalls(address, current, next, { verifierClass, setupClass = "0x0", upgradeTo, allowedVerifiers = KNOWN_VERIFIERS }) {
+  assertAllowedVerifier(verifierClass, allowedVerifiers);
+  if (BigInt(setupClass) !== 0n) assertAllowedVerifier(setupClass, allowedVerifiers, "setup");
+  const pair = { ...next, ecdsaPrivateKey: current.ecdsaPrivateKey };
+  const proof = hybridSignature(rotationHash(current.ecdsaPublicKey, next.falconFelts), pair);
+  const call = { contractAddress: address, entrypoint: "set_pq_key",
+    calldata: [num.toHex(next.falconFelts.length), ...next.falconFelts, num.toHex(verifierClass), num.toHex(setupClass), num.toHex(proof.length), ...proof] };
+  return upgradeTo ? [{ contractAddress: address, entrypoint: "upgrade", calldata: [num.toHex(upgradeTo)] }, call] : [call];
 }
 
 /**
@@ -307,29 +338,34 @@ export async function verifierSwitchCalls(provider, address, verifierClass, { gu
 }
 
 /**
- * Builds the guarded switch (verifierSwitchCalls), simulates it from `account` (an Account whose
- * signer is a HybridSigner) and, unless `dryRun`, sends it with the simulated resource bounds.
- * Throws if the simulation reverts, before anything is sent.
+ * Simulates `calls` from `account` (an Account whose signer is a HybridSigner) and, unless
+ * `dryRun`, sends them with the simulated resource bounds. Throws if the simulation reverts,
+ * before anything is sent.
  *
  * The simulation must run with validation and a real signature. starknet.js simulates and
- * estimates with `skipValidate: true` by default, which signs nothing, so the guard sees an
- * empty signature and rejects even a compatible verifier; `account.execute(calls)` without
- * resource bounds fails in fee estimation for the same reason.
+ * estimates with `skipValidate: true` by default, which signs nothing: bounds built that way
+ * leave no gas for the hybrid validation, and a call that checks the transaction's own signature
+ * (the guard, set_verifier_class_hash) sees an empty one and reverts.
  *
  * `tip` (fri per L2 gas), if given, is used for both the simulation and the send. Without it,
  * starknet.js estimates the recommended tip for each call; never pass 0n on Sepolia, which evicts
  * zero-tip transactions.
  */
-export async function switchVerifier(account, verifierClass, { guard, allowed, dryRun = false, tip }) {
+export async function sendSimulated(account, calls, { dryRun = false, tip, what = "transaction" } = {}) {
   const withTip = tip === undefined ? {} : { tip };
-  const calls = await verifierSwitchCalls(account.provider, account.address, verifierClass, { guard, allowed });
   const { simulated_transactions: [sim] } = await account.simulateTransaction(
     [{ type: "INVOKE", payload: calls }], { skipValidate: false, ...withTip })
-    .catch((e) => { throw new Error(`guarded verifier switch would fail: ${e.message}`); });
+    .catch((e) => { throw new Error(`${what} would fail: ${e.message}`); });
   const trace = sim.transaction_trace;
   const reason = trace.execute_invocation?.revert_reason ?? trace.validate_invocation?.revert_reason;
-  if (reason) throw new Error(`guarded verifier switch would revert: ${reason}`);
+  if (reason) throw new Error(`${what} would revert: ${reason}`);
   if (dryRun) return { calls, simulation: sim };
   const { transaction_hash } = await account.execute(calls, { resourceBounds: sim.resourceBounds, ...withTip });
   return { calls, simulation: sim, transaction_hash };
+}
+
+/** Builds the guarded switch (verifierSwitchCalls) and sends it with sendSimulated. */
+export async function switchVerifier(account, verifierClass, { guard, allowed, dryRun = false, tip }) {
+  const calls = await verifierSwitchCalls(account.provider, account.address, verifierClass, { guard, allowed });
+  return sendSimulated(account, calls, { dryRun, tip, what: "guarded verifier switch" });
 }

@@ -48,7 +48,9 @@ the old verifier in place.
 - **Same scheme only.** The old verifier checks the signature in `__validate__` and the candidate
   checks the same signature in the guard. That works between two SHAKE-256 verifiers (for example
   `HybridShakeAccount` and `HybridShakeVerifierPfCompact`), not between Poseidon and SHAKE-256,
-  which need a signature of the candidate's scheme in the calldata. That case isn't supported.
+  which need a signature of the candidate's scheme in the calldata. That case needs
+  `HybridMigratableAccountV2` and its `set_pq_key`, which takes one as a proof
+  ([scheme-switch.md](scheme-switch.md); built and tested, not declared on Sepolia).
 - **One signature.** The check catches gross incompatibility: the wrong hash-to-point, storage,
   ABI or return value. It doesn't catch a verifier that only rejects rare inputs. That's what the
   differential suite (PF-03, `bench/pf03`) is for.
