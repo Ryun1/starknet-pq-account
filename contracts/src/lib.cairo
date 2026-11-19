@@ -7,6 +7,7 @@ pub mod consumer;
 pub mod guard;
 pub mod hybrid;
 pub mod migratable;
+pub mod migratable_v2;
 pub mod utils;
 
 #[cfg(test)]
@@ -23,6 +24,8 @@ mod tests_pf;
 mod tests_migration;
 #[cfg(test)]
 mod tests_rotation_fixture;
+#[cfg(test)]
+mod tests_scheme;
 #[cfg(test)]
 mod tests_wallets;
 #[cfg(test)]
