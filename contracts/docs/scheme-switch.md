@@ -2,8 +2,9 @@
 
 Status: experimental, unaudited, testnet only. The class is built and tested locally
 (`contracts/src/migratable_v2.cairo`, `tests_scheme.cairo`). It is not declared on Sepolia and is
-not in `release/testnet-v1.json`. The only real scheme it has been tested with is SHAKE-256
-Falcon-512; the second scheme in the tests is a mock (see [Tests](#tests)).
+not in `release/testnet-v1.json`. It has been tested with SHAKE-256 Falcon-512, Falcon-1024
+(`HybridShakeVerifierFalcon1024`, PF-14, [`bench/pf14`](../../bench/pf14/README.md)) and a mock
+scheme with a setup class (see [Tests](#tests)).
 
 ## Why a new account class
 
@@ -107,13 +108,19 @@ pointer and signature checks are as before.
 | raw `set_verifier_class_hash` to another scheme | reverts: `Migratable: verifier rejects` |
 | OpenZeppelin, Argent 0.4+ and Argent 0.3.x migration straight to V2; to the mock scheme with setup | migrated |
 | bootstrap; migrate twice; fresh deployment; `rotate_ecdsa_public_key` | as on the earlier class |
+| Falcon-512 → Falcon-1024 → Falcon-512 with `set_pq_key` (57 felts, then 29); a v1 account moved to Falcon-1024 by `[upgrade, set_pq_key]`; an Argent account migrated straight to Falcon-1024 | switched; each scheme's signatures pass only while it is installed |
+| a 29-felt key under the Falcon-1024 verifier; a Falcon-1024 key under a Falcon-512 verifier | reverts: `Migratable: invalid key proof` |
+| raw `set_verifier_class_hash` to the Falcon-1024 verifier | reverts: `Migratable: verifier rejects` |
 
 Removing the proof check from `set_pq_key` fails six of these, removing its state check fails the
 key-rewriting case, and not clearing the old key before writing the new one fails three.
 
 The mock scheme has no cryptography: its signature is `[hash + key[0]]`. It tests the account (a
 key of another length, a setup class, a proof checked by the new verifier), not a verifier.
-Falcon-1024 and ML-DSA-44 verifier classes are separate work (issues #22, #21).
+Falcon-1024 (issue #22) is the first real second scheme; its fixture is
+`tests_falcon1024_fixture.cairo` (`signer/falcon1024_fixture.mjs`). ML-DSA-44 is separate work (#21).
+`set_pq_key` from Falcon-512 to Falcon-1024 costs 78.8M L2 gas in `__execute__`, and a migration
+straight to Falcon-1024 84.3M ([`bench/pf14`](../../bench/pf14/README.md)).
 
 `signer/scheme_switch_check.mjs` checks offline that the kit's `set_pq_key` and V2 `migrate`
 calldata match the compiled ABI, and that the proof signs the hash the Cairo test verifies.

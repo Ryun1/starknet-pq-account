@@ -1,0 +1,19 @@
+[package]
+name = "pqbench_falcon_1024_pf_record"
+version.workspace = true
+edition.workspace = true
+cairo-version.workspace = true
+scarb-version.workspace = true
+authors.workspace = true
+
+[dependencies]
+starknet.workspace = true
+pqbench_interface.workspace = true
+pqbench_ntt_f1024_pf_record = { path = "../ntt_f1024_pf_record" }
+
+[dev-dependencies]
+snforge_std.workspace = true
+assert_macros.workspace = true
+
+[tool]
+scarb.workspace = true
