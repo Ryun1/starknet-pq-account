@@ -115,7 +115,7 @@ fn v2() -> ClassHash {
     HybridMigratableAccountV2::TEST_CLASS_HASH
 }
 
-fn shake() -> ClassHash {
+pub fn shake() -> ClassHash {
     HybridShakeAccount::TEST_CLASS_HASH
 }
 
@@ -144,24 +144,24 @@ fn mock_proof() -> Array<felt252> {
 }
 
 /// A migrated account on the earlier class: SHAKE verifier, Falcon key A.
-fn v1_account() -> ContractAddress {
+pub fn v1_account() -> ContractAddress {
     let account = deploy_legacy();
     migrate(account);
     account
 }
 
 /// The same account after `upgrade` to V2 alone.
-fn v2_account() -> ContractAddress {
+pub fn v2_account() -> ContractAddress {
     let account = v1_account();
     IMigratableDispatcher { contract_address: account }.upgrade(v2());
     account
 }
 
-fn upgrade_call(account: ContractAddress) -> Call {
+pub fn upgrade_call(account: ContractAddress) -> Call {
     Call { to: account, selector: selector!("upgrade"), calldata: array![v2().into()].span() }
 }
 
-fn set_pq_key_call(
+pub fn set_pq_key_call(
     account: ContractAddress, key: Array<felt252>, verifier: ClassHash, setup: ClassHash,
     proof: Array<felt252>,
 ) -> Call {
@@ -206,7 +206,7 @@ pub fn assert_reverts_with(result: SyscallResult<Span<felt252>>, reason: felt252
 }
 
 /// Still the starting keys and verifier, and still accepting their signature.
-fn assert_unchanged(account: ContractAddress) {
+pub fn assert_unchanged(account: ContractAddress) {
     let m = IMigratableV2Dispatcher { contract_address: account };
     assert_eq!(m.get_verifier_class_hash(), shake());
     assert_eq!(m.get_ecdsa_public_key(), ECDSA_PK);
