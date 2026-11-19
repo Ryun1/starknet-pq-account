@@ -224,8 +224,10 @@ criterion 1 either way. If no-go, stop here; the remaining steps are not built.
 
 ### 5. Signer
 
-Status 2026-11-19: `signer/mldsa_adapter.mjs` and `signer/mldsa_fixture.mjs` in; the vector test of
-the byte order is implicit (Cairo accepts the noble signatures). Kit dispatch on the scheme not done.
+Status 2026-11-19: done. `signer/mldsa_adapter.mjs` and `signer/mldsa_fixture.mjs`; the kit's
+`prepareKeys` / `hybridSignature` treat a 1,312-byte key as ML-DSA-44, and `scheme_switch_check.mjs`
+checks the kit's key felts, `set_pq_key` proof and transaction signature equal the Cairo fixture's.
+The manifest's `scheme` field waits for step 9's manifest.
 
 `signer/mldsa_adapter.mjs`, about 20 lines: bytes to felts of 31 little-endian bytes (last felt
 holds the rest), `publicKeyFelts` (1,312 B → 43), `signatureFelts` (2,420 B → 79), and
@@ -234,6 +236,10 @@ holds the rest), `publicKeyFelts` (1,312 B → 43), `signatureFelts` (2,420 B �
 test.) `@noble/post-quantum` 0.6.1 already exports `ml_dsa44`. No new dependency.
 
 ### 6. Key backup profile v0.2
+
+Status 2026-11-19: done. `deriveAccountKeys(..., "ml-dsa-44")`; noble checked against the 25
+ML-DSA-44 cases of NIST's ACVP keyGen vectors (`bench/pf13/acvp_keygen.json`) rather than
+`mldsa44.py`; vector in `contracts/docs/key-backup-v0.2.md`.
 
 New HKDF salt `starknet-pq-backup-v0.2`, used only for new schemes; v0 and v0.1 code and vectors
 are untouched and `backup_fixtures_check.mjs` keeps pinning them.

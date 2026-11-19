@@ -1,0 +1,157 @@
+{
+ "description": "NIST ACVP ML-DSA-44 keyGen (FIPS 204 KeyGen_internal) cases: seed and SHA-256 of the expected pk and sk.",
+ "source": "https://raw.githubusercontent.com/usnistgov/ACVP-Server/master/gen-val/json-files/ML-DSA-keyGen-FIPS204/internalProjection.json",
+ "source_sha256": "e67ee6540d40e11506c3c4e3b1f79fc1cefcd49820db99fc61f87cc8ba463baf",
+ "tests": [
+  {
+   "tcId": 1,
+   "seed": "7194b13c95231010afd2c909992bd2003ba6f437c3886bdbe3f6b867a14ba161",
+   "pk_sha256": "838b88b6ac41e2c60698173e08ca173d0b0d2839205806e56a8a3d53195f3a03",
+   "sk_sha256": "1c911d163cd0a5563e06f22403f7e16334fee17c2abb66f11ddf39ca6307ec58"
+  },
+  {
+   "tcId": 2,
+   "seed": "2ebe5a4123398dfbcd5bdf0a42ebdd03112be3bc88a6e9b78d93120ab8d0120e",
+   "pk_sha256": "366cdfa62052438e03a4bb70e8aaa2c31c535584ef83a926b4efa1796605dacb",
+   "sk_sha256": "67c5410e10424bdb0a7a17755b9a08f86f52b3ebe372bb03caefd6bbfefd28a5"
+  },
+  {
+   "tcId": 3,
+   "seed": "2aa7609556919cce9893561bb4120cdd9cff12734267a8ccb4b2d2ca93066e1e",
+   "pk_sha256": "075ff22d7358e8548b4c2b59681b86e790f1ef2ef4a651d977d91264b06cfcc3",
+   "sk_sha256": "99fc3c56f5d64075d1e0d3fc71a7c1a7f29ce42e3b16ff93421ebfd1c71d9e57"
+  },
+  {
+   "tcId": 4,
+   "seed": "5506d95c5c36ba3b22f1b237d8b8edebe81554745188e7e0a4ad671798820482",
+   "pk_sha256": "8b970b81cd792a8529d7b9829d4b324932bb78e882f2d48442a22529a52fd17a",
+   "sk_sha256": "68b842320896bc8f66fb83efc1f96911f8a9eeff6a67b97b50f91e6b85dfaa3a"
+  },
+  {
+   "tcId": 5,
+   "seed": "ac83349c89e58131fd8d2dfc933b966c71f20614a220ecb99c7203710b9efb26",
+   "pk_sha256": "7373403b6cd552d30a4e1023f7c265975104116bf7c7b710f504b8b61887227d",
+   "sk_sha256": "cc1dd0bf971753e7db824edf941a6efbd6ceef0f6b711b7625b7fd769227558c"
+  },
+  {
+   "tcId": 6,
+   "seed": "e0c3af912d78950dc960d7474dc7b930d76e620d51e41cf9e15726b2a1751391",
+   "pk_sha256": "17cf05824e67214d6c692b3e0035de53fc63ef40f5279c373809e3a0c43fbc30",
+   "sk_sha256": "f5ea3af90046d05b3cde0431b9e51f43c6fdccb35bf41057fb2f5c933dafdc44"
+  },
+  {
+   "tcId": 7,
+   "seed": "465d3ccd2a180714b05de7192cfd27c47ab53d37c8c3c728a1c11317b0ce895d",
+   "pk_sha256": "c319e8682ece59ffebed2e84c56fa19b7e573073bdf3c7ecdc79c50ba8b75ab1",
+   "sk_sha256": "1ad82ddd510808be13c10ffd5244e3f8560b0a4a2a48ef0f4b5fb3d4f116e4aa"
+  },
+  {
+   "tcId": 8,
+   "seed": "eace11dce6d25d4e8b35ac58e8e2b68d3a65ec6e88411bdaf353227e602bd839",
+   "pk_sha256": "59608e7237b46642732441412c13426e5edd0dbeadfdc2e230d992cbbb376b74",
+   "sk_sha256": "525b44694b7debc302532efdaa9277969a2a3dfd9cc0c36a1ca66be57f622f77"
+  },
+  {
+   "tcId": 9,
+   "seed": "5c4c6fd87dbc03b72ef802f76e31087ee4625ad9f7196501e4cb48b1c3ceffa7",
+   "pk_sha256": "23b165be4af4a96669b0468db7755f3db72e89480dfc6e952e71646740b6f460",
+   "sk_sha256": "71cd748c84d519f0c53b8e132572647ff51a590365219a2924265dcd2629749f"
+  },
+  {
+   "tcId": 10,
+   "seed": "0e422ce433ee6e9b9c640c2c3b9cfea51cd2baaaf5538e3fc7e1cb4456052165",
+   "pk_sha256": "f53759c9148796c8d574c4a07b545333ac10fd5d19ab8c1b6e2faa2888bb3257",
+   "sk_sha256": "fa964f0e8fcd5c5ca429b7eb52bd0167dbb2fcd8db134d870893405c5c937cce"
+  },
+  {
+   "tcId": 11,
+   "seed": "439dd31206c9022bab92924fbd63bcd2475b6c407cb207748261d1999beabfad",
+   "pk_sha256": "0d08cdd968fc416c54402d86074aa83eb00e08eb2a26be9a862500cb7ecd248f",
+   "sk_sha256": "47c5078d47fc2df36cf5b8b4223f20c9a2079e919366f57dbd770b1a10a5c47f"
+  },
+  {
+   "tcId": 12,
+   "seed": "c9ad6f9fc1c9b02f294dff7bd3eaa72a59b9092418ba2b1e62785cc07d999d53",
+   "pk_sha256": "1812edc792ecbf47e75df8c08c533a1dcc58702b409d8f6bfc466a29017db509",
+   "sk_sha256": "25db247bc988ca39ee45f37ccfde1f9e050d04a4a994721cbeeac2c2cb1523c4"
+  },
+  {
+   "tcId": 13,
+   "seed": "7a25f0f2317e1f6c8af549393efa2033008dba451330f9b5a09e07eed0957369",
+   "pk_sha256": "8d3a7b7ba0e463b86b8d9058236e28d64bca1e4298e7c47eac4396ac95e9fafd",
+   "sk_sha256": "3c8952e734a10d0fd64af964d65608a00bfab71d2d47ca19dac945cc792d40cb"
+  },
+  {
+   "tcId": 14,
+   "seed": "16a8b3221ccad750d88c8e99592d77adefb1bc062ed186248aeae09dfb6f4f8d",
+   "pk_sha256": "320e92ad8cf63914926a0fc693fc83fb06c8666f00e33b1bbb26a860347518e8",
+   "sk_sha256": "c1d537966289d89d58ae69c07ee8b372859a2e77d072b33d2a05295748f9c9a9"
+  },
+  {
+   "tcId": 15,
+   "seed": "aec3b6920f4e6f4f54bc1897c6faecbfddba3fafa7e259297d69510c13f00616",
+   "pk_sha256": "1e4da58b9923afdbd5b99835bf4413b4e7c24bd9e1cafd01e40c20dff427f57a",
+   "sk_sha256": "5a5c4e74520eb5453a18929403728b94dbf7a4658fc9d06f54f9366909c4cecd"
+  },
+  {
+   "tcId": 16,
+   "seed": "c9766d2443be6c0263aadb0666c410aaad8a66e5d574fc59a03dd2e21ecd3fa0",
+   "pk_sha256": "410639635fc2c365558d9483c193ed33b3fe4cc8dbb4a7f53da32545823bca2c",
+   "sk_sha256": "4bc64b7624cee60d7a63a6cf4b42dc9c70c927e4d4cbde39110c6b900080af8f"
+  },
+  {
+   "tcId": 17,
+   "seed": "84ffe91df0d9a06df8d882b739fb5d8fc54d3170d3e7e86342e0ccd2eb17440c",
+   "pk_sha256": "792a98d1f0ff91cff8464ac452413412efc922d77ceabd39cb89cf69853708f6",
+   "sk_sha256": "e3fe57c1fd348bca13c7227d0299d7b4ab283dec1f363f5af0307a815a8164fc"
+  },
+  {
+   "tcId": 18,
+   "seed": "f6cc76a94da8f7937a5c9b71d36217f4ba26d7b544ea204abe35b4cff16ee952",
+   "pk_sha256": "70cf6a6395cbb49295e2362e3b955c106ac3e5ff72e1c6a785b94df4e4af3919",
+   "sk_sha256": "a07d361aa42c6bc5a538deb2878b04c1f521c05da13d48d1fc81bf0f5b93444d"
+  },
+  {
+   "tcId": 19,
+   "seed": "e5107d979e6571cff1200032f607ab2af28aec18ba1952f008b7197424d89bd4",
+   "pk_sha256": "917233c15acd740f23e3e90e8fd62bbfb85f2b425140513c7be8d48720f54928",
+   "sk_sha256": "298e4353368a37a823b89ef3bf85bbe3597b34a0470b6065f7fccc82c611d8b2"
+  },
+  {
+   "tcId": 20,
+   "seed": "147bb5ad367f4e24766d05ce134e08ab2f4c3e482ea1bee0961c0496c6f08c8a",
+   "pk_sha256": "f56d52da5740c0243aebc7d2d418ba57253806b579787c6558c69c65fab4e727",
+   "sk_sha256": "3ef8136076edead04f3f5f83615d1b8aa33a3f1e9cd47eef81340f16d294ccd4"
+  },
+  {
+   "tcId": 21,
+   "seed": "24811a03d8d507eff2bd581be213fd54bd29cf577c63e948cf2b655f2608a305",
+   "pk_sha256": "2745bceab146d2a70ee4ad9754752677c1550ed9c745a82fd16d5bab0a4ff50b",
+   "sk_sha256": "5c248a4fc1de5384b8daabbb26405fb02f2ae116f8452ad11544b5b13533e965"
+  },
+  {
+   "tcId": 22,
+   "seed": "c9166c5021129fa38db30e670febf814a1ec71760b2e060a451fcd1254240a78",
+   "pk_sha256": "0cf1d6a106d24a2291ada321194ef312c3225620a4000206c666bf3ce09ebed5",
+   "sk_sha256": "f52b7ce088e2b793c09036dfb58d74434af7170dc1ffbdf82bfc61264a2373e5"
+  },
+  {
+   "tcId": 23,
+   "seed": "2ecc528f573715e6acf8db7fa57bb79b959a27dbbd8e4e5f579cfe0e332f669f",
+   "pk_sha256": "d4b72f04c2ebeb2e099930fbf139f49d89fcf56f0a5cdcf159845f158de5511b",
+   "sk_sha256": "1fab37caa3dbde195b3f37f6ee05b24fc1c3386ba044bb21504479e8ed65e728"
+  },
+  {
+   "tcId": 24,
+   "seed": "4b887242a66bd665eacba74079d7396a50ce0362e6d5d487bd5c190de538ef1d",
+   "pk_sha256": "3be6f3cfadcf3c50c230053d60fa10ef9f7c69355d65cb3059dc82b0a781be66",
+   "sk_sha256": "50befbbf8ac689ad8dd121a8bdd50885bd256e3e0337026ed8ca51609d4ef89d"
+  },
+  {
+   "tcId": 25,
+   "seed": "737018b30354e77ad4d36d98ae629158b3291de4d0fa0438b33bc9ac4bcdd3d7",
+   "pk_sha256": "c8e1ad27df1eeb581e5222cb3242c60599a47d0f96036fa73c92d9c56dbd15a7",
+   "sk_sha256": "bff6c1b77a8818ea440f6ec188b88eb19a5a1c328973604508665cf25d76def9"
+  }
+ ]
+}

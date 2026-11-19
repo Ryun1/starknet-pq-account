@@ -1,5 +1,6 @@
 // "Starknet PQ key backup v0.1": one BIP39 mnemonic -> STARK-curve ECDSA key + Falcon-512 key.
-// "v0.2" (PF-14, contracts/docs/key-backup-v0.2.md): the same with a Falcon-1024 key.
+// "v0.2" (PF-14, PF-13; contracts/docs/key-backup-v0.2.md): the same with a Falcon-1024 or an
+// ML-DSA-44 key. ML-DSA-44 key generation is fixed by FIPS 204 (KeyGen_internal of a 32-byte seed).
 // Falcon keygen is @noble/post-quantum's deterministic keygen(seed48), so the same mnemonic
 // yields the same key in Node and in the browser. TESTNET / DEMO ONLY.
 //
@@ -20,12 +21,15 @@ import { hkdf } from "@noble/hashes/hkdf";
 import { sha512 } from "@noble/hashes/sha2";
 import { hexToBytes } from "@noble/hashes/utils";
 import { falcon512, falcon1024 } from "@noble/post-quantum/falcon.js";
+import { ml_dsa44 } from "@noble/post-quantum/ml-dsa.js";
 
 export const PROFILE = "starknet-pq-backup-v0.1";
-// PQ scheme -> the backup profile (HKDF salt) that defines its key, and its noble keygen.
+// PQ scheme -> the backup profile (HKDF salt) that defines its key, the HKDF info tag, the seed
+// length and the keygen.
 export const PQ_SCHEMES = {
-  "falcon-512": { profile: PROFILE, keygen: falcon512.keygen },
-  "falcon-1024": { profile: "starknet-pq-backup-v0.2", keygen: falcon1024.keygen },
+  "falcon-512": { profile: PROFILE, tag: "noble", seedBytes: 48, keygen: falcon512.keygen },
+  "falcon-1024": { profile: "starknet-pq-backup-v0.2", tag: "noble", seedBytes: 48, keygen: falcon1024.keygen },
+  "ml-dsa-44": { profile: "starknet-pq-backup-v0.2", tag: "fips204", seedBytes: 32, keygen: ml_dsa44.keygen },
 };
 export const ECDSA_PROFILES = ["pq", "argentx", "braavos"];
 const utf8 = (s) => new TextEncoder().encode(s);
@@ -59,8 +63,8 @@ export function deriveAccountKeys(mnemonic, index = 0, ecdsaProfile = "pq", sche
     ecdsaProfile === "argentx"
       ? argentStarkKeyFromSecret(ethereumPrivateKey(seed), index)
       : starkKeyFromMaster(seed, index);
-  const { profile, keygen } = PQ_SCHEMES[scheme];
-  const falconSeed = hkdf(sha512, seed, utf8(profile), utf8(`${scheme}/noble/account/${index}`), 48);
+  const { profile, tag, seedBytes, keygen } = PQ_SCHEMES[scheme];
+  const falconSeed = hkdf(sha512, seed, utf8(profile), utf8(`${scheme}/${tag}/account/${index}`), seedBytes);
   const { publicKey: falconPublicKey, secretKey: falconSecretKey } = keygen(falconSeed);
   return { ecdsaPrivateKey, ecdsaPublicKey, falconPublicKey, falconSecretKey };
 }
