@@ -4,6 +4,7 @@
 //! Testnet / demo use only; never hold real funds with these contracts.
 
 pub mod consumer;
+pub mod dormant;
 pub mod guard;
 pub mod hybrid;
 pub mod migratable;
@@ -16,6 +17,8 @@ mod tests;
 mod tests_browser;
 #[cfg(test)]
 mod tests_consumer;
+#[cfg(test)]
+mod tests_dormant;
 #[cfg(test)]
 mod tests_falcon1024_fixture;
 #[cfg(test)]

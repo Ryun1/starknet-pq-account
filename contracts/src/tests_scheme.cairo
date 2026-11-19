@@ -45,7 +45,7 @@ const MSG: felt252 = REGISTRATION_HASH;
 /// The mock scheme: a 3-felt key; the signature of `hash` is `[hash + key[0]]`, accepted only
 /// once `MockSchemeSetup` has stored key[0] (standing in for work derived from the key).
 #[starknet::contract]
-mod MockSchemeVerifier {
+pub mod MockSchemeVerifier {
     use starknet::storage::{StoragePointerReadAccess, Vec, VecTrait};
 
     #[storage]
@@ -69,7 +69,7 @@ mod MockSchemeVerifier {
 }
 
 #[starknet::contract]
-mod MockSchemeSetup {
+pub mod MockSchemeSetup {
     use starknet::storage::{
         MutableVecTrait, StoragePointerReadAccess, StoragePointerWriteAccess, Vec,
     };
@@ -88,7 +88,7 @@ mod MockSchemeSetup {
 
 /// A setup that also rewrites the mirrored classical key the verifiers read.
 #[starknet::contract]
-mod KeyRewritingSetup {
+pub mod KeyRewritingSetup {
     use starknet::storage::{
         MutableVecTrait, StoragePointerReadAccess, StoragePointerWriteAccess, Vec,
     };
@@ -107,7 +107,7 @@ mod KeyRewritingSetup {
     }
 }
 
-fn class(hash: felt252) -> ClassHash {
+pub fn class(hash: felt252) -> ClassHash {
     hash.try_into().unwrap()
 }
 
@@ -131,11 +131,11 @@ fn mock_setup() -> ClassHash {
     MockSchemeSetup::TEST_CLASS_HASH
 }
 
-fn mock_key() -> Array<felt252> {
+pub fn mock_key() -> Array<felt252> {
     array![11, 22, 33]
 }
 
-fn mock_sig(hash: felt252) -> Array<felt252> {
+pub fn mock_sig(hash: felt252) -> Array<felt252> {
     array![hash + 11]
 }
 
@@ -175,7 +175,7 @@ fn set_pq_key_call(
 
 /// One transaction from `account` with hash MSG: the protocol runs `__validate__`, then
 /// `__execute__`.
-fn transact(account: ContractAddress, calls: Array<Call>, signature: Array<felt252>) -> SyscallResult<Span<felt252>> {
+pub fn transact(account: ContractAddress, calls: Array<Call>, signature: Array<felt252>) -> SyscallResult<Span<felt252>> {
     starknet::testing::set_contract_address(0.try_into().unwrap());
     starknet::testing::set_version(3);
     starknet::testing::set_transaction_hash(MSG);
@@ -192,7 +192,7 @@ fn signed(account: ContractAddress, calls: Array<Call>) -> SyscallResult<Span<fe
 }
 
 /// The call failed, and `reason` is among the felts of its error.
-fn assert_reverts_with(result: SyscallResult<Span<felt252>>, reason: felt252) {
+pub fn assert_reverts_with(result: SyscallResult<Span<felt252>>, reason: felt252) {
     match result {
         Ok(_) => panic!("succeeded, expected a revert with {reason}"),
         Err(error) => {
