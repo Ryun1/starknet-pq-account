@@ -113,7 +113,9 @@ This class is the cheap path for those that do.
 
 ## Supported routes
 
-- **Fresh deployment**: `constructor(ecdsa_public_key, commitment)`.
+- **Fresh deployment**: `constructor(ecdsa_public_key, commitment)`, deployed by another account
+  (UDC). The class has no `__validate_deploy__`, like V2, so it cannot pay for its own deployment
+  through a counterfactual `DEPLOY_ACCOUNT`.
 - **OpenZeppelin-style accounts** (ECDSA key already in `Account_public_key`): one ECDSA-signed
   multicall `[upgrade(dormant class), commit(commitment)]`. Tested with the `LegacyOzLikeAccount`
   stand-in.
@@ -127,7 +129,10 @@ This class is the cheap path for those that do.
   commit time (checks the derived key opens the commitment, without an on-chain proof), and
   `inspectAccount` / `HybridSigner` support for the dormant state.
 - A real Falcon activation fixture. The activation hash binds the account address, which changes
-  with the class hash in Cairo tests. Tests use the mock scheme for success paths, and the real
-  verifier for rejection.
+  with the class hash in Cairo tests, and the ECDSA half needs the fixture's private key, which only
+  the JS generator has. Activation tests use the mock scheme. The one test through the real
+  SHAKE-256 verifier class is rejected at the ECDSA half, so Falcon is not run. The Falcon check is
+  the same `_verify` library call that V2's real-fixture tests cover, but a real activation is
+  untested until the wallet kit and devnet run exist.
 - Devnet measurement of dormant `__validate__` against a plain ECDSA account, and of activation.
 - Independent review. The security claims above have not been reviewed.

@@ -3,9 +3,11 @@
 //!
 //! Activation proofs use the mock scheme (3-felt key, signature `[hash + key[0]]`, no ECDSA half):
 //! the activation hash binds the account address, which changes with the class hash, so a real
-//! Falcon fixture would have to be regenerated on every edit. The real SHAKE-256 Falcon-512
-//! verifier is still exercised on the rejection side (`real_verifier_rejects_a_proof_over_*`), and
-//! the proof check is the same library call as V2's.
+//! fixture would have to be regenerated on every edit (and the ECDSA half needs the fixture's
+//! private key, which only the JS generator has). `activation_through_the_real_verifier_*` only
+//! shows the call reaches the SHAKE-256 verifier class and its rejection reverts: that proof fails
+//! on its ECDSA half, so Falcon itself is not run. The Falcon half is covered by V2's and
+//! tests_migration.cairo's real-fixture tests through the same `_verify` library call.
 
 use starknet::account::Call;
 use starknet::syscalls::{deploy_syscall, get_class_hash_at_syscall};
@@ -282,9 +284,10 @@ fn activation_is_one_shot() {
 }
 
 #[test]
-fn real_verifier_rejects_a_proof_over_another_hash() {
-    // Committed to the SHAKE-256 Falcon-512 key and verifier; the hybrid signature over the
-    // registration hash is a valid signature by both keys, but not over the activation hash.
+fn activation_through_the_real_verifier_rejects_a_proof_over_another_hash() {
+    // Committed to the SHAKE-256 Falcon-512 key and verifier. The hybrid signature over the
+    // registration hash is valid for both keys but not over the activation hash; the verifier
+    // rejects it at the ECDSA half, before Falcon runs.
     let shake = HybridShakeAccount::TEST_CLASS_HASH;
     let commitment = commitment_hash(shake, class(0), falcon_pk().span());
     let (account, _) = deploy_with(commitment).unwrap_syscall();
@@ -431,4 +434,31 @@ fn active_account_upgrades_to_v2_and_keeps_its_keys() {
     assert_eq!(m.get_ecdsa_public_key(), ECDSA_PK);
     transact(account, array![], mock_sig(MSG)).unwrap_syscall();
     assert_reverts_with(transact(account, array![], ecdsa_sig()), INVALID_SIGNATURE);
+}
+
+#[test]
+fn declare_and_signature_checks_follow_the_state() {
+    let declare = |account: ContractAddress, sig: Array<felt252>| {
+        starknet::testing::set_contract_address(0.try_into().unwrap());
+        starknet::testing::set_transaction_hash(MSG);
+        starknet::testing::set_signature(sig.span());
+        starknet::syscalls::call_contract_syscall(
+            account, selector!("__validate_declare__"), array![123].span(),
+        )
+    };
+    // Unregistered (upgraded alone): no declare, no signatures.
+    let legacy = deploy_legacy();
+    starknet::testing::set_contract_address(legacy);
+    ILegacyDispatcher { contract_address: legacy }.upgrade(dormant_class());
+    assert_reverts_with(declare(legacy, ecdsa_sig()), NOT_REGISTERED);
+    let a = IHybridAccountDispatcher { contract_address: legacy };
+    assert_eq!(a.is_valid_signature(MSG, ecdsa_sig()), 0);
+    // Dormant: ECDSA alone.
+    let account = dormant();
+    declare(account, ecdsa_sig()).unwrap_syscall();
+    assert_reverts_with(declare(account, array![WRONG_ECDSA_R, WRONG_ECDSA_S]), INVALID_SIGNATURE);
+    // Active: hybrid only.
+    activate_mock(account);
+    assert_reverts_with(declare(account, ecdsa_sig()), INVALID_SIGNATURE);
+    declare(account, mock_sig(MSG)).unwrap_syscall();
 }
