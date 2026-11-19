@@ -126,7 +126,9 @@ roots up to n = 1024: `signer/falcon1024_ntt_roots.json` (`scripts/export_ntt_ro
 for either. A second button opens the Falcon-1024 demo account, the public demo words at account
 index 1 (`0x6cc8174385000e9451849a43266798b22ad91edd529ba3bc3f1b693e0bc3218`). The page's signing
 code, sliced from the built page, gives the same keys as `signer/pq_keys.mjs` and signatures the
-board's reference verifiers accept, at both n.
+board's reference verifiers accept, at both n. A header menu separates two flows: *Hybrid demo*
+(send with both keys, then ECDSA only, which is rejected) and *Falcon only* (a valid Falcon
+signature with the ECDSA half left as zeros, also rejected with `Account: invalid signature`).
 
 Setting up that account on Sepolia (from the deployer key in `.keys/`):
 

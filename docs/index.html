@@ -220,7 +220,7 @@
 
   <section class="card" data-view="falcon-only" hidden>
     <div class="card-h"><span class="num">2</span><h2>Suppose Falcon were broken</h2></div>
-    <p class="desc">Falcon is young, and this verifier is unaudited contest code. Here the attacker can make a valid Falcon signature but does not have the ECDSA key, so the classical half is left empty. The account should reject it: the classical key still guards it.</p>
+    <p class="desc">Falcon is young, and these verifiers are unaudited. Here the attacker can make a valid Falcon signature but does not have the ECDSA key, so the classical half is left empty. The account should reject it: the classical key still guards it.</p>
     <div class="actions">
       <button id="falcon-send" class="weak" disabled>Try Falcon only</button>
     </div>
@@ -395,11 +395,16 @@ const transfer = () => ({ contractAddress: CONFIG.strk, entrypoint: "transfer", 
 // Derives both keys from a seed, then checks the Falcon key registered on-chain. The scheme is
 // read from the chain: a 57-felt key is Falcon-1024 (backup v0.2), anything else Falcon-512 (v0.1).
 async function activate(newSeed, source, index = 0) {
+  // Nothing can be sent until this account's on-chain key has been checked, even if a restore fails.
+  for (const id of ["send", "attack", "falcon-send", "pk-save"]) $(id).disabled = true;
   seed = newSeed; accountIndex = index;
   const ecdsa = ecdsaKeysFromSeed(seed, index);
   address = hash.calculateContractAddressFromHash(ecdsa.ecdsaPublicKey, OZ_CLASS, [ecdsa.ecdsaPublicKey], 0);
   $("acct").innerHTML = `<a href="${CONFIG.voyager}/contract/${address}" target="_blank" rel="noopener">${address}</a>`;
-  const onchain = await provider.callContract({ contractAddress: address, entrypoint: "get_falcon_public_key", calldata: [] }, "latest").catch(() => null);
+  // No account at the address (RPC 20) or one without the getter, not migrated (21 / ENTRYPOINT_NOT_FOUND):
+  // null. Anything else, such as a network failure, is reported as before.
+  const onchain = await provider.callContract({ contractAddress: address, entrypoint: "get_falcon_public_key", calldata: [] }, "latest")
+    .catch((e) => { if ([20, 21].includes(e?.baseError?.code) || /contract not found|entrypoint does not exist|ENTRYPOINT_NOT_FOUND/i.test(String(e?.message || e))) return null; throw e; });
   keys = { ...ecdsa, ...falconKeysFromSeed(seed, index, onchain && onchain.length === 58 ? 1024 : 512) };
   const mine = pack(ntt(decodePublicKey(keys.falconPublicKey))).map((x) => num.toHex(x));
   $("scheme").textContent = keys.n === 1024 ? "Falcon-1024 (NIST level 5)" : "Falcon-512";
@@ -410,7 +415,7 @@ async function activate(newSeed, source, index = 0) {
     .then((r) => r[0], () => null)
     .then((h) => { $("verifier").textContent = verifierLabel(h, CONFIG.verifiers); });
   const match = !!onchain && JSON.stringify(onchain.slice(1).map((x) => num.toHex(x))) === JSON.stringify(mine);
-  $("check").innerHTML = match ? `<span class="ok">Falcon key on-chain matches the key restored from ${source}</span>` : '<span class="bad">On-chain key does not match</span>';
+  $("check").innerHTML = match ? `<span class="ok">Falcon key on-chain matches the key restored from ${source}</span>` : `<span class="bad">${onchain ? "On-chain key does not match" : "No migrated account at this address"}</span>`;
   $("send").disabled = !match; $("attack").disabled = !match; $("falcon-send").disabled = !match; $("pk-save").disabled = !match;
   falconLog(match ? "Ready." : "Waiting for keys.");
   log(match ? "Ready." : "These keys do not control a migrated account.", match ? "ok" : "bad");
