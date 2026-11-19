@@ -207,7 +207,16 @@
   </section>
 
   <section class="card">
-    <div class="card-h"><span class="num">3</span><h2>Lock the keys with a passkey</h2><span class="opt">Optional</span></div>
+    <div class="card-h"><span class="num">3</span><h2>Suppose Falcon were broken</h2></div>
+    <p class="desc">Falcon is young, and this verifier is unaudited contest code. Here the attacker can make a valid Falcon signature but does not have the ECDSA key, so the classical half is left empty. The account should reject it: the classical key still guards it.</p>
+    <div class="actions">
+      <button id="falcon-only" class="weak" disabled>Try Falcon only</button>
+    </div>
+    <div id="falcon-log" class="log">Waiting for keys.</div>
+  </section>
+
+  <section class="card">
+    <div class="card-h"><span class="num">4</span><h2>Lock the keys with a passkey</h2><span class="opt">Optional</span></div>
     <p class="desc">Face ID, Windows Hello or a security key. The seed is encrypted with the passkey's PRF output and stays in this browser, so next time you unlock instead of typing the words. The words stay the backup.</p>
     <div class="actions">
       <button id="pk-save" class="weak" disabled>Lock with a passkey</button>
@@ -231,7 +240,7 @@
     <ul class="checks">
       <li><b>1</b><div>ECDSA over the transaction hash<br><span>against the account's stored STARK key</span></div></li>
       <li><b>2</b><div>Falcon-512 over the same hash<br><span>by library call to the account's verifier class: OpenZeppelin cairo-pq-verifiers, or the Provably Fast small verifier</span></div></li>
-      <li class="both"><b>3</b><div>Both have to pass<br><span>a valid ECDSA signature alone is rejected in __validate__</span></div></li>
+      <li class="both"><b>3</b><div>Both have to pass<br><span>a valid ECDSA signature alone is rejected in __validate__, and so is a valid Falcon signature alone</span></div></li>
     </ul>
   </section>
 
@@ -345,12 +354,14 @@ function falconFelts(txHash) {
   return [...pack(s2q), leInt(nonce.slice(0, 20)), leInt(nonce.slice(20)), ...pack(mulNegacyclic(s2q, h))];
 }
 
+// mode: "hybrid" (both keys), "ecdsa" (the Falcon half missing) or "falcon" (the ECDSA half
+// left as zeros: what an attacker who can forge Falcon, but has no ECDSA key, can send).
 class HybridSigner extends Signer {
-  constructor(pk, withFalcon) { super(pk); this.pk = pk; this.withFalcon = withFalcon; }
+  constructor(pk, mode) { super(pk); this.pk = pk; this.mode = mode; }
   async signRaw(msgHash) {
     const h = num.toHex(msgHash), e = ec.starkCurve.sign(h, this.pk);
-    const sig = [num.toHex(e.r), num.toHex(e.s)];
-    return this.withFalcon ? [...sig, ...falconFelts(h).map((x) => num.toHex(x))] : sig;
+    const ecdsa = this.mode === "falcon" ? ["0x0", "0x0"] : [num.toHex(e.r), num.toHex(e.s)];
+    return this.mode === "ecdsa" ? ecdsa : [...ecdsa, ...falconFelts(h).map((x) => num.toHex(x))];
   }
 }
 async function bounds() {
@@ -388,7 +399,8 @@ async function activate(newSeed, source, index = 0) {
     .then((h) => { $("verifier").textContent = verifierLabel(h, CONFIG.verifiers); });
   const match = !!onchain && JSON.stringify(onchain.slice(1).map((x) => num.toHex(x))) === JSON.stringify(mine);
   $("check").innerHTML = match ? `<span class="ok">Falcon key on-chain matches the key restored from ${source}</span>` : '<span class="bad">On-chain key does not match</span>';
-  $("send").disabled = !match; $("attack").disabled = !match; $("pk-save").disabled = !match;
+  $("send").disabled = !match; $("attack").disabled = !match; $("falcon-only").disabled = !match; $("pk-save").disabled = !match;
+  falconLog(match ? "Ready." : "Waiting for keys.");
   log(match ? "Ready." : "These keys do not control a migrated account.", match ? "ok" : "bad");
 }
 
@@ -478,8 +490,8 @@ $("pk-unlock").addEventListener("click", async () => {
 $("pk-forget").addEventListener("click", () => { writeStore(null); refreshPasskeyUi(); pkLog("Forgotten on this device. The passkey itself can be removed in your device settings."); });
 refreshPasskeyUi();
 
-async function send(withFalcon) {
-  const acc = new Account({ provider, address, signer: new HybridSigner(keys.ecdsaPrivateKey, withFalcon) });
+async function send(mode) {
+  const acc = new Account({ provider, address, signer: new HybridSigner(keys.ecdsaPrivateKey, mode) });
   const nonce = await provider.getNonceForAddress(address, "latest");
   return acc.execute(transfer(), { nonce, tip: await tip(), resourceBounds: await bounds() });
 }
@@ -488,7 +500,7 @@ $("send").addEventListener("click", async () => {
   try {
     log(`Signing in this browser (ECDSA + Falcon-${keys.n}) and sending...`);
     const t0 = performance.now();
-    const r = await send(true);
+    const r = await send("hybrid");
     log(`Sent. Waiting for inclusion...\n${r.transaction_hash}`);
     const rc = await provider.waitForTransaction(r.transaction_hash);
     log(`${rc.execution_status || "ACCEPTED"} in ${((performance.now() - t0) / 1000).toFixed(1)} s\nL2 gas: ${rc.execution_resources?.l2_gas ?? "?"}\n${CONFIG.voyager}/tx/${r.transaction_hash}`, "ok");
@@ -496,13 +508,27 @@ $("send").addEventListener("click", async () => {
 });
 $("attack").addEventListener("click", async () => {
   $("attack").disabled = true;
-  try { log("Sending with the ECDSA signature only..."); const r = await send(false); log(`Unexpected: accepted ${r.transaction_hash}`, "bad"); }
+  try { log("Sending with the ECDSA signature only..."); const r = await send("ecdsa"); log(`Unexpected: accepted ${r.transaction_hash}`, "bad"); }
   catch (e) {
     const m = String(e.message || e), tail = m.slice(m.lastIndexOf("\n") + 1).slice(0, 300);
     if (/validate/i.test(m) && /panicked|invalid signature/i.test(m)) log("Rejected as expected: __validate__ refused the ECDSA-only signature (the Falcon part is missing).\n" + tail, "ok");
     else log("Not sent, for a reason unrelated to the signature check:\n" + tail, "bad");
   }
   finally { $("attack").disabled = false; }
+});
+const falconLog = (msg, cls) => { const el = $("falcon-log"); el.textContent = msg; el.className = "log " + (cls || ""); };
+$("falcon-only").addEventListener("click", async () => {
+  $("falcon-only").disabled = true;
+  try {
+    falconLog(`Signing with Falcon-${keys.n} only (no ECDSA signature) and sending...`);
+    const r = await send("falcon");
+    falconLog(`Unexpected: accepted ${r.transaction_hash}`, "bad");
+  } catch (e) {
+    const m = String(e.message || e), tail = m.slice(m.lastIndexOf("\n") + 1).slice(0, 300);
+    if (/validate/i.test(m) && /panicked|invalid signature/i.test(m)) falconLog(`Rejected as expected: __validate__ refused a valid Falcon-${keys.n} signature without the ECDSA signature.\n` + tail, "ok");
+    else falconLog("Not sent, for a reason unrelated to the signature check:\n" + tail, "bad");
+  }
+  finally { $("falcon-only").disabled = false; }
 });
 </script>
 </body>
