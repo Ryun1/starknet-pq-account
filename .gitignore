@@ -20,4 +20,8 @@ bench/pf03/src/vectors.cairo
 bench/pf04/src/cases.cairo
 bench/pf14/src/vectors.cairo
 bench/pf14/gas/src/cases.cairo
+bench/pf13/gas/src/cases.cairo
+bench/pf13/correctness/src/vectors.cairo
+bench/pf13/correctness/src/cache_tests.cairo
+bench/pf13/correctness/src/acvp.cairo
 bench/**/target/

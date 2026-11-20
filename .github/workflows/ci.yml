@@ -14,7 +14,7 @@ jobs:
         with:
           scarb-version: "2.18.0"
       - name: Candidate crates match baseline + pinned patches
-        run: vendor/provably-fast/falcon-512/make_crates.sh --check && vendor/provably-fast/falcon-1024/make_crates.sh --check
+        run: vendor/provably-fast/falcon-512/make_crates.sh --check && vendor/provably-fast/falcon-1024/make_crates.sh --check && vendor/provably-fast/ml-dsa-44/make_crates.sh --check
       - name: Build
         working-directory: contracts
         run: scarb build
@@ -52,6 +52,16 @@ jobs:
       - name: Falcon-1024 baseline and pinned record agree with the reference on every vector
         run: bench/pf14/run.sh
 
+  mldsa44-differential:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.18.0"
+      - name: ML-DSA-44 baseline, pinned record and cached check agree with the reference on every vector
+        run: bench/pf13/correctness/run.sh
+
   pf14-budgets:
     runs-on: ubuntu-24.04
     steps:
@@ -68,6 +78,23 @@ jobs:
           universal-sierra-compiler-version: "2.10.2"
       - name: Falcon-1024 account-level gas, class sizes and libfuncs within network limits and budgets
         run: bench/pf14/gas/run.sh --check
+
+  pf13-budgets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: software-mansion/setup-scarb@v1
+        with:
+          scarb-version: "2.18.0"
+      - uses: foundry-rs/setup-snfoundry@v5
+        with:
+          starknet-foundry-version: "0.59.0"
+      # bench/pf13/gas/budgets.json was measured with 2.10.2, as bench/pf14/gas.
+      - uses: software-mansion/setup-universal-sierra-compiler@v1
+        with:
+          universal-sierra-compiler-version: "2.10.2"
+      - name: ML-DSA-44 account-level gas, class sizes and libfuncs within network limits and budgets
+        run: bench/pf13/gas/run.sh --check
 
   pf04-budgets:
     runs-on: ubuntu-24.04

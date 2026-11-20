@@ -20,11 +20,13 @@ name = "pq_hybrid"
 version = "0.1.0"
 dependencies = [
  "pqbench_ecdsa_stark",
+ "pqbench_falcon_1024_pf_record",
  "pqbench_falcon_512",
  "pqbench_falcon_512_pf_compact",
  "pqbench_falcon_512_pf_record",
  "pqbench_falcon_512_pf_small",
  "pqbench_interface",
+ "pqbench_ml_dsa_44_pf_record",
 ]
 
 [[package]]
@@ -32,6 +34,14 @@ name = "pqbench_ecdsa_stark"
 version = "0.1.0"
 dependencies = [
  "pqbench_interface",
+]
+
+[[package]]
+name = "pqbench_falcon_1024_pf_record"
+version = "0.1.0"
+dependencies = [
+ "pqbench_interface",
+ "pqbench_ntt_f1024_pf_record",
 ]
 
 [[package]]
@@ -75,7 +85,22 @@ name = "pqbench_interface"
 version = "0.1.0"
 
 [[package]]
+name = "pqbench_ml_dsa_44_pf_record"
+version = "0.1.0"
+dependencies = [
+ "corelib_imports",
+ "pqbench_interface",
+]
+
+[[package]]
 name = "pqbench_ntt"
+version = "0.1.0"
+dependencies = [
+ "corelib_imports",
+]
+
+[[package]]
+name = "pqbench_ntt_f1024_pf_record"
 version = "0.1.0"
 dependencies = [
  "corelib_imports",

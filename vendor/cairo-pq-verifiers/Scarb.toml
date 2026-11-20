@@ -1,12 +1,15 @@
 # Vendored subset of OpenZeppelin/cairo-pq-verifiers (MIT). Only the crates this repo uses.
 # crates/falcon_1024 is from the Provably Fast Falcon-1024 baseline, bf7fd87 (PF-14; see
-# vendor/provably-fast/falcon-1024/PROVENANCE.md); the rest is bece5c07.
+# vendor/provably-fast/falcon-1024/PROVENANCE.md); crates/ml_dsa_44 is from the
+# Provably Fast ML-DSA-44 baseline, 78c8359 (PF-13; see vendor/provably-fast/ml-dsa-44/PROVENANCE.md);
+# the rest is bece5c07.
 [workspace]
 members = [
     "crates/bench_interface",
     "crates/ecdsa_stark",
     "crates/falcon_512",
     "crates/falcon_1024",
+    "crates/ml_dsa_44",
     "crates/ntt",
 ]
 
