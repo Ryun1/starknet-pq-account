@@ -93,6 +93,7 @@ remain the fallback if the record is broken.
   `[upgrade, set_pq_key]` transaction, an Argent-style account migrating straight to ML-DSA-44,
   rotation within ML-DSA-44 (refused without the setup, accepted with it), and reverts for a missing
   setup, a Falcon key under the setup, an ML-DSA key under a Falcon verifier and a raw verifier switch.
+
 ### Differential suite (`correctness/`, plan step 7)
 
 Authority: the lane's reference verifier https://postquantum.provably.fast/reference/mldsa44.py,
@@ -148,5 +149,5 @@ bench/pf14/gas.
 
 ## Remaining plan steps
 
-6 key backup profile v0.2, 9 docs and manifest, 10 Sepolia receipts (needs
-authorization). Step 5 (signer adapter) is in: `signer/mldsa_adapter.mjs`.
+10 Sepolia receipts (needs authorization), and with it the release manifest and
+`wallet-coverage.md`. Steps 2–9 are in.

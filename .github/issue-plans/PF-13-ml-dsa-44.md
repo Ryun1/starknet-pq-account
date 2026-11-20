@@ -270,6 +270,10 @@ through setup and the cached check.
 
 CI job beside `falcon-differential`.
 
+Status 2026-11-19: done (`bench/pf13/correctness`): 128 vectors (21 valid, 107 invalid), all three
+paths agree with the reference; 10 cache tests; 45 ACVP sigVer cases on the baseline only (the record does not
+expose `verify_internal`). Rejection cost ratio 1.000. The lane's break vector is not published.
+
 ### 8. Account-level gas (`bench/pf13`, PF-04 pattern)
 
 Reuse `class_size` and the limit tables from `bench/pf04/summarize.py` by import. Paired snforge
@@ -279,11 +283,16 @@ migration (`upgrade` + `migrate`) straight to ML-DSA, steps on the worst vector.
 measured + 1%, class table, clean build against the network libfunc list. This is the Starknet
 Foundry half of acceptance criterion 2.
 
+Status 2026-11-19: done (`bench/pf13/gas`, numbers in bench/pf13/README.md), `budgets.json` checked in CI.
+
 ### 9. Docs and manifest
 
 `scripts/release_manifest.mjs` and a new manifest (not `testnet-v1.json`) list V2, the verifier and
 the setup class with `scheme` and `setup`. README table, `NOTICE.md`, `wallet-coverage.md`,
 `scheme-switch.md`. The browser page and hosted demo are not changed.
+
+Status 2026-11-19: docs done (README, NOTICE, scheme-switch.md, key-backup-v0.2.md). The manifest and
+`wallet-coverage.md` wait for step 10: they record declared class hashes and Sepolia receipts.
 
 ### 10. Sepolia receipts — needs your authorization
 
