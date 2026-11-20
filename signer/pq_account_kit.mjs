@@ -62,18 +62,27 @@ export function rotationHash(ecdsaPublicKey, falconFelts) {
   return hash.computePoseidonHashOnElements([shortString.encodeShortString(ROTATE_DOMAIN), ecdsaPublicKey, ...falconFelts]);
 }
 
+/** The PQ half of a hybrid signature, alone (PQ-only, ARCH-01): Falcon x60 (x116 at n = 1024), or ML-DSA-44 x79. */
+export function falconSignature(msgHash, keys) {
+  const pq = isMlDsa44(keys)
+    ? mldsa.signatureFelts(mldsa.signTxHash(BigInt(msgHash), keys.falconSecretKey))
+    : signatureFelts(signTxHash(BigInt(msgHash), keys.falconSecretKey), keys.falconPublicKey);
+  return pq.map(num.toHex);
+}
+
 /** [r, s, pq...]: STARK-curve ECDSA and the PQ scheme (Falcon SHAKE-256, or ML-DSA-44) over the same hash. */
 export function hybridSignature(msgHash, keys) {
   const e = ec.starkCurve.sign(num.toHex(msgHash), keys.ecdsaPrivateKey);
-  const falcon = isMlDsa44(keys)
-    ? mldsa.signatureFelts(mldsa.signTxHash(BigInt(msgHash), keys.falconSecretKey))
-    : signatureFelts(signTxHash(BigInt(msgHash), keys.falconSecretKey), keys.falconPublicKey);
-  return [num.toHex(e.r), num.toHex(e.s), ...falcon.map(num.toHex)];
+  return [num.toHex(e.r), num.toHex(e.s), ...falconSignature(msgHash, keys)];
 }
 
+/**
+ * Signs transactions for a migrated account. `pqOnly: true` (an account on a PQ_ONLY_VERIFIERS
+ * class, see accountMode) signs with Falcon alone; the account refuses a hybrid signature then.
+ */
 export class HybridSigner extends Signer {
-  constructor(keys) { super(keys.ecdsaPrivateKey); this.keys = keys; }
-  async signRaw(msgHash) { return hybridSignature(msgHash, this.keys); }
+  constructor(keys, { pqOnly = false } = {}) { super(keys.ecdsaPrivateKey); this.keys = keys; this.pqOnly = pqOnly; }
+  async signRaw(msgHash) { return this.pqOnly ? falconSignature(msgHash, this.keys) : hybridSignature(msgHash, this.keys); }
 }
 
 /**
@@ -167,6 +176,64 @@ export function setPqKeyCalls(address, current, next, { verifierClass, setupClas
 export function verifierSwitchCall(address, verifierClass, { allowedVerifiers = KNOWN_VERIFIERS } = {}) {
   assertAllowedVerifier(verifierClass, allowedVerifiers);
   return { contractAddress: address, entrypoint: "set_verifier_class_hash", calldata: [num.toHex(verifierClass)] };
+}
+
+// ---------------------------------------------------------------- PQ-only mode (ARCH-01)
+
+/**
+ * Falcon-only verifier classes (contracts/src/hybrid.cairo, Scarb 2.18.0). Built and tested, NOT
+ * declared on Sepolia and NOT reviewed: an account on one of them has no ECDSA check left to catch
+ * a Falcon or verifier bug (contracts/docs/pq-only.md). pq_only_check.mjs keeps these equal to the
+ * compiled classes.
+ */
+export const PQ_ONLY_VERIFIERS = {
+  "0x558436837d4127533bac1d2485d3e1354c8e752aa7db825ddb10747fc5f8f2f": "FalconOnlyVerifierPfSmall (Falcon-512 SHAKE-256 alone, Provably Fast small patch)",
+  "0x3dba9bb9e3fdf77c8a8308088dc09085ce4aa48786032e9d64e26b4f1f371b4": "FalconOnlyVerifierFalcon1024 (Falcon-1024 alone, Provably Fast record)",
+};
+
+/** "pq-only" if the account's verifier is in `pqOnlyVerifiers`, else "hybrid". For HybridSigner's pqOnly. */
+export async function accountMode(provider, address, { pqOnlyVerifiers = PQ_ONLY_VERIFIERS } = {}) {
+  const [verifier] = await view(provider, address, "get_verifier_class_hash");
+  return Object.keys(pqOnlyVerifiers).some((h) => BigInt(h) === verifier) ? "pq-only" : "hybrid";
+}
+
+/**
+ * Moves a HybridMigratableAccountV2 to PQ-only, keeping its keys: set_pq_key with the same PQ key,
+ * a Falcon-only verifier, and a Falcon-only proof over rotation_hash. Sign with the hybrid
+ * HybridSigner. Refuses unless acceptUnreviewedVerifier: true, because no PQ-only verifier has been
+ * reviewed (PF-08). `upgradeTo`: the V2 class hash, for an account on the earlier class.
+ */
+export function pqOnlyCalls(address, keys, { verifierClass, upgradeTo, acceptUnreviewedVerifier = false, allowedVerifiers = PQ_ONLY_VERIFIERS }) {
+  if (!acceptUnreviewedVerifier) {
+    throw new Error("PQ-only drops the ECDSA check that backs up an unreviewed Falcon verifier. Show this to the user and pass acceptUnreviewedVerifier: true to continue.");
+  }
+  assertAllowedVerifier(verifierClass, allowedVerifiers);
+  const proof = falconSignature(rotationHash(keys.ecdsaPublicKey, keys.falconFelts), keys);
+  const call = { contractAddress: address, entrypoint: "set_pq_key",
+    calldata: [num.toHex(keys.falconFelts.length), ...keys.falconFelts, num.toHex(verifierClass), "0x0", num.toHex(proof.length), ...proof] };
+  return upgradeTo ? [{ contractAddress: address, entrypoint: "upgrade", calldata: [num.toHex(upgradeTo)] }, call] : [call];
+}
+
+/**
+ * Moves a PQ-only account back to hybrid with a NEW ECDSA key (`next.ecdsa*`; `next` may also
+ * carry a new Falcon key). Sign with HybridSigner(current, { pqOnly: true }). The first proof is
+ * Falcon-only by the current key, checked by the PQ-only verifier; the second is hybrid by the
+ * next pair, checked by `verifierClass`, so it proves the new ECDSA key. The contract would accept
+ * the old ECDSA key back; the kit refuses it, since a PQ-only account's ECDSA key may have leaked.
+ */
+export function hybridModeCalls(address, current, next, { verifierClass, allowedVerifiers = KNOWN_VERIFIERS }) {
+  assertAllowedVerifier(verifierClass, allowedVerifiers);
+  if (BigInt(next.ecdsaPublicKey) === BigInt(current.ecdsaPublicKey)) {
+    throw new Error("returning to hybrid needs a new ECDSA key: the old one was unused, and may be exposed, while the account was PQ-only");
+  }
+  const rotateProof = falconSignature(rotationHash(next.ecdsaPublicKey, current.falconFelts), current);
+  const setProof = hybridSignature(rotationHash(next.ecdsaPublicKey, next.falconFelts), next);
+  return [
+    { contractAddress: address, entrypoint: "rotate_ecdsa_public_key",
+      calldata: [num.toHex(next.ecdsaPublicKey), num.toHex(rotateProof.length), ...rotateProof] },
+    { contractAddress: address, entrypoint: "set_pq_key",
+      calldata: [num.toHex(next.falconFelts.length), ...next.falconFelts, num.toHex(verifierClass), "0x0", num.toHex(setProof.length), ...setProof] },
+  ];
 }
 
 // ---------------------------------------------------------------- account inspection
