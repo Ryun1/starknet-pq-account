@@ -197,6 +197,6 @@ bench/pf14/gas.
 ## Release manifest
 
 [`release/testnet-v2.json`](../../release/testnet-v2.json) pins the three declared classes to their
-scarb 2.22.0 artifacts, the vendored patch and cache digests, and the declare transactions
+scarb 2.22.0 artifacts, the lane's baseline bundle commit, the vendored patch and cache digests, and the declare transactions
 (`node scripts/release_manifest.mjs --check --release testnet-v2`, in CI; `--chain` re-reads the
 declarations).

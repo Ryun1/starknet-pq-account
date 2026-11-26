@@ -4,10 +4,10 @@ Issue: https://github.com/Ryun1/starknet-pq-account/issues/21. Planned 2026-11-1
 are external; figures marked "est." were estimates, since replaced by the measurements in steps 4
 and 8.
 
-**Progress, 2026-11-26.** Steps 0–8 and 10 done; both acceptance criteria closed. Step 1 merged in
+**Progress, 2026-11-26.** Every step is done; both acceptance criteria closed. Step 1 merged in
 PR #36, steps 2–10 in PR #41 (step 10 landed on the branch after review), the scarb 2.22.0
-toolchain in PR #42, the browser page and an ML-DSA-44 demo account in PR #43.
-Step 9 (release manifest `testnet-v2`, `wallet-coverage.md`) done the same day; every step is closed.
+toolchain in PR #42, the browser page and an ML-DSA-44 demo account in PR #43, step 9's release
+manifest `testnet-v2` and `wallet-coverage.md` in PR #44.
 
 Step 1 (the scheme-switch account) is shared with PF-14 and is the only part PF-14 depends on.
 
@@ -234,7 +234,7 @@ criterion 1 either way. If no-go, stop here; the remaining steps are not built.
 Status 2026-11-19: done. `signer/mldsa_adapter.mjs` and `signer/mldsa_fixture.mjs`; the kit's
 `prepareKeys` / `hybridSignature` treat a 1,312-byte key as ML-DSA-44, and `scheme_switch_check.mjs`
 checks the kit's key felts, `set_pq_key` proof and transaction signature equal the Cairo fixture's.
-The manifest's `scheme` field waits for step 9's manifest.
+The manifest's `scheme` field is in `release/testnet-v2.json` (step 9); the kit reading it is PF-14 A5/A8.
 
 `signer/mldsa_adapter.mjs`, about 20 lines: bytes to felts of 31 little-endian bytes (last felt
 holds the rest), `publicKeyFelts` (1,312 B → 43), `signatureFelts` (2,420 B → 79), and
@@ -315,10 +315,8 @@ ML-DSA-44, a Falcon-512 account moved with `[upgrade, set_pq_key]`; hybrid trans
 ECDSA-only rejected. The move needs about 45K L1 data gas; the first attempts bounded it at 5,000
 and reverted (recorded). Step 9's manifest follows the toolchain change.
 
-Status 2026-11-26, step 9: the toolchain change is merged (PR #42) and a 2.22.0 build reproduces the
-three declared class hashes, so the manifest and `wallet-coverage.md` can now be written.
-
-Status 2026-11-26, step 9: done. `release/testnet-v2.json` pins the three declared classes
+Status 2026-11-26, step 9: done (PR #44), after the toolchain change (PR #42) let a 2.22.0 build
+reproduce the three declared class hashes. `release/testnet-v2.json` pins the three declared classes
 (`release_manifest.mjs --release testnet-v2`; `--check` in CI on the 2.22.0 build, `--chain`
 confirms the declare transactions); `testnet-v1` writes back byte-identical. `wallet-coverage.md`
 has an ML-DSA-44 section. Not done: `verifiers.mjs` and the kit still read `testnet-v1` only; the
