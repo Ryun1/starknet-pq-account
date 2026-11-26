@@ -84,11 +84,28 @@ async function declare(name, run, wallet) {
   config.set("resourceBoundsOverhead", { l1_gas: margin, l2_gas: margin, l1_data_gas: margin });
   // starknet.js estimates with validation skipped by default; a hybrid account's validation is
   // about 28M L2 gas, so leaving it out underestimates the bound and validation runs out of gas.
-  const estimate = await retry(() => acc.estimateDeclareFee({ contract: sierra, casm }, { skipValidate: false }));
-  console.log(`estimated fee ${Number(estimate.overall_fee) / 1e18} STRK (bound includes the margin)`);
-  // Stop rather than send if the estimate is far above what was planned (PF04_MAX_FEE_STRK).
+  let estimate;
+  try {
+    estimate = await retry(() => acc.estimateDeclareFee({ contract: sierra, casm }, { skipValidate: false }));
+  } catch (e) {
+    // Since 2026-11-26 the public RPC cannot estimate a large Sierra 1.10.0 declare ("Internal
+    // error"); bound it as pf13_sepolia.mjs does: the code-size formula (bench/pf04/summarize.py,
+    // 1,280 L2 gas per byte of code and ABI) + 20%, plus the deployer's own validation.
+    const code = 1280n * BigInt(32 * (casm.bytecode.length + sierra.sierra_program.length) + JSON.stringify(sierra.abi).length);
+    const b = await retry(() => provider.getBlockWithTxHashes("latest"));
+    const resourceBounds = {
+      l1_gas: { max_amount: 0n, max_price_per_unit: BigInt(b.l1_gas_price.price_in_fri) * 2n },
+      l1_data_gas: { max_amount: 5000n, max_price_per_unit: BigInt(b.l1_data_gas_price.price_in_fri) * 2n },
+      l2_gas: { max_amount: (code * 12n) / 10n + 20000000n, max_price_per_unit: (BigInt(b.l2_gas_price.price_in_fri) * 3n) / 2n },
+    };
+    const overall_fee = resourceBounds.l2_gas.max_amount * resourceBounds.l2_gas.max_price_per_unit + 5000n * resourceBounds.l1_data_gas.max_price_per_unit;
+    console.log(`no estimate (${JSON.stringify(e.baseError ?? "").slice(0, 80)}); formula bound ${resourceBounds.l2_gas.max_amount} L2 gas`);
+    estimate = { resourceBounds, overall_fee };
+  }
+  console.log(`fee bound ${Number(estimate.overall_fee) / 1e18} STRK`);
+  // Stop rather than send if the bound is far above what was planned (PF04_MAX_FEE_STRK).
   const maxFee = BigInt(process.env.PF04_MAX_FEE_STRK || "250") * 10n ** 18n;
-  if (estimate.overall_fee > maxFee) throw new Error("estimate above PF04_MAX_FEE_STRK; not sending");
+  if (estimate.overall_fee > maxFee) throw new Error("fee bound above PF04_MAX_FEE_STRK; not sending");
   // Sepolia evicts zero-tip transactions from the mempool; use the tip recent blocks paid.
   const { recommendedTip } = await retry(() => provider.getEstimateTip("latest", { maxBlocks: 5 }));
   const d = await acc.declare({ contract: sierra, casm }, { tip: recommendedTip, resourceBounds: estimate.resourceBounds });

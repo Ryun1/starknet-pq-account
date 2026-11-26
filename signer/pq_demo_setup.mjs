@@ -27,7 +27,7 @@ const SCHEMES = {
   "ml-dsa-44": { index: 2, out: "../bench/pf13/demo-sepolia.json", verifier: ["HybridMlDsa44Verifier", PF13.HybridMlDsa44Verifier],
     setup: ["MlDsa44KeySetup", PF13.MlDsa44KeySetup], migrationL2: 1200000000n, migrationData: 60000n, transferL2: 120000000n, fund: 100n * 10n ** 18n },
   "falcon-1024": { index: 1, out: "../bench/pf14/sepolia.json", verifier: ["HybridShakeVerifierFalcon1024", null],
-    setup: null, migrationL2: 250000000n, migrationData: 20000n, transferL2: 250000000n, fund: 30n * 10n ** 18n },
+    setup: null, migrationL2: 600000000n, migrationData: 20000n, transferL2: 250000000n, fund: 50n * 10n ** 18n },
 };
 const S = SCHEMES[SCHEME];
 if (!S) { console.error(`usage: node pq_demo_setup.mjs ${Object.keys(SCHEMES).join(" | ")}`); process.exit(1); }

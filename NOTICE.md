@@ -19,7 +19,7 @@
   for that challenge on the NTT engine above, from its bundle at commit `bf7fd8785a189164d638e7f7c11d261c9e864d56`
   (a child of `bece5c07`), MIT, unchanged. `vendor/provably-fast/falcon-1024/`: the lane's record patch
   `record-fk_2956035507114a6c89165c8cc8e8fe56.patch` (`1df60496…c98b`), MIT, by the contributors listed in its
-  `PROVENANCE.md`, and the crates generated from it: `HybridShakeVerifierFalcon1024`, built and tested only (PF-14).
+  `PROVENANCE.md`, and the crates generated from it: `HybridShakeVerifierFalcon1024`, declared on Sepolia for the browser demo (PF-14).
 - `vendor/cairo-pq-verifiers/crates/ml_dsa_44/`: the Provably Fast ML-DSA-44 lane's baseline crate, from its bundle
   at commit `78c83599f57ecb28847ba3ebc4528598318129b8` (a child of `bece5c07`), MIT, unchanged.
   `vendor/provably-fast/ml-dsa-44/`: the lane's record patch `record-mj_2e2f9ddebbcc4281b07d84937ae0ffbc.patch`

@@ -1,0 +1,30 @@
+{
+  "description": "falcon-1024 public demo account on Sepolia (signer/pq_demo_setup.mjs, demo words index 1); transaction hashes and receipts only",
+  "account": "0x6cc8174385000e9451849a43266798b22ad91edd529ba3bc3f1b693e0bc3218",
+  "classes": {
+    "HybridMigratableAccountV2": "0x7c7c9de03f30291427331176d5e64922c6f457c0ebf86ce09555f485091b154",
+    "HybridShakeVerifierFalcon1024": "0x647ae0aa39903ec2e15c33bee124ff72120e63ad39adc5368cc52799cd4661d"
+  },
+  "deploy": {
+    "tx": "0x11f90dbf95f27d23cb2b1720001b5e0948f6f6f8dd105a282a2be87c2aa12cb",
+    "status": "SUCCEEDED",
+    "l2_gas": 2281840,
+    "fee_fri": "81195574376363440"
+  },
+  "migration": {
+    "tx": "0xa9ae3f8f95304e0b60bcc65e93176062384a7fdb9188a712b5d8ef55ffb5ad",
+    "status": "SUCCEEDED",
+    "l2_gas": 171843520,
+    "fee_fri": "5160302046059197760"
+  },
+  "hybrid_transfer": {
+    "tx": "0x5f761f3f269f06a0cfced699ecd1ddde46bedc1d217c1d40c90d82d085ddc95",
+    "status": "SUCCEEDED",
+    "l2_gas": 54223517,
+    "fee_fri": "1571467950067741953"
+  },
+  "ecdsa_only_transfer": {
+    "rejected": true,
+    "error_tail": "0e9451849a43266798b22ad91edd529ba3bc3f1b693e0bc3218, class hash: 0x07c7c9de03f30291427331176d5e64922c6f457c0ebf86ce09555f485091b154, selector: 0x0162da33a4585851fe8d3af3c2a9c60b557814e221e0d4f30ff0b2189d9c7775): 0x4163636f756e743a20696e76616c6964207369676e6174757265 ('Account: invalid signature'). \""
+  }
+}

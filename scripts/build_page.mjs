@@ -4,13 +4,13 @@
 //   node scripts/build_page.mjs --check   # exit 1 if docs/index.html is not what this builds
 //
 // The page gets: the public page config (signer/browser-wallet.config.json), a label for each
-// verifier pinned in release/testnet-v1.json, for the Falcon-1024 verifier (from its built
-// artifact) and for the declared ML-DSA-44 verifier (bench/pf13/sepolia.json), the Falcon NTT roots up to n = 1024, and verifierLabel from signer/page_verifier.mjs.
+// verifier pinned in release/testnet-v1.json and for the declared Falcon-1024 and ML-DSA-44 verifiers
+// (their Sepolia receipts), the Falcon NTT roots up to n = 1024, and verifierLabel from
+// signer/page_verifier.mjs.
 // Everything in it is public.
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { createRequire } from "node:module";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFileSync(resolve(REPO, path), "utf8");
@@ -27,15 +27,13 @@ for (const [id, name] of Object.entries(release.verifiers)) {
   if (!LABELS[id]) throw new Error(`no page label for verifier "${id}"; add one to scripts/build_page.mjs`);
   verifiers[release.classes[name].class_hash] = LABELS[id];
 }
-// Verifier classes declared on Sepolia outside the release manifest (PF-14), labelled by the class
-// hash of the built artifact, so the page and the build cannot disagree. Needs `scarb build` first.
-const EXTRA_LABELS = { HybridShakeVerifierFalcon1024: "Provably Fast Falcon-1024 record (falcon1024-pf-record)" };
-const { hash } = await import(pathToFileURL(createRequire(resolve(REPO, "signer/package.json")).resolve("starknet")).href);
-for (const [name, label] of Object.entries(EXTRA_LABELS)) {
-  verifiers[hash.computeContractClassHash(JSON.parse(read(`contracts/target/dev/pq_hybrid_${name}.contract_class.json`)))] = label;
-}
-// PF-13: the ML-DSA-44 verifier as declared (step 10 receipts; a scarb 2.22.0 build).
-verifiers[JSON.parse(read("bench/pf13/sepolia.json")).classes.HybridMlDsa44Verifier] = "Provably Fast ML-DSA-44 record, cached (mldsa44-pf-record)";
+// Verifier classes declared on Sepolia outside the release manifest, by the class hash in their
+// Sepolia receipts (scarb 2.22.0 builds; a build with another toolchain hashes differently).
+const DECLARED = [
+  ["bench/pf14/sepolia.json", "HybridShakeVerifierFalcon1024", "Provably Fast Falcon-1024 record (falcon1024-pf-record)"],
+  ["bench/pf13/sepolia.json", "HybridMlDsa44Verifier", "Provably Fast ML-DSA-44 record, cached (mldsa44-pf-record)"],
+];
+for (const [file, name, label] of DECLARED) verifiers[JSON.parse(read(file)).classes[name]] = label;
 const config = { ...JSON.parse(read("signer/browser-wallet.config.json")), verifiers };
 const labelFn = read("signer/page_verifier.mjs").replace(/^\/\/.*\n/gm, "").replace(/^export /m, "").trim();
 
