@@ -6,8 +6,7 @@ and A7.
 
 **Progress, 2026-11-26.** Part A steps A1–A8 merged in PR #37, Part B in PR #38; both acceptance
 criteria closed. Benches re-measured on scarb 2.22.0 in PR #42. A9 and A8's manifest entry done
-(PR #43, then the Falcon-512 move and release `testnet-v2`'s Falcon-1024 entry on branch
-`pf14-a9-finish`). Every step is done. Not done: the kit's per-scheme allow list (see
+(PR #43, then the Falcon-512 move and release `testnet-v2`'s Falcon-1024 entry in PR #45). Every step is done. Not done: the kit's per-scheme allow list (see
 `bench/pf14/README.md`).
 
 Depends on step 1 of the PF-13 plan (`PF-13-ml-dsa-44.md`, `HybridMigratableAccountV2` and

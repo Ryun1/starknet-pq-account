@@ -176,7 +176,8 @@ PQ_TARGET=falcon-1024 node pf13_sepolia.mjs receipts   # writes bench/pf14/a9-se
 
 The move (115.7M) is above the local `set_pq_key` figure (78.8M) by the transaction's Falcon-512
 validation, the `upgrade` call and the 2.22.0 build. Unlike ML-DSA-44 it writes only the 57-felt
-key, so its L1 data gas (4,832) fits a Falcon-sized bound.
+key, but its 4,832 L1 data gas is only 3% under the 5,000 bound that reverted the ML-DSA-44 moves;
+the script bounds it at 20,000, and a wallet should not rely on 5,000 either.
 
 ## Not done
 
