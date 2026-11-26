@@ -89,6 +89,34 @@ review outstanding (#9). The guarded switch needs a working active verifier, and
 Poseidon-verifier accounts or directly deployed `HybridShakeAccount` accounts. Compact and record
 can't be declared, and small fits in a block with a 6.2% margin.
 
+## Release `testnet-v2`: ML-DSA-44
+
+[`testnet-v2.json`](testnet-v2.json) pins the three classes PF-13 declared on Sepolia on
+2026-11-26 ([`bench/pf13`](../bench/pf13/README.md#sepolia-receipts-plan-step-10-2026-11-26)):
+
+| Class | Role | Class hash | Declare tx |
+| --- | --- | --- | --- |
+| `HybridMigratableAccountV2` | account (scheme switch, `set_pq_key`) | `0x7c7c9de03f30291427331176d5e64922c6f457c0ebf86ce09555f485091b154` | [0x531e2875…](https://sepolia.voyager.online/tx/0x531e2875a033559659bcd9e82030c2a903aea90c7aa87529af97d2c5b2e43e3) |
+| `HybridMlDsa44Verifier` | verifier (`ml-dsa-44`, setup `MlDsa44KeySetup`) | `0x35cd62eef749b97d512003946b8e286c6a642352c83aa3a018598f6d15a5974` | [0x55b2e1cf…](https://sepolia.voyager.online/tx/0x55b2e1cf3bb6962e1778f77c6fce731d77953a12f6bfa59ecdf44a24718514b) |
+| `MlDsa44KeySetup` | setup (writes the key's cache once) | `0x7aa0d9ef9ad35319d5170fc1d2661ff03f98c8fd7df0fd8122c03f20cd7e088` | [0x65cbd374…](https://sepolia.voyager.online/tx/0x65cbd374c750205134da3561e820eb62e71996c7fb0633b42d2b49dbe12b990) |
+
+Each verifier entry names its `scheme` and `setup` class. The source pins are the lane's baseline
+bundle `78c83599…` (parent: cairo-pq-verifiers `bece5c07…`), the ML-DSA-44 record patch
+`mj_2e2f9dde` and the ported `cache.cairo` (`vendor/provably-fast/ml-dsa-44/SHA256SUMS`).
+Toolchain: scarb and Cairo 2.22.0, Sierra 1.10.0 (the only version Sepolia declared that day),
+snforge 0.64.1, universal-sierra-compiler 2.11.0-rc.1. Falcon-512 verifiers stay in
+`testnet-v1`; a V2 account can use them.
+
+```sh
+(cd contracts && ASDF_SCARB_VERSION=2.22.0 scarb build)
+node scripts/release_manifest.mjs --check --release testnet-v2   # offline; also run by CI
+node scripts/release_manifest.mjs --chain --release testnet-v2   # read-only: declared, declare txs match
+```
+
+Same limits as `testnet-v1`: experimental, unaudited, testnet only. The kit does not yet read this
+manifest: `signer/verifiers.mjs` reads `testnet-v1` only, and the scheme table that would dispatch
+on `scheme` is PF-14 work.
+
 ## Tagging
 
 After the PR is merged, the maintainer tags the merge commit:

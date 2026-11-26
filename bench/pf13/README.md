@@ -194,7 +194,9 @@ bench/pf13/gas/run.sh --check    # CI: same, against gas/budgets.json
 `gas/run.sh` needs scarb 2.22.0, snforge 0.64.1 and universal-sierra-compiler 2.11.0-rc.1, as
 bench/pf14/gas.
 
-## Remaining plan steps
+## Release manifest
 
-Step 9's release manifest for these classes waits for the scarb 2.22.0 toolchain change
-(separate PR), so that the manifest's build reproduces the declared class hashes.
+[`release/testnet-v2.json`](../../release/testnet-v2.json) pins the three declared classes to their
+scarb 2.22.0 artifacts, the lane's baseline bundle commit, the vendored patch and cache digests, and the declare transactions
+(`node scripts/release_manifest.mjs --check --release testnet-v2`, in CI; `--chain` re-reads the
+declarations).

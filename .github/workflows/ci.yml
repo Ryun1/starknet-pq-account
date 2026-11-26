@@ -27,6 +27,8 @@ jobs:
       - name: Kit verifier-switch gates
         working-directory: signer
         run: npm install --no-package-lock --no-audit --no-fund && node verifier_switch_check.mjs && node verifiers_check.mjs && node scheme_switch_check.mjs
+      - name: Built classes match release testnet-v2 (scarb 2.22.0 builds)
+        run: node scripts/release_manifest.mjs --check --release testnet-v2
 
   # Release testnet-v1's classes are declared on Sepolia from scarb 2.18.0 builds (Sierra 1.8.0),
   # so the manifest and the page, which pin their class hashes, are checked against that toolchain.

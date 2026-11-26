@@ -1,8 +1,13 @@
 # PF-13 implementation plan: ML-DSA-44 (FIPS 204) hybrid verifier
 
-Issue: https://github.com/Ryun1/starknet-pq-account/issues/21. Planned 2026-11-19. Nothing here is
-built or measured in this repository yet. Board figures are external; figures marked "est." are
-estimates to be replaced by the measurements in steps 4 and 9.
+Issue: https://github.com/Ryun1/starknet-pq-account/issues/21. Planned 2026-11-19. Board figures
+are external; figures marked "est." were estimates, since replaced by the measurements in steps 4
+and 8.
+
+**Progress, 2026-11-26.** Every step is done; both acceptance criteria closed. Step 1 merged in
+PR #36, steps 2–10 in PR #41 (step 10 landed on the branch after review), the scarb 2.22.0
+toolchain in PR #42, the browser page and an ML-DSA-44 demo account in PR #43, step 9's release
+manifest `testnet-v2` and `wallet-coverage.md` in PR #44.
 
 Step 1 (the scheme-switch account) is shared with PF-14 and is the only part PF-14 depends on.
 
@@ -203,6 +208,8 @@ was built for, checked by the verifier (a key written without the setup cannot u
 Status 2026-11-19: **go**, every gate passes (bench/pf13/README.md): verifier declare 65.2%, setup
 34.7%, `__validate__` worst 40.6M, `set_pq_key` 414M. Measured with `bench/pf13/gas` (step 8's
 harness, built early) rather than a generalised `screen.sh`; only the record was built.
+Re-measured 2026-11-26 on scarb 2.22.0 (PR #42): `__validate__` worst 43.4M, verifier declare 67.0%,
+setup 36.4%; every gate still passes.
 
 Generalise `bench/pf04/screen.sh` to take a lane (API path, job-id prefix `mj_`, allowed patch
 paths `crates/ml_dsa_44/src/…`, class names). For each candidate record, record CASM felts, Sierra
@@ -227,7 +234,7 @@ criterion 1 either way. If no-go, stop here; the remaining steps are not built.
 Status 2026-11-19: done. `signer/mldsa_adapter.mjs` and `signer/mldsa_fixture.mjs`; the kit's
 `prepareKeys` / `hybridSignature` treat a 1,312-byte key as ML-DSA-44, and `scheme_switch_check.mjs`
 checks the kit's key felts, `set_pq_key` proof and transaction signature equal the Cairo fixture's.
-The manifest's `scheme` field waits for step 9's manifest.
+The manifest's `scheme` field is in `release/testnet-v2.json` (step 9); the kit reading it is PF-14 A5/A8.
 
 `signer/mldsa_adapter.mjs`, about 20 lines: bytes to felts of 31 little-endian bytes (last felt
 holds the rest), `publicKeyFelts` (1,312 B → 43), `signatureFelts` (2,420 B → 79), and
@@ -308,6 +315,13 @@ ML-DSA-44, a Falcon-512 account moved with `[upgrade, set_pq_key]`; hybrid trans
 ECDSA-only rejected. The move needs about 45K L1 data gas; the first attempts bounded it at 5,000
 and reverted (recorded). Step 9's manifest follows the toolchain change.
 
+Status 2026-11-26, step 9: done (PR #44), after the toolchain change (PR #42) let a 2.22.0 build
+reproduce the three declared class hashes. `release/testnet-v2.json` pins the three declared classes
+(`release_manifest.mjs --release testnet-v2`; `--check` in CI on the 2.22.0 build, `--chain`
+confirms the declare transactions); `testnet-v1` writes back byte-identical. `wallet-coverage.md`
+has an ML-DSA-44 section. Not done: `verifiers.mjs` and the kit still read `testnet-v1` only; the
+scheme table that dispatches on the manifest's `scheme` is PF-14 A5/A8.
+
 ## Acceptance criteria
 
 | Criterion | Closed by |
@@ -317,7 +331,11 @@ and reverted (recorded). Step 9's manifest follows the toolchain change.
 
 ## Not in this plan
 
-- A browser signer page or hosted demo for ML-DSA: a separate, authorized rollout.
+- A browser signer page or hosted demo for ML-DSA: a separate, authorized rollout. Done anyway on
+  2026-11-26: the page restores and signs with ML-DSA-44 keys (`7b49b05`), and PR #43 added a
+  "Try ML-DSA-44" demo account (demo words index 2, `bench/pf13/demo-sepolia.json`: migration
+  1.12e9 L2 gas from the page's OpenZeppelin class, against Sepolia's 1.21e9 cap; hybrid transfer
+  44.7M; ECDSA-only rejected).
 - Committing to the cache and passing it in the signature instead of reading 461 storage slots.
   Possibly several million gas per transaction, unmeasured; look at it only if step 8 shows the
   reads dominate.
