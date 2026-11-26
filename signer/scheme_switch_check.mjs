@@ -10,7 +10,10 @@ import { readFileSync } from "node:fs";
 import { falcon512, falcon1024, makeNtt, publicKeyFelts } from "./falcon_adapter.mjs";
 import { deriveAccountKeys } from "./pq_keys.mjs";
 import { HybridSigner, KNOWN_VERIFIERS, migrationArgs, prepareKeys, rotationHash, setPqKeyCalls } from "./pq_account_kit.mjs";
-import { ml_dsa44 } from "./mldsa_adapter.mjs";
+import { hashBytes, ml_dsa44 } from "./mldsa_adapter.mjs";
+import { hkdf } from "@noble/hashes/hkdf";
+import { sha512 } from "@noble/hashes/sha2";
+import { mnemonicToSeedSync } from "@scure/bip39";
 import { createHash } from "node:crypto";
 import { ROOTS, ROTATION_FIXTURE, TARGET } from "./config.mjs";
 
@@ -125,5 +128,19 @@ check("backup v0.2 gives an ML-DSA-44 key with the same ECDSA key", v02ml.falcon
 check("backup v0.2 ML-DSA-44 vector", sha(v02ml.falconPublicKey) === "ac0882837d8d1a2f1b2fba51c5cb0c1403b1acbb64d951e1bd522ed6c936e599", sha(v02ml.falconPublicKey));
 check("backup v0.2 Falcon-1024 key is unchanged by the ML-DSA-44 entry",
   sha(v02.falconPublicKey) === "d14527e61098ec1c65435148886c783d064dd193339720d3d5b544b4ecff864a");
+
+// The browser page's ML-DSA-44 block (signer/browser-wallet.template.html), run here as written:
+// its keys, key felts and signatures must be the kit's.
+const PAGE = readFileSync(new URL("./browser-wallet.template.html", import.meta.url), "utf8");
+const block = /\/\/ --- ML-DSA-44 \(PF-13\)[^\n]*\n([\s\S]*?)\/\/ --- end ML-DSA-44 ---/.exec(PAGE)[1];
+const page = new Function("ml_dsa44", "hkdf", "sha512", `${block}; return { mldsaKeysFromSeed, bytesToFelts, mldsaSignatureFelts };`)(ml_dsa44, hkdf, sha512);
+const pageKeys = page.mldsaKeysFromSeed(mnemonicToSeedSync(WORDS), 0);
+check("page: ML-DSA-44 key from the words = backup v0.2's", same([...pageKeys.falconPublicKey], [...v02ml.falconPublicKey]));
+check("page: key felts = the kit's", same(page.bytesToFelts(km.publicKey), nextMl.falconFelts));
+const pageSig = page.mldsaSignatureFelts(MSG, km.secretKey);
+// Inverse of the packing: 31 little-endian bytes per felt, the last felt the rest.
+const feltsToBytes = (felts, n) => Uint8Array.from({ length: n }, (_, k) => Number((felts[Math.floor(k / 31)] >> BigInt(8 * (k % 31))) & 0xffn));
+check("page: its signature felts unpack to a signature noble accepts",
+  pageSig.length === 79 && ml_dsa44.verify(feltsToBytes(pageSig, 2420), hashBytes(MSG), km.publicKey));
 
 process.exit(failed ? 1 : 0);

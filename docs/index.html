@@ -241,7 +241,7 @@
   <p class="label">How it works</p>
   <section class="more">
     <h3>What the account checks</h3>
-    <p class="point">Every transaction carries 62 felts (118 with Falcon-1024). Both halves are checked against the same transaction hash.</p>
+    <p class="point">Every transaction carries 62 felts (118 with Falcon-1024, 81 with ML-DSA-44). Both halves are checked against the same transaction hash.</p>
     <div class="sig"><i class="e"></i><i class="f"></i><i class="s"></i><i class="h"></i></div>
     <div class="sig-legend">
       <span class="lg-e">ECDSA r, s (2)</span>
@@ -284,6 +284,7 @@
 <script type="module">
 const { Account, CallData, RpcProvider, Signer, cairo, ec, hash, num } = window.starknet;
 import { falcon512, falcon1024 } from "https://cdn.jsdelivr.net/npm/@noble/post-quantum@0.6.1/falcon.js/+esm";
+import { ml_dsa44 } from "https://cdn.jsdelivr.net/npm/@noble/post-quantum@0.6.1/ml-dsa.js/+esm";
 import { mnemonicToSeedSync, validateMnemonic } from "https://cdn.jsdelivr.net/npm/@scure/bip39@1.6.0/+esm";
 import { wordlist } from "https://cdn.jsdelivr.net/npm/@scure/bip39@1.6.0/wordlists/english.js/+esm";
 import { HDKey } from "https://cdn.jsdelivr.net/npm/@scure/bip32@1.7.0/+esm";
@@ -307,7 +308,7 @@ const log = (msg, cls) => { const el = $("log"); el.textContent = msg; el.classN
 const provider = new RpcProvider({ nodeUrl: CONFIG.rpc });
 let keys = null, address = null, seed = null, accountIndex = 0, nextIndex = 0;
 
-// --- key backup profiles v0.1 (Falcon-512) and v0.2 (Falcon-1024), same as signer/pq_keys.mjs ---
+// --- key backup profiles v0.1 (Falcon-512) and v0.2 (Falcon-1024, ML-DSA-44), same as signer/pq_keys.mjs ---
 function seedFromMnemonic(mnemonic) {
   if (!validateMnemonic(mnemonic, wordlist)) throw new Error("Invalid mnemonic.");
   return mnemonicToSeedSync(mnemonic);
@@ -323,8 +324,27 @@ function falconKeysFromSeed(seed, index, n) {
   const te = new TextEncoder();
   const falconSeed = hkdf(sha512, seed, te.encode(profile), te.encode(`falcon-${n}/noble/account/${index}`), 48);
   const { publicKey, secretKey } = scheme.keygen(falconSeed);
-  return { n, falconPublicKey: publicKey, falconSecretKey: secretKey };
+  return { n, scheme: `Falcon-${n}`, falconPublicKey: publicKey, falconSecretKey: secretKey };
 }
+// --- ML-DSA-44 (PF-13): backup v0.2 and the felt layout of signer/mldsa_adapter.mjs. Run by signer/scheme_switch_check.mjs. ---
+function mldsaKeysFromSeed(seed, index) {
+  const te = new TextEncoder();
+  const mlSeed = hkdf(sha512, seed, te.encode("starknet-pq-backup-v0.2"), te.encode(`ml-dsa-44/fips204/account/${index}`), 32);
+  const { publicKey, secretKey } = ml_dsa44.keygen(mlSeed);
+  return { scheme: "ML-DSA-44", falconPublicKey: publicKey, falconSecretKey: secretKey };
+}
+// 31 bytes per felt, little-endian within the felt, the last felt holding the rest.
+function bytesToFelts(bytes) {
+  const out = [];
+  for (let i = 0; i < bytes.length; i += 31) out.push(bytes.slice(i, i + 31).reduceRight((acc, x) => (acc << 8n) | BigInt(x), 0n));
+  return out;
+}
+// ML-DSA signs the transaction hash as 32 big-endian bytes (Falcon: little-endian), empty context.
+function mldsaSignatureFelts(txHash, secretKey) {
+  const msg = Uint8Array.from(BigInt(txHash).toString(16).padStart(64, "0").match(/../g), (b) => parseInt(b, 16));
+  return bytesToFelts(ml_dsa44.sign(msg, secretKey));
+}
+// --- end ML-DSA-44 ---
 
 // --- noble Falcon -> on-chain felts (same as signer/falcon_adapter.mjs; n from the header byte) ---
 function decodePublicKey(pk) {
@@ -360,6 +380,7 @@ function mulNegacyclic(a, b) {
 const leInt = (b) => b.reduceRight((acc, x) => (acc << 8n) | BigInt(x), 0n);
 function hashToMessage(txHash) { let v = BigInt(txHash); const out = new Uint8Array(32); for (let i = 0; i < 32; i++) { out[i] = Number(v & 0xffn); v >>= 8n; } return out; }
 function falconFelts(txHash) {
+  if (keys.scheme === "ML-DSA-44") return mldsaSignatureFelts(txHash, keys.falconSecretKey);
   const sig = (keys.n === 1024 ? falcon1024 : falcon512).sign(hashToMessage(txHash), keys.falconSecretKey);
   const { nonce, s2 } = decodeSignature(sig), h = decodePublicKey(keys.falconPublicKey);
   const s2q = s2.map((x) => ((x % Q) + Q) % Q);
@@ -381,8 +402,9 @@ async function bounds() {
   return {
     l1_gas: { max_amount: 0n, max_price_per_unit: BigInt(b.l1_gas_price.price_in_fri) * 2n },
     l1_data_gas: { max_amount: 5000n, max_price_per_unit: BigInt(b.l1_data_gas_price.price_in_fri) * 2n },
-    // Falcon-1024 validation is about 55M L2 gas against Falcon-512's 30-54M (bench/pf14, pf04).
-    l2_gas: { max_amount: keys.n === 1024 ? 120000000n : 70000000n, max_price_per_unit: (BigInt(b.l2_gas_price.price_in_fri) * 5n) / 4n },
+    // Falcon-1024 validation is about 55M L2 gas and ML-DSA-44 about 41M, against Falcon-512's 30-54M
+    // (bench/pf14, pf13, pf04).
+    l2_gas: { max_amount: keys.n === 512 ? 70000000n : 120000000n, max_price_per_unit: (BigInt(b.l2_gas_price.price_in_fri) * 5n) / 4n },
   };
 }
 // Sepolia evicts zero-tip transactions from the mempool: pay the tip recent blocks paid, or, if
@@ -393,7 +415,8 @@ async function tip() {
 const transfer = () => ({ contractAddress: CONFIG.strk, entrypoint: "transfer", calldata: CallData.compile({ recipient: CONFIG.recipient, amount: cairo.uint256(10n ** 16n) }) });
 
 // Derives both keys from a seed, then checks the Falcon key registered on-chain. The scheme is
-// read from the chain: a 57-felt key is Falcon-1024 (backup v0.2), anything else Falcon-512 (v0.1).
+// read from the chain: a 57-felt key is Falcon-1024 and a 43-felt key ML-DSA-44 (backup v0.2),
+// anything else Falcon-512 (v0.1).
 async function activate(newSeed, source, index = 0) {
   // Nothing can be sent until this account's on-chain key has been checked, even if a restore fails.
   for (const id of ["send", "attack", "falcon-send", "pk-save"]) $(id).disabled = true;
@@ -405,9 +428,11 @@ async function activate(newSeed, source, index = 0) {
   // null. Anything else, such as a network failure, is reported as before.
   const onchain = await provider.callContract({ contractAddress: address, entrypoint: "get_falcon_public_key", calldata: [] }, "latest")
     .catch((e) => { if ([20, 21].includes(e?.baseError?.code) || /contract not found|entrypoint does not exist|ENTRYPOINT_NOT_FOUND/i.test(String(e?.message || e))) return null; throw e; });
-  keys = { ...ecdsa, ...falconKeysFromSeed(seed, index, onchain && onchain.length === 58 ? 1024 : 512) };
-  const mine = pack(ntt(decodePublicKey(keys.falconPublicKey))).map((x) => num.toHex(x));
-  $("scheme").textContent = keys.n === 1024 ? "Falcon-1024 (NIST level 5)" : "Falcon-512";
+  const felts = onchain ? onchain.length - 1 : 0;
+  keys = { ...ecdsa, ...(felts === 43 ? mldsaKeysFromSeed(seed, index) : falconKeysFromSeed(seed, index, felts === 57 ? 1024 : 512)) };
+  const mine = (keys.n ? pack(ntt(decodePublicKey(keys.falconPublicKey))) : bytesToFelts(keys.falconPublicKey)).map((x) => num.toHex(x));
+  $("scheme").textContent = { "Falcon-1024": "Falcon-1024 (NIST level 5)", "ML-DSA-44": "ML-DSA-44 (FIPS 204, NIST level 2)" }[keys.scheme] || keys.scheme;
+  $("falcon-send").textContent = `Try ${keys.scheme} only`;
   $("ecpk").textContent = keys.ecdsaPublicKey; $("fpk").textContent = mine[0]; $("keys").hidden = false;
   $("verifier").textContent = "checking...";
   // Signing is the same for every SHAKE-256 verifier; this only shows which one the account uses.
@@ -415,7 +440,7 @@ async function activate(newSeed, source, index = 0) {
     .then((r) => r[0], () => null)
     .then((h) => { $("verifier").textContent = verifierLabel(h, CONFIG.verifiers); });
   const match = !!onchain && JSON.stringify(onchain.slice(1).map((x) => num.toHex(x))) === JSON.stringify(mine);
-  $("check").innerHTML = match ? `<span class="ok">Falcon key on-chain matches the key restored from ${source}</span>` : `<span class="bad">${onchain ? "On-chain key does not match" : "No migrated account at this address"}</span>`;
+  $("check").innerHTML = match ? `<span class="ok">${keys.scheme} key on-chain matches the key restored from ${source}</span>` : `<span class="bad">${onchain ? "On-chain key does not match" : "No migrated account at this address"}</span>`;
   $("send").disabled = !match; $("attack").disabled = !match; $("falcon-send").disabled = !match; $("pk-save").disabled = !match;
   falconLog(match ? "Ready." : "Waiting for keys.");
   log(match ? "Ready." : "These keys do not control a migrated account.", match ? "ok" : "bad");
@@ -527,7 +552,7 @@ async function send(mode) {
 $("send").addEventListener("click", async () => {
   $("send").disabled = true;
   try {
-    log(`Signing in this browser (ECDSA + Falcon-${keys.n}) and sending...`);
+    log(`Signing in this browser (ECDSA + ${keys.scheme}) and sending...`);
     const t0 = performance.now();
     const r = await send("hybrid");
     log(`Sent. Waiting for inclusion...\n${r.transaction_hash}`);
@@ -549,12 +574,12 @@ const falconLog = (msg, cls) => { const el = $("falcon-log"); el.textContent = m
 $("falcon-send").addEventListener("click", async () => {
   $("falcon-send").disabled = true;
   try {
-    falconLog(`Signing with Falcon-${keys.n} only (no ECDSA signature) and sending...`);
+    falconLog(`Signing with ${keys.scheme} only (no ECDSA signature) and sending...`);
     const r = await send("falcon");
     falconLog(`Unexpected: accepted ${r.transaction_hash}`, "bad");
   } catch (e) {
     const m = String(e.message || e), tail = m.slice(m.lastIndexOf("\n") + 1).slice(0, 300);
-    if (/validate/i.test(m) && /panicked|invalid signature/i.test(m)) falconLog(`Rejected as expected: __validate__ refused a valid Falcon-${keys.n} signature without the ECDSA signature.\n` + tail, "ok");
+    if (/validate/i.test(m) && /panicked|invalid signature/i.test(m)) falconLog(`Rejected as expected: __validate__ refused a valid ${keys.scheme} signature without the ECDSA signature.\n` + tail, "ok");
     else falconLog("Not sent, for a reason unrelated to the signature check:\n" + tail, "bad");
   }
   finally { $("falcon-send").disabled = false; }

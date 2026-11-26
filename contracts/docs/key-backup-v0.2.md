@@ -48,4 +48,5 @@ URL and SHA-256). On chain the key is 43 felts (`get_falcon_public_key`).
 Test vector (same mnemonic, profile `pq`, index 0): ECDSA key as above; SHA-256 of the 1,312-byte
 ML-DSA-44 public key `ac0882837d8d1a2f1b2fba51c5cb0c1403b1acbb64d951e1bd522ed6c936e599`.
 
-The browser page does not restore ML-DSA-44 keys.
+The browser page (`docs/index.html`) restores ML-DSA-44 keys when the account's on-chain key is 43 felts
+and signs with them; it has no ML-DSA-44 demo account (no ML-DSA-44 class is declared on Sepolia yet).
