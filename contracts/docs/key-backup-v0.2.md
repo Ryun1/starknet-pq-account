@@ -49,4 +49,5 @@ Test vector (same mnemonic, profile `pq`, index 0): ECDSA key as above; SHA-256 
 ML-DSA-44 public key `ac0882837d8d1a2f1b2fba51c5cb0c1403b1acbb64d951e1bd522ed6c936e599`.
 
 The browser page (`docs/index.html`) restores ML-DSA-44 keys when the account's on-chain key is 43 felts
-and signs with them; it has no ML-DSA-44 demo account (no ML-DSA-44 class is declared on Sepolia yet).
+and signs with them. Its ML-DSA-44 demo account is the public demo words at index 2
+(`signer/pq_demo_setup.mjs ml-dsa-44`, receipts in `bench/pf13/demo-sepolia.json`).

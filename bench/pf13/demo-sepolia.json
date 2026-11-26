@@ -1,0 +1,31 @@
+{
+  "description": "ml-dsa-44 public demo account on Sepolia (signer/pq_demo_setup.mjs, demo words index 2); transaction hashes and receipts only",
+  "account": "0x23ce907048fbbb5a1d62df8404d456d99eacbe9ea5a94400f0344e47457eb67",
+  "classes": {
+    "HybridMigratableAccountV2": "0x7c7c9de03f30291427331176d5e64922c6f457c0ebf86ce09555f485091b154",
+    "HybridMlDsa44Verifier": "0x35cd62eef749b97d512003946b8e286c6a642352c83aa3a018598f6d15a5974",
+    "MlDsa44KeySetup": "0x7aa0d9ef9ad35319d5170fc1d2661ff03f98c8fd7df0fd8122c03f20cd7e088"
+  },
+  "deploy": {
+    "tx": "0x12175c05a07b58b3655e8fc2c2d77b5c6d5d529657848a00bc3e7e80f015521",
+    "status": "SUCCEEDED",
+    "l2_gas": 2281840,
+    "fee_fri": "101468446294003680"
+  },
+  "migration": {
+    "tx": "0x774c25eae18f613e702d0753757788e39d92114fb4d993e8f8bd4e7b4efbde2",
+    "status": "SUCCEEDED",
+    "l2_gas": 1117752400,
+    "fee_fri": "35508594777388277600"
+  },
+  "hybrid_transfer": {
+    "tx": "0x7b08c5abce182d567e68658da512c094adaa7b91f09525a1eaafaaa4f5c146f",
+    "status": "SUCCEEDED",
+    "l2_gas": 44679173,
+    "fee_fri": "1305454078204357926"
+  },
+  "ecdsa_only_transfer": {
+    "rejected": true,
+    "error_tail": "bb5a1d62df8404d456d99eacbe9ea5a94400f0344e47457eb67, class hash: 0x07c7c9de03f30291427331176d5e64922c6f457c0ebf86ce09555f485091b154, selector: 0x0162da33a4585851fe8d3af3c2a9c60b557814e221e0d4f30ff0b2189d9c7775): 0x4163636f756e743a20696e76616c6964207369676e6174757265 ('Account: invalid signature'). \""
+  }
+}

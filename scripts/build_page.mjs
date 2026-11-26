@@ -4,8 +4,8 @@
 //   node scripts/build_page.mjs --check   # exit 1 if docs/index.html is not what this builds
 //
 // The page gets: the public page config (signer/browser-wallet.config.json), a label for each
-// verifier pinned in release/testnet-v1.json and for the Falcon-1024 verifier (from its built
-// artifact), the Falcon NTT roots up to n = 1024, and verifierLabel from signer/page_verifier.mjs.
+// verifier pinned in release/testnet-v1.json, for the Falcon-1024 verifier (from its built
+// artifact) and for the declared ML-DSA-44 verifier (bench/pf13/sepolia.json), the Falcon NTT roots up to n = 1024, and verifierLabel from signer/page_verifier.mjs.
 // Everything in it is public.
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -34,6 +34,8 @@ const { hash } = await import(pathToFileURL(createRequire(resolve(REPO, "signer/
 for (const [name, label] of Object.entries(EXTRA_LABELS)) {
   verifiers[hash.computeContractClassHash(JSON.parse(read(`contracts/target/dev/pq_hybrid_${name}.contract_class.json`)))] = label;
 }
+// PF-13: the ML-DSA-44 verifier as declared (step 10 receipts; a scarb 2.22.0 build).
+verifiers[JSON.parse(read("bench/pf13/sepolia.json")).classes.HybridMlDsa44Verifier] = "Provably Fast ML-DSA-44 record, cached (mldsa44-pf-record)";
 const config = { ...JSON.parse(read("signer/browser-wallet.config.json")), verifiers };
 const labelFn = read("signer/page_verifier.mjs").replace(/^\/\/.*\n/gm, "").replace(/^export /m, "").trim();
 

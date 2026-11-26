@@ -159,7 +159,7 @@
   </a>
   <div class="menu" role="tablist">
     <a href="#hybrid" data-show="hybrid" role="tab">Hybrid demo</a>
-    <a href="#falcon-only" data-show="falcon-only" role="tab">Falcon only</a>
+    <a href="#falcon-only" data-show="falcon-only" role="tab">Post-quantum only</a>
   </div>
   <nav>
     <span class="pill">Sepolia</span>
@@ -185,10 +185,11 @@
   <p class="label">Try it on Sepolia</p>
   <section class="card">
     <div class="card-h"><span class="num">1</span><h2>Restore both keys from one mnemonic</h2></div>
-    <p class="desc">The demo account's 24 words are public on purpose, so anyone can try it. It is topped up with Sepolia STRK now and then. The same words also hold a Falcon-1024 account, NIST's level 5.</p>
+    <p class="desc">The demo account's 24 words are public on purpose, so anyone can try it. It is topped up with Sepolia STRK now and then. The same words also hold a Falcon-1024 account (NIST level 5) and an ML-DSA-44 account (FIPS 204, the NIST-standard lattice signature).</p>
     <div class="actions">
       <button id="demo">Use the public demo account</button>
       <button id="demo1024" class="weak">Try Falcon-1024</button>
+      <button id="demomldsa" class="weak">Try ML-DSA-44</button>
     </div>
 
     <dl id="keys" class="keys" hidden>
@@ -219,8 +220,8 @@
   </section>
 
   <section class="card" data-view="falcon-only" hidden>
-    <div class="card-h"><span class="num">2</span><h2>Suppose Falcon were broken</h2></div>
-    <p class="desc">Falcon is young, and these verifiers are unaudited. Here the attacker can make a valid Falcon signature but does not have the ECDSA key, so the classical half is left empty. The account should reject it: the classical key still guards it.</p>
+    <div class="card-h"><span class="num">2</span><h2>Suppose the post-quantum scheme were broken</h2></div>
+    <p class="desc">Falcon and ML-DSA are young, and these verifiers are unaudited. Here the attacker can make a valid post-quantum signature but does not have the ECDSA key, so the classical half is left empty. The account should reject it: the classical key still guards it.</p>
     <div class="actions">
       <button id="falcon-send" class="weak" disabled>Try Falcon only</button>
     </div>
@@ -444,6 +445,8 @@ async function activate(newSeed, source, index = 0) {
 $("demo").addEventListener("click", () => { $("mnemonic").value = PUBLIC_DEMO_MNEMONIC; nextIndex = 0; $("derive").click(); });
 // The Falcon-1024 demo account: the same public words, account index 1.
 $("demo1024").addEventListener("click", () => { $("mnemonic").value = PUBLIC_DEMO_MNEMONIC; nextIndex = 1; $("derive").click(); });
+// The ML-DSA-44 demo account: the same public words, account index 2 (signer/pq_demo_setup.mjs).
+$("demomldsa").addEventListener("click", () => { $("mnemonic").value = PUBLIC_DEMO_MNEMONIC; nextIndex = 2; $("derive").click(); });
 $("derive").addEventListener("click", async () => {
   try {
     $("derive").disabled = true; log("Deriving keys...");
@@ -560,7 +563,7 @@ $("attack").addEventListener("click", async () => {
   try { log("Sending with the ECDSA signature only..."); const r = await send("ecdsa"); log(`Unexpected: accepted ${r.transaction_hash}`, "bad"); }
   catch (e) {
     const m = String(e.message || e), tail = m.slice(m.lastIndexOf("\n") + 1).slice(0, 300);
-    if (/validate/i.test(m) && /panicked|invalid signature/i.test(m)) log("Rejected as expected: __validate__ refused the ECDSA-only signature (the Falcon part is missing).\n" + tail, "ok");
+    if (/validate/i.test(m) && /panicked|invalid signature/i.test(m)) log(`Rejected as expected: __validate__ refused the ECDSA-only signature (the ${keys.scheme} part is missing).\n` + tail, "ok");
     else log("Not sent, for a reason unrelated to the signature check:\n" + tail, "bad");
   }
   finally { $("attack").disabled = false; }
