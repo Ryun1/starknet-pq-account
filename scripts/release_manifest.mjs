@@ -58,7 +58,8 @@ const RELEASES = {
     classes: V1_CLASSES,
     declareTx: V1_DECLARE_TX,
     toolchain: V1_TOOLCHAIN,
-    patches: "vendor/provably-fast/falcon-512",
+    // Patch-file key prefix -> vendored lane directory holding SHA256SUMS.
+    patches: { "": "vendor/provably-fast/falcon-512" },
     note: "Experimental, unaudited, testnet only. Class hashes are Sepolia declarations; compact and record cannot be declared there.",
     source: { cairo_pq_verifiers: "bece5c07eeea5784e570c01108ec000d2d04ae40" },
     verifiers: {
@@ -72,31 +73,39 @@ const RELEASES = {
     guard: "0x5093253fe6ee74bce57ae826a72bc94ddf02b6fbe20db5512e744a9a304945e",
     legacy: true,
   },
-  // PF-13: the scheme-switch account and ML-DSA-44, declared 2026-11-26 (bench/pf13/sepolia.json).
+  // PF-13: the scheme-switch account and ML-DSA-44, declared 2026-11-26 (bench/pf13/sepolia.json);
+  // PF-14: the Falcon-1024 verifier, declared the same day.
   // Sepolia declared only Sierra 1.10.0 that day, so this release is built with scarb 2.22.0.
   "testnet-v2": {
     classes: {
       HybridMigratableAccountV2: { role: "account", declarable: true },
       HybridMlDsa44Verifier: { role: "verifier", declarable: true },
       MlDsa44KeySetup: { role: "setup", declarable: true },
+      HybridShakeVerifierFalcon1024: { role: "verifier", declarable: true },
     },
     declareTx: {
       HybridMigratableAccountV2: "0x531e2875a033559659bcd9e82030c2a903aea90c7aa87529af97d2c5b2e43e3",
       HybridMlDsa44Verifier: "0x55b2e1cf3bb6962e1778f77c6fce731d77953a12f6bfa59ecdf44a24718514b",
       MlDsa44KeySetup: "0x65cbd374c750205134da3561e820eb62e71996c7fb0633b42d2b49dbe12b990",
+      // PF-14 A9 (.keys/pf04-sepolia-state.json; bench/pf14/README.md).
+      HybridShakeVerifierFalcon1024: "0x62cffff0c2ef735b3537812a4de33dc7f183322202ca726b3ce735bef4ccc62",
     },
     toolchain: {
       scarb: "2.22.0", cairo: "2.22.0", sierra: "1.10.0", snforge: "0.64.1",
       universal_sierra_compiler: "2.11.0-rc.1", starknet_js: "10.8.0", noble_post_quantum: "0.6.1",
     },
-    patches: "vendor/provably-fast/ml-dsa-44",
+    patches: { "ml-dsa-44/": "vendor/provably-fast/ml-dsa-44", "falcon-1024/": "vendor/provably-fast/falcon-1024" },
     note: "Experimental, unaudited, testnet only. Class hashes are Sepolia declarations. Falcon-512 verifiers stay in testnet-v1; a V2 account can use them.",
-    // The lane's baseline bundle (vendor/provably-fast/ml-dsa-44/PROVENANCE.md); its parent is
+    // The lanes' baseline bundles (PROVENANCE.md in each vendor directory); the parent of both is
     // the cairo-pq-verifiers commit testnet-v1 pins.
-    source: { provably_fast_ml_dsa_44_bundle: "78c83599f57ecb28847ba3ebc4528598318129b8" },
+    source: {
+      provably_fast_ml_dsa_44_bundle: "78c83599f57ecb28847ba3ebc4528598318129b8",
+      provably_fast_falcon_1024_bundle: "bf7fd8785a189164d638e7f7c11d261c9e864d56",
+    },
     // Each verifier names its scheme and the setup class set_pq_key / migrate library-calls once.
     verifiers: {
       "ml-dsa-44": { class: "HybridMlDsa44Verifier", scheme: "ml-dsa-44", setup: "MlDsa44KeySetup" },
+      "falcon-1024": { class: "HybridShakeVerifierFalcon1024", scheme: "falcon-1024" },
     },
     default_verifier: "ml-dsa-44",
   },
@@ -104,7 +113,6 @@ const RELEASES = {
 const REL = RELEASES[RELEASE];
 if (!REL) { console.error(`unknown release ${RELEASE}; known: ${Object.keys(RELEASES).join(", ")}`); process.exit(2); }
 const CLASSES = REL.classes;
-const PATCHES = resolve(REPO, REL.patches);
 // A verifier entry is a class name (testnet-v1) or { class, scheme, setup } (testnet-v2).
 const verifierEntry = (v) => (typeof v === "string" ? { class: v } : v);
 
@@ -126,10 +134,13 @@ function built(name) {
 
 function patchSums() {
   const sums = {};
-  for (const line of readFileSync(resolve(PATCHES, "SHA256SUMS"), "utf8").trim().split("\n")) {
-    const [digest, file] = line.trim().split(/\s+/);
-    if (sha256(resolve(PATCHES, file)) !== digest) throw new Error(`${file} does not match SHA256SUMS`);
-    sums[file] = digest;
+  for (const [prefix, rel] of Object.entries(REL.patches)) {
+    const dir = resolve(REPO, rel);
+    for (const line of readFileSync(resolve(dir, "SHA256SUMS"), "utf8").trim().split("\n")) {
+      const [digest, file] = line.trim().split(/\s+/);
+      if (sha256(resolve(dir, file)) !== digest) throw new Error(`${rel}/${file} does not match SHA256SUMS`);
+      sums[prefix + file] = digest;
+    }
   }
   return sums;
 }

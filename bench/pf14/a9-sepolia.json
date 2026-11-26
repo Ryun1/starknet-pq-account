@@ -1,0 +1,67 @@
+{
+  "description": "PF-14 Sepolia receipts; see bench/pf14/README.md",
+  "generated_utc": "2026-11-26T16:48:15.978Z",
+  "classes": {
+    "HybridMigratableAccountV2": "0x7c7c9de03f30291427331176d5e64922c6f457c0ebf86ce09555f485091b154",
+    "HybridShakeVerifierFalcon1024": "0x647ae0aa39903ec2e15c33bee124ff72120e63ad39adc5368cc52799cd4661d"
+  },
+  "declares": {},
+  "accounts": {
+    "falcon-512": {
+      "address": "0x47ec0e90147df7e02db66c6d47f662785c4a54d4f4b7c3530a87413ba609ffc",
+      "path": "falcon-512 testnet-v1 -> [upgrade V2, set_pq_key Falcon-1024]",
+      "deploy": {
+        "tx": "0x4091d53e1336db0b5e6c1bd37cf8795d10f2a8157d83f92e4a479b0fdf67582",
+        "status": "SUCCEEDED",
+        "block": 18741709,
+        "timestamp": 1795711581,
+        "l2_gas": 1659576,
+        "l1_data_gas": 256,
+        "l1_gas": 0,
+        "fee_fri": "48639638515295600",
+        "l2_gas_price_fri": "29113751906"
+      },
+      "falconMigration": {
+        "tx": "0x4b8f56e6ebd3ee043394efe36810e12c39f284c8daae62fcd888a93aeb4ddd7",
+        "status": "SUCCEEDED",
+        "block": 18741721,
+        "timestamp": 1795711602,
+        "l2_gas": 50304794,
+        "l1_data_gas": 3328,
+        "l1_gas": 0,
+        "fee_fri": "1471638433130602484",
+        "l2_gas_price_fri": "29113751906"
+      },
+      "move": {
+        "tx": "0x7fa616e21dd5cd510393894a30739bf4dd0fe090cd11d605ecb1a357065d34e",
+        "status": "SUCCEEDED",
+        "block": 18741730,
+        "timestamp": 1795711617,
+        "l2_gas": 115749732,
+        "l1_data_gas": 4832,
+        "l1_gas": 0,
+        "fee_fri": "3384458229234793992",
+        "l2_gas_price_fri": "29113751906"
+      },
+      "hybridTransfer": {
+        "tx": "0x6928ed48b8da1839b23577c9a40fc6850e753e0eb087cf629382a5bc0d24cd4",
+        "status": "SUCCEEDED",
+        "block": 18741735,
+        "timestamp": 1795711626,
+        "l2_gas": 54226127,
+        "l1_data_gas": 192,
+        "l1_gas": 0,
+        "fee_fri": "1584266877684701310",
+        "l2_gas_price_fri": "29113751906"
+      },
+      "failedAttempts": [],
+      "after": {
+        "class": "0x7c7c9de03f30291427331176d5e64922c6f457c0ebf86ce09555f485091b154",
+        "ecdsaKeyMatchesWords": true,
+        "falcon1024KeyMatchesWords": true,
+        "balanceDropEqualsFee": true
+      },
+      "ecdsaOnlyTransfer": "rejected in __validate__"
+    }
+  }
+}
