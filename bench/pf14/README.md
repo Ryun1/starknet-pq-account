@@ -145,7 +145,7 @@ Setting up that account on Sepolia (from the deployer key in `.keys/`):
 cd signer
 node pf04_sepolia.mjs declare HybridMigratableAccountV2
 node pf04_sepolia.mjs declare HybridShakeVerifierFalcon1024   # about 4.43e9 L2 gas, ~100 STRK
-node falcon1024_demo_setup.mjs   # fund, deploy, [upgrade(V2), migrate] to Falcon-1024, hybrid
+node pq_demo_setup.mjs falcon-1024   # fund, deploy, [upgrade(V2), migrate] to Falcon-1024, hybrid
                                  # transfer, ECDSA-only transfer rejected; writes sepolia.json
 ```
 
