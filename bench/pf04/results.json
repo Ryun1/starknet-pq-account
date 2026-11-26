@@ -1,11 +1,11 @@
 {
   "description": "PF-04 account-level measurements; see bench/pf04/README.md",
   "env": {
-    "date_utc": "2026-10-29T11:40:51Z",
-    "uname": "Darwin 25.6.0 arm64",
-    "scarb": "scarb 2.18.0 (e6144df0f 2026-04-21) cairo: 2.18.0 (https://crates.io/crates/cairo-lang-compiler/2.18.0) sierra: 1.8.0 arch: aarch64-apple-darwin ",
-    "snforge": "snforge 0.59.0",
-    "usc": "universal-sierra-compiler 2.10.3"
+    "date_utc": "2026-11-26T10:47:19Z",
+    "uname": "Darwin 27.2.0 arm64",
+    "scarb": "scarb 2.22.0 (5452a2aff 2026-11-25) cairo: 2.22.0 (https://crates.io/crates/cairo-lang-compiler/2.22.0) sierra: 1.10.0 arch: aarch64-apple-darwin ",
+    "snforge": "snforge 0.64.1",
+    "usc": "universal-sierra-compiler 2.11.0-rc.1"
   },
   "method": "snforge L2 gas (Sierra-gas mode): measured test minus its setup_ twin",
   "network_limits": {
@@ -20,231 +20,231 @@
   },
   "validate": {
     "baseline": {
-      "mean": 50396185,
-      "worst": 52177683,
-      "best": 47807131,
+      "mean": 50766085,
+      "worst": 52547583,
+      "best": 48177031,
       "mean_by_blocks": {
-        "8": 47820808,
-        "9": 52166757
+        "8": 48190708,
+        "9": 52536657
       },
       "per_vector": {
-        "0": 47823191,
-        "1": 47823131,
-        "2": 47825681,
-        "3": 47824461,
-        "4": 52167493,
-        "5": 52164043,
-        "6": 52160363,
-        "7": 52162803,
-        "8": 52156263,
-        "9": 47818361,
-        "10": 47807131,
-        "11": 47827211,
-        "12": 47816881,
-        "13": 52159393,
-        "14": 52168433,
-        "15": 52163783,
-        "16": 52169993,
-        "17": 52161463,
-        "18": 47823671,
-        "19": 47814801,
-        "20": 47824371,
-        "21": 52167113,
-        "22": 52168443,
-        "23": 52171743,
-        "24": 52173473,
-        "25": 52175623,
-        "26": 52177683
+        "0": 48193091,
+        "1": 48193031,
+        "2": 48195581,
+        "3": 48194361,
+        "4": 52537393,
+        "5": 52533943,
+        "6": 52530263,
+        "7": 52532703,
+        "8": 52526163,
+        "9": 48188261,
+        "10": 48177031,
+        "11": 48197111,
+        "12": 48186781,
+        "13": 52529293,
+        "14": 52538333,
+        "15": 52533683,
+        "16": 52539893,
+        "17": 52531363,
+        "18": 48193571,
+        "19": 48184701,
+        "20": 48194271,
+        "21": 52537013,
+        "22": 52538343,
+        "23": 52541643,
+        "24": 52543373,
+        "25": 52545523,
+        "26": 52547583
       }
     },
     "compact": {
-      "mean": 26431759,
-      "worst": 27915024,
-      "best": 25445185,
+      "mean": 26769258,
+      "worst": 28285424,
+      "best": 25815595,
       "mean_by_blocks": {
-        "8": 25451749,
-        "9": 27105517
+        "8": 25822159,
+        "9": 27420389
       },
       "per_vector": {
-        "0": 25453215,
-        "1": 25454125,
-        "2": 25453345,
-        "3": 25452115,
-        "4": 27041931,
-        "5": 27046321,
-        "6": 27041681,
-        "7": 27047051,
-        "8": 27039151,
-        "9": 25450845,
-        "10": 25453825,
-        "11": 25445185,
-        "12": 25451685,
-        "13": 27041911,
-        "14": 27078654,
-        "15": 27040041,
-        "16": 27066534,
-        "17": 27050121,
-        "18": 25448835,
-        "19": 25449495,
-        "20": 25456565,
-        "21": 27065604,
-        "22": 27047131,
-        "23": 27049341,
-        "24": 27050171,
-        "25": 27067604,
-        "26": 27915024
+        "0": 25823625,
+        "1": 25824535,
+        "2": 25823755,
+        "3": 25822525,
+        "4": 27353101,
+        "5": 27357491,
+        "6": 27352851,
+        "7": 27358221,
+        "8": 27350321,
+        "9": 25821255,
+        "10": 25824235,
+        "11": 25815595,
+        "12": 25822095,
+        "13": 27353081,
+        "14": 27389824,
+        "15": 27351211,
+        "16": 27377704,
+        "17": 27361291,
+        "18": 25819245,
+        "19": 25819905,
+        "20": 25826975,
+        "21": 27376774,
+        "22": 27358301,
+        "23": 27360511,
+        "24": 27361341,
+        "25": 27378774,
+        "26": 28285424
       }
     },
     "record": {
-      "mean": 26130688,
-      "worst": 27614917,
-      "best": 25143078,
+      "mean": 26468187,
+      "worst": 27985317,
+      "best": 25513488,
       "mean_by_blocks": {
-        "8": 25150129,
-        "9": 26804823
+        "8": 25520539,
+        "9": 27119695
       },
       "per_vector": {
-        "0": 25151108,
-        "1": 25153358,
-        "2": 25151908,
-        "3": 25151348,
-        "4": 26738184,
-        "5": 26745744,
-        "6": 26740264,
-        "7": 26745044,
-        "8": 26738754,
-        "9": 25148738,
-        "10": 25151718,
-        "11": 25143078,
-        "12": 25149578,
-        "13": 26743084,
-        "14": 26779747,
-        "15": 26738304,
-        "16": 26766237,
-        "17": 26751374,
-        "18": 25147398,
-        "19": 25146718,
-        "20": 25156468,
-        "21": 26764727,
-        "22": 26745884,
-        "23": 26748004,
-        "24": 26749504,
-        "25": 26767397,
-        "26": 27614917
+        "0": 25521518,
+        "1": 25523768,
+        "2": 25522318,
+        "3": 25521758,
+        "4": 27049354,
+        "5": 27056914,
+        "6": 27051434,
+        "7": 27056214,
+        "8": 27049924,
+        "9": 25519148,
+        "10": 25522128,
+        "11": 25513488,
+        "12": 25519988,
+        "13": 27054254,
+        "14": 27090917,
+        "15": 27049474,
+        "16": 27077407,
+        "17": 27062544,
+        "18": 25517808,
+        "19": 25517128,
+        "20": 25526878,
+        "21": 27075897,
+        "22": 27057054,
+        "23": 27059174,
+        "24": 27060674,
+        "25": 27078567,
+        "26": 27985317
       }
     },
     "small": {
-      "mean": 27215883,
-      "worst": 28722966,
-      "best": 26223037,
+      "mean": 27552933,
+      "worst": 29092866,
+      "best": 26592937,
       "mean_by_blocks": {
-        "8": 26231313,
-        "9": 27892774
+        "8": 26601213,
+        "9": 28207240
       },
       "per_vector": {
-        "0": 26233177,
-        "1": 26234577,
-        "2": 26232477,
-        "3": 26232037,
-        "4": 27826023,
-        "5": 27834323,
-        "6": 27826843,
-        "7": 27833683,
-        "8": 27827393,
-        "9": 26232137,
-        "10": 26235147,
-        "11": 26223037,
-        "12": 26231337,
-        "13": 27830993,
-        "14": 27862516,
-        "15": 27828563,
-        "16": 27850386,
-        "17": 27836393,
-        "18": 26227977,
-        "19": 26227007,
-        "20": 26235537,
-        "21": 27850366,
-        "22": 27834093,
-        "23": 27836843,
-        "24": 27835473,
-        "25": 27847526,
-        "26": 28722966
+        "0": 26603077,
+        "1": 26604477,
+        "2": 26602377,
+        "3": 26601937,
+        "4": 28136793,
+        "5": 28145093,
+        "6": 28137613,
+        "7": 28144453,
+        "8": 28138163,
+        "9": 26602037,
+        "10": 26605047,
+        "11": 26592937,
+        "12": 26601237,
+        "13": 28141763,
+        "14": 28173286,
+        "15": 28139333,
+        "16": 28161156,
+        "17": 28147163,
+        "18": 26597877,
+        "19": 26596907,
+        "20": 26605437,
+        "21": 28161136,
+        "22": 28144863,
+        "23": 28147613,
+        "24": 28146243,
+        "25": 28158296,
+        "26": 29092866
       }
     },
     "smallkr": {
-      "mean": 26549273,
-      "worst": 28056356,
-      "best": 25556427,
+      "mean": 26712323,
+      "worst": 28252256,
+      "best": 25752327,
       "mean_by_blocks": {
-        "8": 25564703,
-        "9": 27226164
+        "8": 25760603,
+        "9": 27366630
       },
       "per_vector": {
-        "0": 25566567,
-        "1": 25567967,
-        "2": 25565867,
-        "3": 25565427,
-        "4": 27159413,
-        "5": 27167713,
-        "6": 27160233,
-        "7": 27167073,
-        "8": 27160783,
-        "9": 25565527,
-        "10": 25568537,
-        "11": 25556427,
-        "12": 25564727,
-        "13": 27164383,
-        "14": 27195906,
-        "15": 27161953,
-        "16": 27183776,
-        "17": 27169783,
-        "18": 25561367,
-        "19": 25560397,
-        "20": 25568927,
-        "21": 27183756,
-        "22": 27167483,
-        "23": 27170233,
-        "24": 27168863,
-        "25": 27180916,
-        "26": 28056356
+        "0": 25762467,
+        "1": 25763867,
+        "2": 25761767,
+        "3": 25761327,
+        "4": 27296183,
+        "5": 27304483,
+        "6": 27297003,
+        "7": 27303843,
+        "8": 27297553,
+        "9": 25761427,
+        "10": 25764437,
+        "11": 25752327,
+        "12": 25760627,
+        "13": 27301153,
+        "14": 27332676,
+        "15": 27298723,
+        "16": 27320546,
+        "17": 27306553,
+        "18": 25757267,
+        "19": 25756297,
+        "20": 25764827,
+        "21": 27320526,
+        "22": 27304253,
+        "23": 27307003,
+        "24": 27305633,
+        "25": 27317686,
+        "26": 28252256
       }
     },
     "direct": {
-      "mean": 50045745,
-      "worst": 51827243,
-      "best": 47456691,
+      "mean": 50404145,
+      "worst": 52185643,
+      "best": 47815091,
       "mean_by_blocks": {
-        "8": 47470368,
-        "9": 51816317
+        "8": 47828768,
+        "9": 52174717
       },
       "per_vector": {
-        "0": 47472751,
-        "1": 47472691,
-        "2": 47475241,
-        "3": 47474021,
-        "4": 51817053,
-        "5": 51813603,
-        "6": 51809923,
-        "7": 51812363,
-        "8": 51805823,
-        "9": 47467921,
-        "10": 47456691,
-        "11": 47476771,
-        "12": 47466441,
-        "13": 51808953,
-        "14": 51817993,
-        "15": 51813343,
-        "16": 51819553,
-        "17": 51811023,
-        "18": 47473231,
-        "19": 47464361,
-        "20": 47473931,
-        "21": 51816673,
-        "22": 51818003,
-        "23": 51821303,
-        "24": 51823033,
-        "25": 51825183,
-        "26": 51827243
+        "0": 47831151,
+        "1": 47831091,
+        "2": 47833641,
+        "3": 47832421,
+        "4": 52175453,
+        "5": 52172003,
+        "6": 52168323,
+        "7": 52170763,
+        "8": 52164223,
+        "9": 47826321,
+        "10": 47815091,
+        "11": 47835171,
+        "12": 47824841,
+        "13": 52167353,
+        "14": 52176393,
+        "15": 52171743,
+        "16": 52177953,
+        "17": 52169423,
+        "18": 47831631,
+        "19": 47822761,
+        "20": 47832331,
+        "21": 52175073,
+        "22": 52176403,
+        "23": 52179703,
+        "24": 52181433,
+        "25": 52183583,
+        "26": 52185643
       }
     }
   },
@@ -254,190 +254,190 @@
   ],
   "declare": {
     "baseline": {
-      "0": 47817791,
-      "26": 52172283
+      "0": 48187691,
+      "26": 52542183
     },
     "compact": {
-      "0": 25447815,
-      "26": 27909624
+      "0": 25818225,
+      "26": 28280024
     },
     "record": {
-      "0": 25145708,
-      "26": 27609517
+      "0": 25516118,
+      "26": 27979917
     },
     "small": {
-      "0": 26227777,
-      "26": 28717566
+      "0": 26597677,
+      "26": 29087466
     },
     "smallkr": {
-      "0": 25561167,
-      "26": 28050956
+      "0": 25757067,
+      "26": 28246856
     }
   },
   "is_valid": {
     "baseline": {
-      "0": 48014871,
-      "26": 52369363
+      "0": 48386171,
+      "26": 52740663
     },
     "compact": {
-      "0": 25644895,
-      "26": 28106704
+      "0": 26016705,
+      "26": 28478504
     },
     "record": {
-      "0": 25342788,
-      "26": 27806597
+      "0": 25714598,
+      "26": 28178397
     },
     "small": {
-      "0": 26424857,
-      "26": 28914646
+      "0": 26796157,
+      "26": 29285946
     },
     "smallkr": {
-      "0": 25758247,
-      "26": 28248036
+      "0": 25955547,
+      "26": 28445336
     }
   },
   "reject": {
     "baseline": {
-      "0": 52411463,
-      "26": 48067631
+      "0": 52782763,
+      "26": 48438931
     },
     "compact": {
-      "0": 27231021,
-      "26": 25644455
+      "0": 27543591,
+      "26": 26016265
     },
     "record": {
-      "0": 26915914,
-      "26": 25324868
+      "0": 27228484,
+      "26": 25696678
     },
     "small": {
-      "0": 27116653,
-      "26": 25519647
+      "0": 27428823,
+      "26": 25890947
     },
     "smallkr": {
-      "0": 26450043,
-      "26": 24853037
+      "0": 26588213,
+      "26": 25050337
     }
   },
   "migrate": {
-    "baseline": 69386419,
-    "compact": 44272637,
-    "record": 43971120,
-    "small": 45057399,
-    "smallkr": 44390789
+    "baseline": 70858669,
+    "compact": 45686157,
+    "record": 45384640,
+    "small": 46470519,
+    "smallkr": 45629909
   },
   "entrypoint_cross_check": {
     "baseline": {
-      "entrypoint_mean": 50300095,
-      "entrypoint_worst": 52081593,
+      "entrypoint_mean": 50670195,
+      "entrypoint_worst": 52451693,
       "paired_minus_entrypoint": {
-        "min": 96090,
-        "max": 96090
+        "min": 95890,
+        "max": 95890
       }
     },
     "compact": {
-      "entrypoint_mean": 26335669,
-      "entrypoint_worst": 27818934,
+      "entrypoint_mean": 26673368,
+      "entrypoint_worst": 28189534,
       "paired_minus_entrypoint": {
-        "min": 96090,
-        "max": 96090
+        "min": 95890,
+        "max": 95890
       }
     },
     "record": {
-      "entrypoint_mean": 26034598,
-      "entrypoint_worst": 27518827,
+      "entrypoint_mean": 26372297,
+      "entrypoint_worst": 27889427,
       "paired_minus_entrypoint": {
-        "min": 96090,
-        "max": 96090
+        "min": 95890,
+        "max": 95890
       }
     },
     "small": {
-      "entrypoint_mean": 27119793,
-      "entrypoint_worst": 28626876,
+      "entrypoint_mean": 27457043,
+      "entrypoint_worst": 28996976,
       "paired_minus_entrypoint": {
-        "min": 96090,
-        "max": 96090
+        "min": 95890,
+        "max": 95890
       }
     },
     "smallkr": {
-      "entrypoint_mean": 26453183,
-      "entrypoint_worst": 27960266,
+      "entrypoint_mean": 26616433,
+      "entrypoint_worst": 28156366,
       "paired_minus_entrypoint": {
-        "min": 96090,
-        "max": 96090
+        "min": 95890,
+        "max": 95890
       }
     },
     "direct": {
-      "entrypoint_mean": 49949655,
-      "entrypoint_worst": 51731153,
+      "entrypoint_mean": 50308255,
+      "entrypoint_worst": 52089753,
       "paired_minus_entrypoint": {
-        "min": 96090,
-        "max": 96090
+        "min": 95890,
+        "max": 95890
       }
     }
   },
   "validate_steps_worst_vector": {
-    "baseline": 331338,
-    "compact": 182602,
-    "record": 179553,
-    "small": 189908,
-    "smallkr": 183384
+    "baseline": 335037,
+    "compact": 186306,
+    "record": 183257,
+    "small": 193607,
+    "smallkr": 185343
   },
   "class_sizes": {
     "HybridShakeAccount": {
       "casm_bytecode_felts": 53237,
-      "sierra_program_felts": 53532,
-      "declare_code_l2_gas": 4377213440,
-      "contract_class_object_bytes": 2038866,
-      "compiled_class_object_bytes": 1439349
+      "sierra_program_felts": 53497,
+      "declare_code_l2_gas": 4375779840,
+      "contract_class_object_bytes": 2036270,
+      "compiled_class_object_bytes": 1444209
     },
     "HybridShakeVerifierPfCompact": {
-      "casm_bytecode_felts": 71580,
+      "casm_bytecode_felts": 71594,
       "sierra_program_felts": 71809,
-      "declare_code_l2_gas": 5874137600,
-      "contract_class_object_bytes": 3149439,
-      "compiled_class_object_bytes": 2141080
+      "declare_code_l2_gas": 5874711040,
+      "contract_class_object_bytes": 3148142,
+      "compiled_class_object_bytes": 2144860
     },
     "HybridShakeVerifierPfRecord": {
-      "casm_bytecode_felts": 77902,
-      "sierra_program_felts": 76146,
-      "declare_code_l2_gas": 6310728960,
-      "contract_class_object_bytes": 3422453,
-      "compiled_class_object_bytes": 2329159
+      "casm_bytecode_felts": 77916,
+      "sierra_program_felts": 76143,
+      "declare_code_l2_gas": 6311179520,
+      "contract_class_object_bytes": 3419647,
+      "compiled_class_object_bytes": 2335287
     },
     "HybridShakeVerifierPfSmall": {
       "casm_bytecode_felts": 64163,
-      "sierra_program_felts": 68569,
-      "declare_code_l2_gas": 5437624320,
-      "contract_class_object_bytes": 3350894,
-      "compiled_class_object_bytes": 1741663
+      "sierra_program_felts": 68563,
+      "declare_code_l2_gas": 5437378560,
+      "contract_class_object_bytes": 3350677,
+      "compiled_class_object_bytes": 1744660
     },
     "HybridShakeVerifierPfSmallKeyRead": {
       "casm_bytecode_felts": 63912,
-      "sierra_program_felts": 68420,
-      "declare_code_l2_gas": 5421249280,
-      "contract_class_object_bytes": 3341785,
-      "compiled_class_object_bytes": 1735081
+      "sierra_program_felts": 68418,
+      "declare_code_l2_gas": 5421167360,
+      "contract_class_object_bytes": 3340924,
+      "compiled_class_object_bytes": 1738078
     },
     "HybridMigratableAccount": {
-      "casm_bytecode_felts": 8866,
-      "sierra_program_felts": 4124,
-      "declare_code_l2_gas": 539115520,
-      "contract_class_object_bytes": 215322,
-      "compiled_class_object_bytes": 203538
+      "casm_bytecode_felts": 8905,
+      "sierra_program_felts": 4073,
+      "declare_code_l2_gas": 538624000,
+      "contract_class_object_bytes": 212240,
+      "compiled_class_object_bytes": 205315
     },
     "HybridPoseidonAccount": {
       "casm_bytecode_felts": 49043,
-      "sierra_program_felts": 51261,
-      "declare_code_l2_gas": 4112410880,
-      "contract_class_object_bytes": 1900820,
-      "compiled_class_object_bytes": 1331138
+      "sierra_program_felts": 51224,
+      "declare_code_l2_gas": 4110895360,
+      "contract_class_object_bytes": 1898479,
+      "compiled_class_object_bytes": 1336160
     },
     "VerifierSwitchGuard": {
-      "casm_bytecode_felts": 1164,
-      "sierra_program_felts": 978,
-      "declare_code_l2_gas": 88408320,
-      "contract_class_object_bytes": 36318,
-      "compiled_class_object_bytes": 27626
+      "casm_bytecode_felts": 1156,
+      "sierra_program_felts": 884,
+      "declare_code_l2_gas": 84230400,
+      "contract_class_object_bytes": 32695,
+      "compiled_class_object_bytes": 27228
     }
   },
   "not_declarable": [
@@ -447,77 +447,77 @@
   "selected": "small",
   "libfuncs": "every class builds with allowed-libfuncs-deny against network_libfuncs.json",
   "metrics": {
-    "validate.baseline.mean": 50396185,
-    "validate.baseline.worst": 52177683,
-    "validate.compact.mean": 26431759,
-    "validate.compact.worst": 27915024,
-    "validate.record.mean": 26130688,
-    "validate.record.worst": 27614917,
-    "validate.small.mean": 27215883,
-    "validate.small.worst": 28722966,
-    "validate.smallkr.mean": 26549273,
-    "validate.smallkr.worst": 28056356,
-    "validate.direct.mean": 50045745,
-    "validate.direct.worst": 51827243,
-    "declare.baseline.worst": 52172283,
-    "declare.compact.worst": 27909624,
-    "declare.record.worst": 27609517,
-    "declare.small.worst": 28717566,
-    "declare.smallkr.worst": 28050956,
-    "is_valid.baseline.worst": 52369363,
-    "is_valid.compact.worst": 28106704,
-    "is_valid.record.worst": 27806597,
-    "is_valid.small.worst": 28914646,
-    "is_valid.smallkr.worst": 28248036,
-    "reject.baseline.worst": 52411463,
-    "reject.compact.worst": 27231021,
-    "reject.record.worst": 26915914,
-    "reject.small.worst": 27116653,
-    "reject.smallkr.worst": 26450043,
-    "migrate.baseline": 69386419,
-    "migrate.compact": 44272637,
-    "migrate.record": 43971120,
-    "migrate.small": 45057399,
-    "migrate.smallkr": 44390789,
+    "validate.baseline.mean": 50766085,
+    "validate.baseline.worst": 52547583,
+    "validate.compact.mean": 26769258,
+    "validate.compact.worst": 28285424,
+    "validate.record.mean": 26468187,
+    "validate.record.worst": 27985317,
+    "validate.small.mean": 27552933,
+    "validate.small.worst": 29092866,
+    "validate.smallkr.mean": 26712323,
+    "validate.smallkr.worst": 28252256,
+    "validate.direct.mean": 50404145,
+    "validate.direct.worst": 52185643,
+    "declare.baseline.worst": 52542183,
+    "declare.compact.worst": 28280024,
+    "declare.record.worst": 27979917,
+    "declare.small.worst": 29087466,
+    "declare.smallkr.worst": 28246856,
+    "is_valid.baseline.worst": 52740663,
+    "is_valid.compact.worst": 28478504,
+    "is_valid.record.worst": 28178397,
+    "is_valid.small.worst": 29285946,
+    "is_valid.smallkr.worst": 28445336,
+    "reject.baseline.worst": 52782763,
+    "reject.compact.worst": 27543591,
+    "reject.record.worst": 27228484,
+    "reject.small.worst": 27428823,
+    "reject.smallkr.worst": 26588213,
+    "migrate.baseline": 70858669,
+    "migrate.compact": 45686157,
+    "migrate.record": 45384640,
+    "migrate.small": 46470519,
+    "migrate.smallkr": 45629909,
     "size.HybridShakeAccount.casm_bytecode_felts": 53237,
-    "size.HybridShakeAccount.sierra_program_felts": 53532,
-    "size.HybridShakeAccount.declare_code_l2_gas": 4377213440,
-    "size.HybridShakeAccount.contract_class_object_bytes": 2038866,
-    "size.HybridShakeAccount.compiled_class_object_bytes": 1439349,
-    "size.HybridShakeVerifierPfCompact.casm_bytecode_felts": 71580,
+    "size.HybridShakeAccount.sierra_program_felts": 53497,
+    "size.HybridShakeAccount.declare_code_l2_gas": 4375779840,
+    "size.HybridShakeAccount.contract_class_object_bytes": 2036270,
+    "size.HybridShakeAccount.compiled_class_object_bytes": 1444209,
+    "size.HybridShakeVerifierPfCompact.casm_bytecode_felts": 71594,
     "size.HybridShakeVerifierPfCompact.sierra_program_felts": 71809,
-    "size.HybridShakeVerifierPfCompact.declare_code_l2_gas": 5874137600,
-    "size.HybridShakeVerifierPfCompact.contract_class_object_bytes": 3149439,
-    "size.HybridShakeVerifierPfCompact.compiled_class_object_bytes": 2141080,
-    "size.HybridShakeVerifierPfRecord.casm_bytecode_felts": 77902,
-    "size.HybridShakeVerifierPfRecord.sierra_program_felts": 76146,
-    "size.HybridShakeVerifierPfRecord.declare_code_l2_gas": 6310728960,
-    "size.HybridShakeVerifierPfRecord.contract_class_object_bytes": 3422453,
-    "size.HybridShakeVerifierPfRecord.compiled_class_object_bytes": 2329159,
+    "size.HybridShakeVerifierPfCompact.declare_code_l2_gas": 5874711040,
+    "size.HybridShakeVerifierPfCompact.contract_class_object_bytes": 3148142,
+    "size.HybridShakeVerifierPfCompact.compiled_class_object_bytes": 2144860,
+    "size.HybridShakeVerifierPfRecord.casm_bytecode_felts": 77916,
+    "size.HybridShakeVerifierPfRecord.sierra_program_felts": 76143,
+    "size.HybridShakeVerifierPfRecord.declare_code_l2_gas": 6311179520,
+    "size.HybridShakeVerifierPfRecord.contract_class_object_bytes": 3419647,
+    "size.HybridShakeVerifierPfRecord.compiled_class_object_bytes": 2335287,
     "size.HybridShakeVerifierPfSmall.casm_bytecode_felts": 64163,
-    "size.HybridShakeVerifierPfSmall.sierra_program_felts": 68569,
-    "size.HybridShakeVerifierPfSmall.declare_code_l2_gas": 5437624320,
-    "size.HybridShakeVerifierPfSmall.contract_class_object_bytes": 3350894,
-    "size.HybridShakeVerifierPfSmall.compiled_class_object_bytes": 1741663,
+    "size.HybridShakeVerifierPfSmall.sierra_program_felts": 68563,
+    "size.HybridShakeVerifierPfSmall.declare_code_l2_gas": 5437378560,
+    "size.HybridShakeVerifierPfSmall.contract_class_object_bytes": 3350677,
+    "size.HybridShakeVerifierPfSmall.compiled_class_object_bytes": 1744660,
     "size.HybridShakeVerifierPfSmallKeyRead.casm_bytecode_felts": 63912,
-    "size.HybridShakeVerifierPfSmallKeyRead.sierra_program_felts": 68420,
-    "size.HybridShakeVerifierPfSmallKeyRead.declare_code_l2_gas": 5421249280,
-    "size.HybridShakeVerifierPfSmallKeyRead.contract_class_object_bytes": 3341785,
-    "size.HybridShakeVerifierPfSmallKeyRead.compiled_class_object_bytes": 1735081,
-    "size.HybridMigratableAccount.casm_bytecode_felts": 8866,
-    "size.HybridMigratableAccount.sierra_program_felts": 4124,
-    "size.HybridMigratableAccount.declare_code_l2_gas": 539115520,
-    "size.HybridMigratableAccount.contract_class_object_bytes": 215322,
-    "size.HybridMigratableAccount.compiled_class_object_bytes": 203538,
+    "size.HybridShakeVerifierPfSmallKeyRead.sierra_program_felts": 68418,
+    "size.HybridShakeVerifierPfSmallKeyRead.declare_code_l2_gas": 5421167360,
+    "size.HybridShakeVerifierPfSmallKeyRead.contract_class_object_bytes": 3340924,
+    "size.HybridShakeVerifierPfSmallKeyRead.compiled_class_object_bytes": 1738078,
+    "size.HybridMigratableAccount.casm_bytecode_felts": 8905,
+    "size.HybridMigratableAccount.sierra_program_felts": 4073,
+    "size.HybridMigratableAccount.declare_code_l2_gas": 538624000,
+    "size.HybridMigratableAccount.contract_class_object_bytes": 212240,
+    "size.HybridMigratableAccount.compiled_class_object_bytes": 205315,
     "size.HybridPoseidonAccount.casm_bytecode_felts": 49043,
-    "size.HybridPoseidonAccount.sierra_program_felts": 51261,
-    "size.HybridPoseidonAccount.declare_code_l2_gas": 4112410880,
-    "size.HybridPoseidonAccount.contract_class_object_bytes": 1900820,
-    "size.HybridPoseidonAccount.compiled_class_object_bytes": 1331138,
-    "size.VerifierSwitchGuard.casm_bytecode_felts": 1164,
-    "size.VerifierSwitchGuard.sierra_program_felts": 978,
-    "size.VerifierSwitchGuard.declare_code_l2_gas": 88408320,
-    "size.VerifierSwitchGuard.contract_class_object_bytes": 36318,
-    "size.VerifierSwitchGuard.compiled_class_object_bytes": 27626
+    "size.HybridPoseidonAccount.sierra_program_felts": 51224,
+    "size.HybridPoseidonAccount.declare_code_l2_gas": 4110895360,
+    "size.HybridPoseidonAccount.contract_class_object_bytes": 1898479,
+    "size.HybridPoseidonAccount.compiled_class_object_bytes": 1336160,
+    "size.VerifierSwitchGuard.casm_bytecode_felts": 1156,
+    "size.VerifierSwitchGuard.sierra_program_felts": 884,
+    "size.VerifierSwitchGuard.declare_code_l2_gas": 84230400,
+    "size.VerifierSwitchGuard.contract_class_object_bytes": 32695,
+    "size.VerifierSwitchGuard.compiled_class_object_bytes": 27228
   }
 }

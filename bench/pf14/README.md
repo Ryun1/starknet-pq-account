@@ -98,8 +98,14 @@ bench/pf04/screen.sh --lane falcon1024 fk_2956035507114a6c89165c8cc8e8fe56 ...  
 bench/pf04/screen.sh --lane mldsa87 mk_94cd1f15e1c94f189f3a3579bb166377 ...      # Part B
 ```
 
-`gas/run.sh` needs snforge 0.59.0 and universal-sierra-compiler **2.10.2**, the version
-`gas/budgets.json` (measured + 1%) was measured with; bench/pf04 pins 2.10.3. It also builds
+**Toolchain change, 2026-11-26.** `results.json` and `budgets.json` were re-measured with scarb 2.22.0
+(Sierra 1.10.0), snforge 0.64.1 and universal-sierra-compiler 2.11.0-rc.1, because Sepolia's gateway
+now declares only Sierra 1.10.0. The tables below remain the dated 2.18.0 run; under 2.22.0 the same
+paths cost up to 5.4% (`set_pq_key`) more L2 gas, and every network limit still holds. Release testnet-v1's declared
+classes are the 2.18.0 builds (`release/testnet-v1.json`).
+
+`gas/run.sh` needs scarb 2.22.0, snforge 0.64.1 and universal-sierra-compiler **2.11.0-rc.1**, the
+versions `gas/budgets.json` (measured + 1%) was measured with, as bench/pf04. It also builds
 `contracts/` against `bench/pf04/network_libfuncs.json` and reads the class sizes from that build.
 
 To regenerate the vectors (the committed file is the pinned artifact):

@@ -3,7 +3,7 @@
 #
 #   bench/arch01/run.sh
 #
-# Needs scarb 2.18.0, snforge 0.59.0, universal-sierra-compiler 2.10.2 (as bench/pf14/gas).
+# Needs scarb 2.22.0, snforge 0.64.1, universal-sierra-compiler 2.11.0-rc.1 (as bench/pf14/gas).
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 mkdir -p "$HERE/src/fixtures"

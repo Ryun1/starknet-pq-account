@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # PF-03: run every vector in vectors.json through the baseline and both candidate verifiers.
-#   bench/pf03/run.sh            # needs scarb 2.18.0 and python3
+#   bench/pf03/run.sh            # needs scarb 2.22.0 and python3
 # Regenerates src/vectors.cairo (not committed), runs cairo-test, then fails unless every
 # verifier agrees with the reference on every vector, and rewrites results.json.
 set -euo pipefail
