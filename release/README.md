@@ -54,7 +54,7 @@ from `.keys/*-state.json` files. Set `PQ_VERIFIER=<id>` to choose a verifier.
 
 ```sh
 (cd signer && npm install --no-package-lock --no-audit --no-fund)
-(cd contracts && scarb build)
+(cd contracts && ASDF_SCARB_VERSION=2.18.0 scarb build)   # the release toolchain; the repo default is 2.22.0
 node scripts/release_manifest.mjs --check   # offline; also run by CI
 node scripts/release_manifest.mjs --chain   # read-only: declared on Sepolia, guard instance, declare txs
 node scripts/build_page.mjs --check         # docs/index.html is built from its template

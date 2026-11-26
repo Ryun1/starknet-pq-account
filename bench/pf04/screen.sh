@@ -9,7 +9,7 @@
 # in the lane's slot (Falcon-512: compact; Falcon-1024: record), build contracts/, and print the
 # CASM and Sierra felts of the slot's verifier class and its declare L2 gas against the block cap
 # (see summarize.py). The board reports CASM only, which does not predict the declare size. Nothing
-# in the repository is changed. Needs scarb 2.18.0, curl, rsync and python3; about 45 seconds per
+# in the repository is changed. Needs scarb 2.22.0, curl, rsync and python3; about 45 seconds per
 # job.
 #
 # mldsa87 has no class in this repository, and the lane scores its own account, so that lane builds

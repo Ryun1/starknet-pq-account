@@ -71,8 +71,8 @@ The step count matters because it sets the prover's memory. What brought it down
   profiles output exactly the key the wallet derivation in
   [`../signer/pq_keys.mjs`](../signer/pq_keys.mjs) produces (vectors from
   [`../signer/recovery_vectors.mjs`](../signer/recovery_vectors.mjs)).
-- `scarb execute --target bootloader`: 545,685 Cairo steps for the Braavos profile and 911,665
-  for Argent X (one extra BIP32 chain), down from 4,257,716 and 8,469,319 in the first version.
+- `scarb execute --target bootloader` (Scarb 2.22.0): 545,199 Cairo steps for the Braavos profile and 910,913
+  for Argent X (545,685 and 911,665 with 2.18.0) (one extra BIP32 chain), down from 4,257,716 and 8,469,319 in the first version.
   The program output is the same as before for both profiles.
 - Proving: on a standard GitHub Actions runner (16 GB of memory), `scarb prove` makes a Stwo
   proof for each profile in about one minute with a peak of about 15 GB, and `scarb verify`
@@ -134,6 +134,6 @@ The argument files use the public Hardhat test mnemonic
   Accounts created from an imported raw private key cannot.
 - The rule must be agreed and deployed before the emergency; otherwise attackers move first.
 - The code declares two corelib libfuncs itself (`bitwise`, `u128s_from_felt252`), which Scarb
-  2.18 accepts for executables. A helper that converts values known to be below 2^128 returns 0
+  2.18 and 2.22 accept for executables. A helper that converts values known to be below 2^128 returns 0
   on its unreachable branch instead of failing; a review should confirm the bound at every call.
 - Unaudited research code.

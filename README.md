@@ -56,7 +56,7 @@ in-place upgrade, the hybrid signature check, key backup and recovery, and brows
 | `HybridPoseidonAccount`, `HybridShakeAccount` | Full hybrid accounts, also used as verifier classes: a transaction passes only if BOTH a STARK-curve ECDSA signature and a Falcon-512 signature verify over the same hash. |
 | `HybridShakeVerifierPfSmall` | The optimized verifier class of release `testnet-v1` (`PQ_VERIFIER=shake-pf-small-v1`): the same SHAKE-256 Falcon-512 check with the Provably Fast `fj_dee1326c` patch from the StarkWare and Starknet Foundation Falcon challenge, about 45% less L2 gas per transfer than `HybridShakeAccount` (29.6M against 53.9M). Chosen because it is the cheapest variant that fits in a Sepolia block when declared ([`bench/pf04`](bench/pf04/README.md)). The unpatched `HybridShakeAccount` stays the default until a review covers the patch. |
 | `HybridShakeVerifierFalcon1024` | Falcon-1024 (NIST level 5) verifier class for `HybridMigratableAccountV2`, on the Provably Fast Falcon-1024 record `fk_29560355`: 51.3M L2 gas mean validation, 54.6M worst, 4.43e9 declare (76% of a block). A V2 account moves to it, or back, with `set_pq_key`; built and tested only, not declared ([`bench/pf14`](bench/pf14/README.md), [scheme-switch.md](contracts/docs/scheme-switch.md)). |
-| `FalconOnlyVerifierPfSmall`, `FalconOnlyVerifierFalcon1024` | PQ-only mode (ARCH-01): Falcon alone, no ECDSA check, for `HybridMigratableAccountV2`. Entered and left with `set_pq_key`. Saves about 63K L2 gas per validation. Not recommended before a verifier review (PF-08); built and tested only, not declared ([pq-only.md](contracts/docs/pq-only.md)). |
+| `FalconOnlyVerifierPfSmall`, `FalconOnlyVerifierFalcon1024` | PQ-only mode (ARCH-01): Falcon alone, no ECDSA check, for `HybridMigratableAccountV2`. Entered and left with `set_pq_key`. Saves about 63–69K L2 gas per validation. Not recommended before a verifier review (PF-08); built and tested only, not declared ([pq-only.md](contracts/docs/pq-only.md)). |
 | `VerifierSwitchGuard` | Lets a migrated account change its verifier without locking itself: the switch reverts unless the new verifier accepts the switch transaction's own signature (`switchVerifier` in the kit, [`bench/pf06`](bench/pf06/README.md)). |
 | Release manifest | [`release/testnet-v1.json`](release/testnet-v1.json) pins every deployed class to its artifacts, sources and toolchain; `scripts/release_manifest.mjs --check` (offline) and `--chain` (Sepolia, read-only) verify it. See [`release/README.md`](release/README.md). |
 | Key backup profile | One BIP39 mnemonic restores both keys. For an Argent X / Ready account, the classical key follows Argent's own derivation (checked against argent-x test vectors), so the words the user already has restore the current key and the new Falcon key. See [`contracts/docs/key-backup-v0.md`](contracts/docs/key-backup-v0.md). |
@@ -303,7 +303,7 @@ checks, read-only, that these words still give the keys stored on the account.
 
 ### Reproduce release `testnet-v1` from a clean checkout
 
-Requirements: Scarb 2.18.0, Node.js 24. No Python or falcon.py needed. These commands are the ones
+Requirements: Scarb 2.18.0 (the release's classes were built with it; later builds are not the declared classes), Node.js 24. No Python or falcon.py needed. These commands are the ones
 run for the clean-checkout evidence in `release/testnet-v1-evidence.json`.
 
 ```sh
@@ -325,7 +325,7 @@ L2 gas per transfer. Unknown ids and class hashes that are not in the manifest a
 
 ### Everything else
 
-Requirements: Scarb 2.18.0, Node.js 20+ (24 for the STRK20 SDK), Python 3.11+ with `numpy`,
+Requirements: Scarb 2.22.0 (Sierra 1.10.0, the only Sierra version the Sepolia gateway accepted for a declare on 2026-11-26; snforge 0.64.1 and universal-sierra-compiler 2.10.3 for the gas benches), Node.js 20+ (24 for the STRK20 SDK), Python 3.11+ with `numpy`,
 `pycryptodome` and `beartype`, and a [falcon.py](https://github.com/tprest/falcon.py) checkout at
 commit `5145a818c9512b4a443507d3375e75dae3076af6`.
 

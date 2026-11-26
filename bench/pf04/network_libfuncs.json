@@ -83,6 +83,7 @@
         "enum_from_bounded_int": null,
         "enum_init": null,
         "enum_match": null,
+        "enum_match_v2": null,
         "enum_snapshot_match": null,
         "eval_circuit": null,
         "felt252_add": null,

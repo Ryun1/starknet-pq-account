@@ -1,11 +1,11 @@
 {
   "description": "PF-14 Falcon-1024 account-level measurements; see bench/pf14/README.md",
   "env": {
-    "date_utc": "2026-11-19T11:49:36Z",
+    "date_utc": "2026-11-26T10:35:15Z",
     "uname": "Darwin 27.2.0 arm64",
-    "scarb": "scarb 2.18.0 (e6144df0f 2026-04-21) cairo: 2.18.0 (https://crates.io/crates/cairo-lang-compiler/2.18.0) sierra: 1.8.0 arch: aarch64-apple-darwin ",
-    "snforge": "snforge 0.59.0",
-    "usc": "universal-sierra-compiler 2.10.2"
+    "scarb": "scarb 2.22.0 (5452a2aff 2026-11-25) cairo: 2.22.0 (https://crates.io/crates/cairo-lang-compiler/2.22.0) sierra: 1.10.0 arch: aarch64-apple-darwin ",
+    "snforge": "snforge 0.64.1",
+    "usc": "universal-sierra-compiler 2.11.0-rc.1"
   },
   "method": "snforge L2 gas (Sierra-gas mode): measured test minus its setup_ twin",
   "network_limits": {
@@ -19,33 +19,33 @@
     "max_receipt_l2_gas_in_block": 5800000000
   },
   "validate": {
-    "mean": 51341528,
-    "worst": 54645625,
-    "best": 49842867,
+    "mean": 51705428,
+    "worst": 55009525,
+    "best": 50206767,
     "mean_by_blocks": {
-      "16": 49866542,
-      "17": 52414245
+      "16": 50230442,
+      "17": 52778145
     },
     "per_vector": {
-      "0": 52179207,
-      "1": 52202555,
-      "2": 49875967,
-      "3": 52263024,
-      "4": 52190237,
-      "5": 49867427,
-      "6": 52158177,
-      "7": 54645625,
-      "8": 52201579,
-      "9": 52197323,
-      "10": 49863277,
-      "11": 49866677,
-      "12": 52173507,
-      "13": 49842867,
-      "14": 52170273,
-      "15": 49867777,
-      "16": 49862027,
-      "17": 49886317,
-      "18": 52175189
+      "0": 52543107,
+      "1": 52566455,
+      "2": 50239867,
+      "3": 52626924,
+      "4": 52554137,
+      "5": 50231327,
+      "6": 52522077,
+      "7": 55009525,
+      "8": 52565479,
+      "9": 52561223,
+      "10": 50227177,
+      "11": 50230577,
+      "12": 52537407,
+      "13": 50206767,
+      "14": 52534173,
+      "15": 50231677,
+      "16": 50225927,
+      "17": 50250217,
+      "18": 52539089
     }
   },
   "selected_vectors": [
@@ -53,55 +53,55 @@
     7
   ],
   "declare": {
-    "5": 49861927,
-    "7": 54640125
+    "5": 50225827,
+    "7": 55004025
   },
   "is_valid": {
-    "5": 50247247,
-    "7": 55025445
+    "5": 50612547,
+    "7": 55390745
   },
   "reject": {
-    "5": 45292297,
-    "7": 47641479
+    "5": 45657797,
+    "7": 48006979
   },
-  "set_pq_key_from_falcon512": 78767109,
-  "migrate_straight_to_falcon1024": 84322669,
-  "validate_steps_worst_vector": 352947,
+  "set_pq_key_from_falcon512": 83023869,
+  "migrate_straight_to_falcon1024": 86806769,
+  "validate_steps_worst_vector": 356586,
   "class_sizes": {
     "HybridShakeVerifierFalcon1024": {
-      "casm_bytecode_felts": 59762,
-      "sierra_program_felts": 48437,
-      "declare_code_l2_gas": 4432756480,
-      "contract_class_object_bytes": 2450380,
-      "compiled_class_object_bytes": 1785439
+      "casm_bytecode_felts": 59753,
+      "sierra_program_felts": 48434,
+      "declare_code_l2_gas": 4432264960,
+      "contract_class_object_bytes": 2449989,
+      "compiled_class_object_bytes": 1785397
     },
     "HybridMigratableAccountV2": {
-      "casm_bytecode_felts": 9748,
-      "sierra_program_felts": 4564,
-      "declare_code_l2_gas": 593775360,
-      "contract_class_object_bytes": 238125,
-      "compiled_class_object_bytes": 224500
+      "casm_bytecode_felts": 9728,
+      "sierra_program_felts": 4452,
+      "declare_code_l2_gas": 588368640,
+      "contract_class_object_bytes": 232216,
+      "compiled_class_object_bytes": 225205
     }
   },
   "libfuncs": "every class builds with allowed-libfuncs-deny against bench/pf04/network_libfuncs.json",
   "metrics": {
-    "validate.mean": 51341528,
-    "validate.worst": 54645625,
-    "set_pq_key": 78767109,
-    "migrate": 84322669,
-    "steps.worst_vector": 352947,
-    "declare.worst": 54640125,
-    "is_valid.worst": 55025445,
-    "reject.worst": 47641479,
-    "size.HybridShakeVerifierFalcon1024.casm_bytecode_felts": 59762,
-    "size.HybridShakeVerifierFalcon1024.sierra_program_felts": 48437,
-    "size.HybridShakeVerifierFalcon1024.declare_code_l2_gas": 4432756480,
-    "size.HybridShakeVerifierFalcon1024.contract_class_object_bytes": 2450380,
-    "size.HybridShakeVerifierFalcon1024.compiled_class_object_bytes": 1785439,
-    "size.HybridMigratableAccountV2.casm_bytecode_felts": 9748,
-    "size.HybridMigratableAccountV2.sierra_program_felts": 4564,
-    "size.HybridMigratableAccountV2.declare_code_l2_gas": 593775360,
-    "size.HybridMigratableAccountV2.contract_class_object_bytes": 238125,
-    "size.HybridMigratableAccountV2.compiled_class_object_bytes": 224500
+    "validate.mean": 51705428,
+    "validate.worst": 55009525,
+    "set_pq_key": 83023869,
+    "migrate": 86806769,
+    "steps.worst_vector": 356586,
+    "declare.worst": 55004025,
+    "is_valid.worst": 55390745,
+    "reject.worst": 48006979,
+    "size.HybridShakeVerifierFalcon1024.casm_bytecode_felts": 59753,
+    "size.HybridShakeVerifierFalcon1024.sierra_program_felts": 48434,
+    "size.HybridShakeVerifierFalcon1024.declare_code_l2_gas": 4432264960,
+    "size.HybridShakeVerifierFalcon1024.contract_class_object_bytes": 2449989,
+    "size.HybridShakeVerifierFalcon1024.compiled_class_object_bytes": 1785397,
+    "size.HybridMigratableAccountV2.casm_bytecode_felts": 9728,
+    "size.HybridMigratableAccountV2.sierra_program_felts": 4452,
+    "size.HybridMigratableAccountV2.declare_code_l2_gas": 588368640,
+    "size.HybridMigratableAccountV2.contract_class_object_bytes": 232216,
+    "size.HybridMigratableAccountV2.compiled_class_object_bytes": 225205
   }
 }

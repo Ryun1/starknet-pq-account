@@ -138,7 +138,10 @@ scheme on `HybridMigratableAccountV2`:
 | `__validate__`, Falcon-1024 | 52,163,837 | 52,100,462 | 63,375 (0.12%) |
 | `set_pq_key` hybrid → PQ-only, Falcon-512, same key (`__execute__`) | | 37,120,734 | |
 
-The saving is the STARK ECDSA check, about 63K L2 gas, plus 2 calldata felts. That is
+Re-run on 2026-11-26 with scarb 2.22.0, snforge 0.64.1 and USC 2.11.0-rc.1: Falcon-512 27,310,543 /
+27,241,768 (saving 68,775), Falcon-1024 52,527,737 / 52,458,362 (69,375).
+
+The saving is the STARK ECDSA check, about 63–69K L2 gas depending on the compiler, plus 2 calldata felts. That is
 negligible next to Falcon, so gas is no reason to switch. Devnet and Sepolia transactions have not
 been measured.
 
