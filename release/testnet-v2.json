@@ -1,0 +1,60 @@
+{
+  "release": "testnet-v2",
+  "network": "SN_SEPOLIA",
+  "experimental": true,
+  "note": "Experimental, unaudited, testnet only. Class hashes are Sepolia declarations. Falcon-512 verifiers stay in testnet-v1; a V2 account can use them.",
+  "source": {
+    "commit": "79c0b5973dcee3074aafa10f549992a2ee44d2e8",
+    "provably_fast_ml_dsa_44_bundle": "78c83599f57ecb28847ba3ebc4528598318129b8",
+    "provably_fast_patches": {
+      "record-mj_2e2f9ddebbcc4281b07d84937ae0ffbc.patch": "281b100eef3784fea37f620e65653643c6ca812b8e37bdbf91afaac0ca906d1d",
+      "cache.cairo": "d507ac3ced746097883c3c2f46d367941ba63d7fc73d0100460c458bf2239d6f"
+    }
+  },
+  "toolchain": {
+    "scarb": "2.22.0",
+    "cairo": "2.22.0",
+    "sierra": "1.10.0",
+    "snforge": "0.64.1",
+    "universal_sierra_compiler": "2.11.0-rc.1",
+    "starknet_js": "10.8.0",
+    "noble_post_quantum": "0.6.1"
+  },
+  "classes": {
+    "HybridMigratableAccountV2": {
+      "role": "account",
+      "class_hash": "0x7c7c9de03f30291427331176d5e64922c6f457c0ebf86ce09555f485091b154",
+      "compiled_class_hash": "0x18b9d6563b585d0b8ff61bfff2b525862c9683980532b28333ac57599e6269a",
+      "sierra_sha256": "7538bc9f6eca3fcdfbbf65976bab87614df3fd2bfb33e5f9f9831985de39b29c",
+      "casm_sha256": "a940d0a95d6a32c5cd8694872ea5ce38275f0a52deca5d9a56ee0fed2ad161b9",
+      "declarable": true,
+      "declare_tx": "0x531e2875a033559659bcd9e82030c2a903aea90c7aa87529af97d2c5b2e43e3"
+    },
+    "HybridMlDsa44Verifier": {
+      "role": "verifier",
+      "class_hash": "0x35cd62eef749b97d512003946b8e286c6a642352c83aa3a018598f6d15a5974",
+      "compiled_class_hash": "0x125a5094a8c458df1e08eb3e4c21d35ba8377045c93b3de51466bc6796ff4c0",
+      "sierra_sha256": "06ff68f24bb5befb623398c19a9027cb7e47d3ed69ea8eb043b7e28894752b2b",
+      "casm_sha256": "f37fa20c4551e5a944951c1e0ea4b475718ad4ce399c5777e26f1b8c5b5e8ac9",
+      "declarable": true,
+      "declare_tx": "0x55b2e1cf3bb6962e1778f77c6fce731d77953a12f6bfa59ecdf44a24718514b"
+    },
+    "MlDsa44KeySetup": {
+      "role": "setup",
+      "class_hash": "0x7aa0d9ef9ad35319d5170fc1d2661ff03f98c8fd7df0fd8122c03f20cd7e088",
+      "compiled_class_hash": "0x2a18c4da5b27e756cfe31b86995e8fb25a86970c58291e240e9f2f1058758ae",
+      "sierra_sha256": "286145582c3f11e98f02b3bffecb88028d07b9e27c8fab7889caa7c7981bb61d",
+      "casm_sha256": "22829065ab6d210f8d60caf0cf078dd085e60c61460d3c9c8ed0c982acb80fc5",
+      "declarable": true,
+      "declare_tx": "0x65cbd374c750205134da3561e820eb62e71996c7fb0633b42d2b49dbe12b990"
+    }
+  },
+  "verifiers": {
+    "ml-dsa-44": {
+      "class": "HybridMlDsa44Verifier",
+      "scheme": "ml-dsa-44",
+      "setup": "MlDsa44KeySetup"
+    }
+  },
+  "default_verifier": "ml-dsa-44"
+}

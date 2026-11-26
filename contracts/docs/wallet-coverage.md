@@ -43,6 +43,28 @@ These runs use the baseline `HybridShakeAccount` verifier. Argent 0.5.0, Argent 
 same checks ([`bench/pf04`](../../bench/pf04/README.md#sepolia-receipts),
 [`bench/pf06`](../../bench/pf06/README.md)).
 
+### ML-DSA-44 (release `testnet-v2`)
+
+`signer/pf13_sepolia.mjs` ran the same checks with ML-DSA-44 on 2026-11-26, on
+`HybridMigratableAccountV2` (`0x7c7c9de0…b154`, [`release/testnet-v2.json`](../../release/testnet-v2.json)):
+Argent 0.5.0 (`perform_upgrade`) and Braavos 1.2.0 (`[upgrade, migrate]`), plus an account moved
+from Falcon-512. ML-DSA-44 keys follow
+backup profile [v0.2](key-backup-v0.2.md).
+
+| Start | Move transaction | L2 gas | L1 data gas | Hybrid transfer |
+| --- | --- | --- | --- | --- |
+| Argent 0.5.0 | `upgrade` → `perform_upgrade`, straight to ML-DSA-44 [0x5b1aeaa6…](https://sepolia.voyager.online/tx/0x5b1aeaa665ba33cbe6ecc672271b4e6d38d9ee088d57e42883536c517c82f3b) | 459.1M | 44,896 | [0x78081446…](https://sepolia.voyager.online/tx/0x7808144689c22d915638656ac0cc94bcd79048fa1495cb75803a5dca557f32f) |
+| Braavos 1.2.0 | `[upgrade, migrate]`, straight to ML-DSA-44 [0x2d9802f3…](https://sepolia.voyager.online/tx/0x2d9802f35856f6b1f37d1c6d8d92677d83c1cec4460ffd075d54f0cf1ad15fc) | 458.7M | 44,896 | [0x22e7bf8c…](https://sepolia.voyager.online/tx/0x22e7bf8c468de274f1526d2efb611f44716c59b0d19286abcdcc9d0cda5a82f) |
+| Argent 0.5.0 already on Falcon-512 (`testnet-v1`) | `[upgrade V2, set_pq_key]` [0x9d3675d7…](https://sepolia.voyager.online/tx/0x9d3675d79dba977285e9327c1e79f581fc68d9f497ac564bb251fe327d0bf0) | 479.4M | 43,712 | [0x26065dfb…](https://sepolia.voyager.online/tx/0x26065dfbf1580f339df0e2f3059d7c74f432a549c9f68e01413137e8326bed8) |
+
+For all three: the stored ECDSA and ML-DSA-44 keys equal the keys from the words, the balance
+dropped by exactly the move's fee, the hybrid transfer (about 44.7M L2 gas) succeeded, and an
+ECDSA-only transfer was rejected in `__validate__`. The move writes the key and a 419-slot cache,
+so a wallet must bound L1 data gas at about 45K or more; a 5,000 bound reverts after running
+([`bench/pf13`](../../bench/pf13/README.md#sepolia-receipts-plan-step-10-2026-11-26)). The other
+nine wallet classes above were not re-run with ML-DSA-44; Argent 0.3.x and OKX use the third
+callback path, `execute_after_upgrade`, which no ML-DSA-44 move has exercised.
+
 ### Gas
 
 Migrations started from classes compiled with Sierra 1.7.0 (Argent 0.5.0, Braavos 1.2.0) used
