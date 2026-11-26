@@ -20,6 +20,12 @@ the plan passes, with margin:
 | Network libfunc list | every class builds | yes (`bench/pf04/network_libfuncs.json`, deny) |
 | Pinned record | unbroken, ≥ 1 attack round withstood | `mj_2e2f9dde`: unbroken, 1 round |
 
+**Under scarb 2.22.0** (2026-11-26; Sierra 1.10.0, snforge 0.64.1, universal-sierra-compiler
+2.11.0-rc.1, the toolchain the classes were declared with): `__validate__` worst 43.4M (mean 43.2M),
+verifier declare 3.88e9 (67.0%), setup 2.11e9 (36.4%), steps 365,029 (validation) and 1,586,724
+(`set_pq_key`), `set_pq_key` 427M, `migrate` 431M. Every gate still passes; `gas/results.json` and
+`gas/budgets.json` are this run. The tables below are the dated 2.18.0 run.
+
 The plan expected a single verifier class at 88–93% of the block cap. Splitting the one-time ExpandA
 code into the setup class leaves the verifier at 65%.
 
@@ -185,7 +191,7 @@ bench/pf13/gas/run.sh            # gas, steps, class sizes, network libfuncs; wr
 bench/pf13/gas/run.sh --check    # CI: same, against gas/budgets.json
 ```
 
-`gas/run.sh` needs scarb 2.18.0, snforge 0.59.0 and universal-sierra-compiler 2.10.2, as
+`gas/run.sh` needs scarb 2.22.0, snforge 0.64.1 and universal-sierra-compiler 2.11.0-rc.1, as
 bench/pf14/gas.
 
 ## Remaining plan steps

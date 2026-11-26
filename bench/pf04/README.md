@@ -41,6 +41,12 @@ bench/pf04/screen.sh JOB...  # declare size of board entries as our verifier cla
 
 ## Results
 
+**Toolchain change, 2026-11-26.** `results.json` and `budgets.json` were re-measured with scarb 2.22.0
+(Sierra 1.10.0), snforge 0.64.1 and universal-sierra-compiler 2.11.0-rc.1, because Sepolia's gateway
+now declares only Sierra 1.10.0. The tables below remain the dated 2.18.0 run; under 2.22.0 the same
+paths cost 0.2–3.2% more L2 gas, and every network limit still holds. Release testnet-v1's declared
+classes are the 2.18.0 builds (`release/testnet-v1.json`).
+
 Run on 2026-10-27, Darwin arm64, scarb 2.18.0 / cairo 2.18.0 / Sierra 1.8.0, snforge 0.59.0,
 universal-sierra-compiler 2.10.3. Full figures in `results.json`. L2 gas:
 
@@ -155,7 +161,13 @@ sequencer compiles declared classes against its own bundled list (`DEFAULT_ALLOW
 = Bundled`), which was narrowed on 2026-09-16, so `run.sh` also builds every class from a clean
 copy against that list: `network_libfuncs.json`, from
 `crates/apollo_compile_to_casm/resources/allowed_libfuncs.json` at `ced8be53` (Apache-2.0,
-SHA-256 `3b4ebcfa…eb0ff9dc`). All classes build. The bundled option first appeared on `main` on
+SHA-256 `3b4ebcfa…eb0ff9dc`), plus one entry, `enum_match_v2`. Scarb 2.22.0 (Sierra 1.10.0) emits
+`enum_match_v2`, which the published list (unchanged on the sequencer's `main` on 2026-11-26) does not
+contain, yet Sepolia declared and ran classes using it on 2026-11-26 (declares
+[`0x531e2875…`](https://sepolia.voyager.online/tx/0x531e2875a033559659bcd9e82030c2a903aea90c7aa87529af97d2c5b2e43e3) and
+[`0x55b2e1cf…`](https://sepolia.voyager.online/tx/0x55b2e1cf3bb6962e1778f77c6fce731d77953a12f6bfa59ecdf44a24718514b) for PF-13,
+whose classes use it 28 and 42 times). The deployed list is therefore not the
+published one; the added entry rests on that evidence, not on a source file. All classes build. The bundled option first appeared on `main` on
 2026-09-16 and the deployed 0.14.4 build may predate it and use the audited list instead; the
 classes pass both, so either way they compile. Removing `keccak_syscall` from the list makes the
 candidate verifier classes fail, so the check is live. Scarb does not rebuild when only the list

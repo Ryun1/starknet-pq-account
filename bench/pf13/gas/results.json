@@ -1,11 +1,11 @@
 {
   "description": "PF-13 ML-DSA-44 account-level measurements; see bench/pf13/README.md",
   "env": {
-    "date_utc": "2026-11-19T15:42:28Z",
+    "date_utc": "2026-11-26T11:19:53Z",
     "uname": "Darwin 27.2.0 arm64",
-    "scarb": "scarb 2.18.0 (e6144df0f 2026-04-21) cairo: 2.18.0 (https://crates.io/crates/cairo-lang-compiler/2.18.0) sierra: 1.8.0 arch: aarch64-apple-darwin ",
-    "snforge": "snforge 0.59.0",
-    "usc": "universal-sierra-compiler 2.10.2"
+    "scarb": "scarb 2.22.0 (5452a2aff 2026-11-25) cairo: 2.22.0 (https://crates.io/crates/cairo-lang-compiler/2.22.0) sierra: 1.10.0 arch: aarch64-apple-darwin ",
+    "snforge": "snforge 0.64.1",
+    "usc": "universal-sierra-compiler 2.11.0-rc.1"
   },
   "method": "snforge L2 gas (Sierra-gas mode): measured test minus its setup_ twin",
   "network_limits": {
@@ -21,22 +21,22 @@
     "invoke_tx_max_n_steps": 10000000
   },
   "validate": {
-    "mean": 40466574,
-    "worst": 40636546,
-    "best": 40338807,
+    "mean": 43213834,
+    "worst": 43383806,
+    "best": 43086067,
     "per_vector": {
-      "0": 40399210,
-      "1": 40636546,
-      "2": 40561639,
-      "3": 40612515,
-      "4": 40394494,
-      "5": 40433854,
-      "6": 40343247,
-      "7": 40442380,
-      "8": 40411107,
-      "9": 40412960,
-      "10": 40338807,
-      "11": 40612126
+      "0": 43146470,
+      "1": 43383806,
+      "2": 43308899,
+      "3": 43359775,
+      "4": 43141754,
+      "5": 43181114,
+      "6": 43090507,
+      "7": 43189640,
+      "8": 43158367,
+      "9": 43160220,
+      "10": 43086067,
+      "11": 43359386
     }
   },
   "selected_vectors": [
@@ -44,69 +44,69 @@
     3
   ],
   "declare": {
-    "1": 40631046,
-    "3": 40607015
+    "1": 43378306,
+    "3": 43354275
   },
   "is_valid": {
-    "1": 40892786,
-    "3": 40868755
+    "1": 43641446,
+    "3": 43617415
   },
   "reject": {
-    "1": 40892306,
-    "3": 40867485
+    "1": 43640966,
+    "3": 43616145
   },
-  "set_pq_key_from_falcon512": 414139287,
-  "migrate_straight_to_mldsa44": 420352361,
-  "validate_steps_worst_vector": 337502,
-  "set_pq_key_steps": 1461539,
+  "set_pq_key_from_falcon512": 426651947,
+  "migrate_straight_to_mldsa44": 431260361,
+  "validate_steps_worst_vector": 365029,
+  "set_pq_key_steps": 1586724,
   "class_sizes": {
     "HybridMlDsa44Verifier": {
-      "casm_bytecode_felts": 50158,
-      "sierra_program_felts": 42207,
-      "declare_code_l2_gas": 3784184320,
-      "contract_class_object_bytes": 2221816,
-      "compiled_class_object_bytes": 1293446
+      "casm_bytecode_felts": 50938,
+      "sierra_program_felts": 43884,
+      "declare_code_l2_gas": 3884823040,
+      "contract_class_object_bytes": 2326835,
+      "compiled_class_object_bytes": 1306736
     },
     "MlDsa44KeySetup": {
-      "casm_bytecode_felts": 28557,
-      "sierra_program_felts": 20585,
-      "declare_code_l2_gas": 2013356800,
-      "contract_class_object_bytes": 1012250,
-      "compiled_class_object_bytes": 758094
+      "casm_bytecode_felts": 29321,
+      "sierra_program_felts": 22236,
+      "declare_code_l2_gas": 2112275200,
+      "contract_class_object_bytes": 1110638,
+      "compiled_class_object_bytes": 770090
     },
     "HybridMigratableAccountV2": {
-      "casm_bytecode_felts": 9748,
-      "sierra_program_felts": 4564,
-      "declare_code_l2_gas": 593775360,
-      "contract_class_object_bytes": 238125,
-      "compiled_class_object_bytes": 224500
+      "casm_bytecode_felts": 9728,
+      "sierra_program_felts": 4452,
+      "declare_code_l2_gas": 588368640,
+      "contract_class_object_bytes": 232216,
+      "compiled_class_object_bytes": 225205
     }
   },
   "libfuncs": "every class builds with allowed-libfuncs-deny against bench/pf04/network_libfuncs.json",
   "metrics": {
-    "validate.mean": 40466574,
-    "validate.worst": 40636546,
-    "set_pq_key": 414139287,
-    "migrate": 420352361,
-    "steps.worst_vector": 337502,
-    "steps.set_pq_key": 1461539,
-    "declare.worst": 40631046,
-    "is_valid.worst": 40892786,
-    "reject.worst": 40892306,
-    "size.HybridMlDsa44Verifier.casm_bytecode_felts": 50158,
-    "size.HybridMlDsa44Verifier.sierra_program_felts": 42207,
-    "size.HybridMlDsa44Verifier.declare_code_l2_gas": 3784184320,
-    "size.HybridMlDsa44Verifier.contract_class_object_bytes": 2221816,
-    "size.HybridMlDsa44Verifier.compiled_class_object_bytes": 1293446,
-    "size.MlDsa44KeySetup.casm_bytecode_felts": 28557,
-    "size.MlDsa44KeySetup.sierra_program_felts": 20585,
-    "size.MlDsa44KeySetup.declare_code_l2_gas": 2013356800,
-    "size.MlDsa44KeySetup.contract_class_object_bytes": 1012250,
-    "size.MlDsa44KeySetup.compiled_class_object_bytes": 758094,
-    "size.HybridMigratableAccountV2.casm_bytecode_felts": 9748,
-    "size.HybridMigratableAccountV2.sierra_program_felts": 4564,
-    "size.HybridMigratableAccountV2.declare_code_l2_gas": 593775360,
-    "size.HybridMigratableAccountV2.contract_class_object_bytes": 238125,
-    "size.HybridMigratableAccountV2.compiled_class_object_bytes": 224500
+    "validate.mean": 43213834,
+    "validate.worst": 43383806,
+    "set_pq_key": 426651947,
+    "migrate": 431260361,
+    "steps.worst_vector": 365029,
+    "steps.set_pq_key": 1586724,
+    "declare.worst": 43378306,
+    "is_valid.worst": 43641446,
+    "reject.worst": 43640966,
+    "size.HybridMlDsa44Verifier.casm_bytecode_felts": 50938,
+    "size.HybridMlDsa44Verifier.sierra_program_felts": 43884,
+    "size.HybridMlDsa44Verifier.declare_code_l2_gas": 3884823040,
+    "size.HybridMlDsa44Verifier.contract_class_object_bytes": 2326835,
+    "size.HybridMlDsa44Verifier.compiled_class_object_bytes": 1306736,
+    "size.MlDsa44KeySetup.casm_bytecode_felts": 29321,
+    "size.MlDsa44KeySetup.sierra_program_felts": 22236,
+    "size.MlDsa44KeySetup.declare_code_l2_gas": 2112275200,
+    "size.MlDsa44KeySetup.contract_class_object_bytes": 1110638,
+    "size.MlDsa44KeySetup.compiled_class_object_bytes": 770090,
+    "size.HybridMigratableAccountV2.casm_bytecode_felts": 9728,
+    "size.HybridMigratableAccountV2.sierra_program_felts": 4452,
+    "size.HybridMigratableAccountV2.declare_code_l2_gas": 588368640,
+    "size.HybridMigratableAccountV2.contract_class_object_bytes": 232216,
+    "size.HybridMigratableAccountV2.compiled_class_object_bytes": 225205
   }
 }

@@ -5,7 +5,7 @@
 #   bench/pf13/gas/run.sh            # measure, check limits and budgets, rewrite results.json
 #   bench/pf13/gas/run.sh --check    # measure and check only (CI)
 #
-# Needs scarb 2.18.0, snforge 0.59.0, universal-sierra-compiler 2.10.2 (snforge compiles the test
+# Needs scarb 2.22.0, snforge 0.64.1, universal-sierra-compiler 2.11.0-rc.1 (snforge compiles the test
 # classes with it, so it changes gas; budgets.json was measured with it) and python3.
 set -euo pipefail
 
@@ -20,9 +20,9 @@ need() {
   got=$("$1" --version 2>/dev/null | head -1 | awk '{print $2}')
   [ "$got" = "$2" ] || { echo "$1 $2 required, found ${got:-none}" >&2; exit 1; }
 }
-need scarb 2.18.0
-need snforge 0.59.0
-need universal-sierra-compiler 2.10.2
+need scarb 2.22.0
+need snforge 0.64.1
+need universal-sierra-compiler 2.11.0-rc.1
 
 echo "== paired gas tests"
 python3 -I "$HERE/gen_tests.py"
