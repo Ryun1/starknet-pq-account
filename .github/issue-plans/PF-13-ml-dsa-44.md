@@ -302,6 +302,12 @@ one migrated Falcon-512 account with `[upgrade, set_pq_key]`; a hybrid transfer 
 ECDSA-only transfer rejected. Receipts into `bench/pf13/sepolia.json`. This is the Sepolia half of
 acceptance criterion 2.
 
+Status 2026-11-26: done (bench/pf13/README.md, `sepolia.json`). Declared from a scarb 2.22.0 build:
+the Sepolia gateway accepted only Sierra 1.10.0. Argent 0.5.0 and Braavos 1.2.0 migrated straight to
+ML-DSA-44, a Falcon-512 account moved with `[upgrade, set_pq_key]`; hybrid transfers succeeded,
+ECDSA-only rejected. The move needs about 45K L1 data gas; the first attempts bounded it at 5,000
+and reverted (recorded). Step 9's manifest follows the toolchain change.
+
 ## Acceptance criteria
 
 | Criterion | Closed by |

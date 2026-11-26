@@ -25,7 +25,7 @@
   `vendor/provably-fast/ml-dsa-44/`: the lane's record patch `record-mj_2e2f9ddebbcc4281b07d84937ae0ffbc.patch`
   (`281b100e…6d1d`), MIT, by the contributors listed in its `PROVENANCE.md`, the cache module `cache.cairo`
   ported from the board's account (see `PROVENANCE.md`), and the crate generated from them:
-  `HybridMlDsa44Verifier` and `MlDsa44KeySetup`, built and tested only (PF-13).
+  `HybridMlDsa44Verifier` and `MlDsa44KeySetup` (PF-13), declared on Sepolia (testnet only).
 - `bench/pf13/acvp_keygen.json`: seeds and key hashes from NIST's ACVP ML-DSA keyGen vectors
   ([usnistgov/ACVP-Server](https://github.com/usnistgov/ACVP-Server), public domain).
 - `contracts/src/utils/execution.cairo` and `contracts/src/utils/interface.cairo` are adapted from the same

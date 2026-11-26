@@ -3,7 +3,7 @@
 Issue #21. ML-DSA-44 for `HybridMigratableAccountV2` ([scheme-switch.md](../../contracts/docs/scheme-switch.md))
 as two classes, `HybridMlDsa44Verifier` and `MlDsa44KeySetup` (`contracts/src/mldsa.cairo`), built on
 the Provably Fast record `mj_2e2f9dde` ([PROVENANCE](../../vendor/provably-fast/ml-dsa-44/PROVENANCE.md)).
-Experimental, unaudited, testnet only; nothing here is declared on Sepolia.
+Experimental, unaudited, testnet only. Declared on Sepolia from a scarb 2.22.0 build (see [Sepolia receipts](#sepolia-receipts-plan-step-10-2026-11-26)).
 
 ## Go / no-go: **go** (2026-11-19)
 
@@ -131,6 +131,47 @@ small secrets); only the public key and signature are judged, by the reference. 
 break (`REJECTS_VALID`, `mj_8c3bebbe`) is not included: the board publishes only its digest, not the
 vector.
 
+## Sepolia receipts (plan step 10, 2026-11-26)
+
+Complete transactions on Sepolia (Starknet 0.14.4), collected by `signer/pf13_sepolia.mjs` into
+[`sepolia.json`](sepolia.json) (hashes and receipts only; the test words stay in `.keys/`). Fees at
+an L2 gas price of about 2.87e10 fri.
+
+**Toolchain.** On 2026-11-26 the Sepolia gateway refused our scarb 2.18.0 build ("Sierra versions
+older than 1.10.0 or newer than 1.10.0 are not supported"), so these classes are the **scarb 2.22.0
+(Sierra 1.10.0)** build of this branch, not the 2.18.0 build the tables above measure. The
+public RPC could not estimate a Sierra 1.10.0 declare ("Internal error"), so each declare was
+bounded by the code-size formula + 20%.
+
+| Declared class | Class hash | L2 gas | of 5.8e9 block cap | Fee (STRK) | Tx |
+| --- | --- | ---: | ---: | ---: | --- |
+| `HybridMigratableAccountV2` | `0x7c7c9de0…b154` | 589,502,400 | 10.2% | 17.04 | [`0x531e2875…`](https://sepolia.voyager.online/tx/0x531e2875a033559659bcd9e82030c2a903aea90c7aa87529af97d2c5b2e43e3) |
+| `MlDsa44KeySetup` | `0x7aa0d9ef…e088` | 2,112,923,840 | 36.4% | 60.97 | [`0x65cbd374…`](https://sepolia.voyager.online/tx/0x65cbd374c750205134da3561e820eb62e71996c7fb0633b42d2b49dbe12b990) |
+| `HybridMlDsa44Verifier` | `0x35cd62ee…5974` | 3,885,496,000 | 67.0% | 112.07 | [`0x55b2e1cf…`](https://sepolia.voyager.online/tx/0x55b2e1cf3bb6962e1778f77c6fce731d77953a12f6bfa59ecdf44a24718514b) |
+
+Accounts, each from fresh words (ECDSA key by the wallet's own derivation, ML-DSA-44 key by
+backup profile v0.2):
+
+| Account | Path | Move: L2 gas / L1 data gas / fee | Hybrid transfer: L2 gas / fee |
+| --- | --- | ---: | ---: |
+| Argent 0.5.0 | `upgrade` straight to V2 + ML-DSA-44 ([tx](https://sepolia.voyager.online/tx/0x5b1aeaa665ba33cbe6ecc672271b4e6d38d9ee088d57e42883536c517c82f3b)) | 459,124,013 / 44,896 / 20.73 STRK | 44,781,406 / 1.32 STRK ([tx](https://sepolia.voyager.online/tx/0x7808144689c22d915638656ac0cc94bcd79048fa1495cb75803a5dca557f32f)) |
+| Braavos 1.2.0 | `[upgrade, migrate]` straight to V2 + ML-DSA-44 ([tx](https://sepolia.voyager.online/tx/0x2d9802f35856f6b1f37d1c6d8d92677d83c1cec4460ffd075d54f0cf1ad15fc)) | 458,687,974 / 44,896 / 20.70 STRK | 44,714,230 / 1.32 STRK ([tx](https://sepolia.voyager.online/tx/0x22e7bf8c468de274f1526d2efb611f44716c59b0d19286abcdcc9d0cda5a82f)) |
+| Argent 0.5.0 on testnet-v1 Falcon-512 | `[upgrade V2, set_pq_key]`, signed hybrid with Falcon-512 ([tx](https://sepolia.voyager.online/tx/0x9d3675d79dba977285e9327c1e79f581fc68d9f497ac564bb251fe327d0bf0)) | 479,362,058 / 43,712 / 21.07 STRK | 44,712,614 / 1.32 STRK ([tx](https://sepolia.voyager.online/tx/0x26065dfbf1580f339df0e2f3059d7c74f432a549c9f68e01413137e8326bed8)) |
+
+For all three: the account's class is V2 (`0x7c7c9de0…`), the stored ECDSA and ML-DSA-44 keys equal
+the keys from the words, the balance dropped by exactly the move's fee, a hybrid (ECDSA + ML-DSA-44)
+transfer succeeded, and an ECDSA-only transfer was rejected in `__validate__`.
+
+Finding: **the move costs about 45K L1 data gas**, from writing the key and its 419-slot cache
+(the snforge figures above are L2 gas only). The first attempt of each move bounded L1 data gas at
+5,000 and reverted after running ("Insufficient max L1DataGas … actual used: 44896"), paying 14.1,
+14.1 and 14.7 STRK; `sepolia.json` keeps them under `failedAttempts`. The script now bounds the
+move at 80,000. A wallet must set this bound from the scheme, not from a Falcon-sized default.
+
+A hybrid transfer's 44.7M L2 gas is the whole transaction (validation, 40.6M locally, plus the
+transfer); the move's 459M is above the local `migrate` figure (420M) by the full transaction's
+validation and the 2.22.0 build.
+
 ## Reproduce
 
 ```sh
@@ -149,5 +190,5 @@ bench/pf14/gas.
 
 ## Remaining plan steps
 
-10 Sepolia receipts (needs authorization), and with it the release manifest and
-`wallet-coverage.md`. Steps 2–9 are in.
+Step 9's release manifest for these classes waits for the scarb 2.22.0 toolchain change
+(separate PR), so that the manifest's build reproduces the declared class hashes.
