@@ -12,6 +12,10 @@
 //     (shake-pf-small-v1), then moved with one hybrid-signed [upgrade V2, set_pq_key ML-DSA-44]
 // Then for each: stored keys equal the words' keys, a hybrid (ECDSA + ML-DSA-44) transfer succeeds,
 // an ECDSA-only transfer is rejected. sepolia.json holds hashes and receipts, never keys or words.
+//
+// PQ_TARGET=falcon-1024 runs PF-14 A9 instead: the falcon-512 account only, moved to the
+// Falcon-1024 verifier (no setup class); state .keys/pf14-sepolia-state.json, receipts
+// bench/pf14/a9-sepolia.json (bench/pf14/sepolia.json is the demo account's).
 import { Account, CallData, RpcProvider, Signer, cairo, config, constants, ec, hash, json, num } from "starknet";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -22,23 +26,35 @@ import { KEYS, ROOTS, RPC, TARGET } from "./config.mjs";
 import { MIGRATABLE_CLASS, verifierClass } from "./verifiers.mjs";
 
 const provider = new RpcProvider({ nodeUrl: RPC });
-const STATE_FILE = `${KEYS}/pf13-sepolia-state.json`;
-const OUT = resolve(import.meta.dirname, "../bench/pf13/sepolia.json");
+const TARGETS = {
+  // set_pq_key / migrate to ML-DSA-44 measured 414M / 420M L2 gas locally (bench/pf13/gas); writing
+  // the key and its 419-slot cache took about 45K L1 data gas on Sepolia (2026-11-26).
+  "ml-dsa-44": { tag: "pf13", label: "ML-DSA-44", verifier: "HybridMlDsa44Verifier", setup: "MlDsa44KeySetup", pqFelts: 43,
+    keyCheck: "mlDsaKeyMatchesWords", accounts: ["argent-0.5.0", "braavos-1.2.0", "falcon-512"],
+    moveL2: 800000000n, moveData: 80000n, transferL2: 120000000n },
+  // set_pq_key Falcon-512 -> Falcon-1024 measured 78.8M L2 gas locally (bench/pf14); the demo
+  // account's migration took 171.8M and its hybrid transfer 54.2M on Sepolia.
+  "falcon-1024": { tag: "pf14", label: "Falcon-1024", verifier: "HybridShakeVerifierFalcon1024", setup: null, pqFelts: 57,
+    keyCheck: "falcon1024KeyMatchesWords", accounts: ["falcon-512"], roots: "falcon1024_ntt_roots.json",
+    moveL2: 400000000n, moveData: 20000n, transferL2: 250000000n },
+};
+const SCHEME = process.env.PQ_TARGET || "ml-dsa-44";
+const T = TARGETS[SCHEME];
+if (!T) { console.error(`PQ_TARGET must be one of ${Object.keys(TARGETS).join(", ")}`); process.exit(1); }
+const STATE_FILE = `${KEYS}/${T.tag}-sepolia-state.json`;
+const OUT = resolve(import.meta.dirname, T.tag === "pf13" ? "../bench/pf13/sepolia.json" : "../bench/pf14/a9-sepolia.json");
 const STRK = "0x04718f5a0fc34cc1af16a1cdee98ffb20c31f5cd61d6ab07201858f4287c938d";
 const BRAAVOS_BASE = "0x03d16c7a9a60b0593bd202f660a28c5d76e0403601d9ccc7e4fa253b6a70c201";
 const VOYAGER = "https://sepolia.voyager.online";
-const CLASSES = ["HybridMigratableAccountV2", "MlDsa44KeySetup", "HybridMlDsa44Verifier"];
+const CLASSES = ["HybridMigratableAccountV2", ...(T.setup ? [T.setup] : []), T.verifier];
 const artifact = (name, kind) => json.parse(readFileSync(`${TARGET}/pq_hybrid_${name}.${kind}.json`, "utf8"));
 const H = Object.fromEntries(CLASSES.map((c) => [c, num.toHex(hash.computeContractClassHash(artifact(c, "contract_class")))]));
-const V2 = H.HybridMigratableAccountV2, VERIFIER = H.HybridMlDsa44Verifier, SETUP = H.MlDsa44KeySetup;
-const MLDSA_ALLOWED = { [VERIFIER]: "HybridMlDsa44Verifier (PF-13)", [SETUP]: "MlDsa44KeySetup (PF-13)" };
+const V2 = H.HybridMigratableAccountV2, VERIFIER = H[T.verifier], SETUP = T.setup ? H[T.setup] : "0x0";
+const TARGET_ALLOWED = { [VERIFIER]: T.verifier, ...(T.setup && { [SETUP]: T.setup }) };
 const FALCON_VERIFIER = verifierClass("shake-pf-small-v1");
-// set_pq_key / migrate to ML-DSA-44 measured 414M / 420M L2 gas locally (bench/pf13/gas).
-const MOVE_L2_MAX = 800000000n;
-// Writing the ML-DSA-44 key and its 419-slot cache: about 45K L1 data gas on Sepolia (2026-11-26).
-const MOVE_DATA_MAX = 80000n;
+const MOVE_L2_MAX = T.moveL2, MOVE_DATA_MAX = T.moveData;
 const V1_MIGRATION_L2_MAX = 250000000n;
-const TRANSFER_L2_MAX = 120000000n;
+const TRANSFER_L2_MAX = T.transferL2;
 const ACCOUNTS = {
   "argent-0.5.0": { profile: "argentx", cls: "0x073414441639dcd11d1846f287650a00c60c416b9d3ba45d31c651672125b2c2", ctor: (pk) => [0, pk, 1] },
   "braavos-1.2.0": { profile: "braavos", impl: "0x3957f9f5a1cbfe918cedc2015c85200ca51a5f7506ecb6de98a5207b759bf8a" },
@@ -148,7 +164,7 @@ async function declareAll() {
 }
 
 function words(name) {
-  const file = `${KEYS}/pf13-${name}-mnemonic.txt`;
+  const file = `${KEYS}/${T.tag}-${name}-mnemonic.txt`;
   if (!existsSync(file)) writeFileSync(file, generateMnemonic(wordlist, 256));
   return readFileSync(file, "utf8").trim();
 }
@@ -182,15 +198,16 @@ async function runAccount(name) {
   const w = ACCOUNTS[name];
   const mnemonic = words(name);
   const roots = JSON.parse(readFileSync(ROOTS, "utf8"));
-  const mldsa = prepareKeys(deriveAccountKeys(mnemonic, 0, w.profile, "ml-dsa-44"), roots);
+  const next = prepareKeys(deriveAccountKeys(mnemonic, 0, w.profile, SCHEME),
+    T.roots ? JSON.parse(readFileSync(new URL(`./${T.roots}`, import.meta.url), "utf8")) : roots);
   const falcon = prepareKeys(deriveAccountKeys(mnemonic, 0, w.profile, "falcon-512"), roots);
   log(`\n${name}`);
-  const s = await deploy(name, w, mldsa);
+  const s = await deploy(name, w, next);
   log(`  account ${s.address}`);
-  const ecdsaAcc = new Account({ provider, address: s.address, signer: mldsa.ecdsaPrivateKey });
+  const ecdsaAcc = new Account({ provider, address: s.address, signer: next.ecdsaPrivateKey });
 
   if (w.viaFalcon) {
-    // Migrate to the testnet-v1 class with Falcon-512 first, then move to ML-DSA-44 in one transaction.
+    // Migrate to the testnet-v1 class with Falcon-512 first, then move to the target in one transaction.
     const ok = await step(s, "falconMigration", async () => {
       const info = await retry(() => inspectAccount(provider, s.address));
       if (!info.migratable) throw new Error(`not migratable: ${info.reason}`);
@@ -202,33 +219,33 @@ async function runAccount(name) {
       await fund(s.address, MOVE_L2_MAX, MOVE_DATA_MAX);
       s.balanceBeforeMove = (await strkBalance(s.address)).toString();
       return send(new Account({ provider, address: s.address, signer: new HybridSigner(falcon) }),
-        setPqKeyCalls(s.address, falcon, mldsa, { verifierClass: VERIFIER, setupClass: SETUP, upgradeTo: V2, allowedVerifiers: MLDSA_ALLOWED }), MOVE_L2_MAX, MOVE_DATA_MAX);
+        setPqKeyCalls(s.address, falcon, next, { verifierClass: VERIFIER, setupClass: SETUP, upgradeTo: V2, allowedVerifiers: TARGET_ALLOWED }), MOVE_L2_MAX, MOVE_DATA_MAX);
     }))) return;
   } else if (!(await step(s, "move", async () => {
     const info = await retry(() => inspectAccount(provider, s.address));
     if (!info.migratable) throw new Error(`not migratable: ${info.reason}`);
     await fund(s.address, MOVE_L2_MAX, MOVE_DATA_MAX);
     s.balanceBeforeMove = (await strkBalance(s.address)).toString();
-    return send(ecdsaAcc, migrationCalls(info, mldsa, { migratableClass: V2, verifierClass: VERIFIER, setupClass: SETUP, allowedVerifiers: MLDSA_ALLOWED }), MOVE_L2_MAX, MOVE_DATA_MAX);
+    return send(ecdsaAcc, migrationCalls(info, next, { migratableClass: V2, verifierClass: VERIFIER, setupClass: SETUP, allowedVerifiers: TARGET_ALLOWED }), MOVE_L2_MAX, MOVE_DATA_MAX);
   }))) return;
 
   const read = async (ep) => retry(() => provider.callContract({ contractAddress: s.address, entrypoint: ep, calldata: [] }, "latest"));
   const pq = (await read("get_falcon_public_key")).slice(1);
   s.after = {
     class: await classAt(s.address),
-    ecdsaKeyMatchesWords: BigInt((await read("get_ecdsa_public_key"))[0]) === BigInt(mldsa.ecdsaPublicKey),
-    mlDsaKeyMatchesWords: pq.length === 43 && pq.every((f, i) => BigInt(f) === BigInt(mldsa.falconFelts[i])),
+    ecdsaKeyMatchesWords: BigInt((await read("get_ecdsa_public_key"))[0]) === BigInt(next.ecdsaPublicKey),
+    [T.keyCheck]: pq.length === T.pqFelts && pq.every((f, i) => BigInt(f) === BigInt(next.falconFelts[i])),
     balanceDropEqualsFee: BigInt(s.balanceBeforeMove) - (await strkBalance(s.address)) === BigInt(s.move.fee),
   };
   save();
   log(`  after: ${JSON.stringify(s.after)}`);
   if (!(await step(s, "hybridTransfer", async () => {
     await fund(s.address, TRANSFER_L2_MAX);
-    return send(new Account({ provider, address: s.address, signer: new HybridSigner(mldsa) }), transferCall(deployer().address, 10n ** 16n), TRANSFER_L2_MAX);
+    return send(new Account({ provider, address: s.address, signer: new HybridSigner(next) }), transferCall(deployer().address, 10n ** 16n), TRANSFER_L2_MAX);
   }))) return;
   if (!s.ecdsaOnly) {
     try {
-      const r = await send(new Account({ provider, address: s.address, signer: new EcdsaOnlySigner(mldsa.ecdsaPrivateKey) }), transferCall(deployer().address, 1n), TRANSFER_L2_MAX);
+      const r = await send(new Account({ provider, address: s.address, signer: new EcdsaOnlySigner(next.ecdsaPrivateKey) }), transferCall(deployer().address, 1n), TRANSFER_L2_MAX);
       s.ecdsaOnly = "UNEXPECTED: accepted " + r.tx;
     } catch (e) {
       const m = e?.message || String(e);
@@ -251,11 +268,11 @@ async function receipt(tx) {
 }
 
 async function receipts() {
-  const out = { description: "PF-13 Sepolia receipts; see bench/pf13/README.md", generated_utc: new Date().toISOString(),
-    classes: { HybridMigratableAccountV2: V2, HybridMlDsa44Verifier: VERIFIER, MlDsa44KeySetup: SETUP }, declares: {}, accounts: {} };
+  const out = { description: `${T.tag.replace("pf", "PF-")} Sepolia receipts; see bench/${T.tag}/README.md`, generated_utc: new Date().toISOString(),
+    classes: { HybridMigratableAccountV2: V2, [T.verifier]: VERIFIER, ...(T.setup && { [T.setup]: SETUP }) }, declares: {}, accounts: {} };
   for (const [name, d] of Object.entries(state.declares || {})) out.declares[name] = { classHash: d.classHash, ...(await receipt(d.tx)) };
   for (const [name, s] of Object.entries(state.accounts || {})) {
-    const r = { address: s.address, path: ACCOUNTS[name].viaFalcon ? "falcon-512 testnet-v1 -> [upgrade V2, set_pq_key ML-DSA-44]" : "migrate straight to ML-DSA-44" };
+    const r = { address: s.address, path: ACCOUNTS[name].viaFalcon ? `falcon-512 testnet-v1 -> [upgrade V2, set_pq_key ${T.label}]` : `migrate straight to ${T.label}` };
     for (const k of ["deploy", "falconMigration", "move", "hybridTransfer"]) if (s[k]?.tx) r[k] = await receipt(s[k].tx);
     // Earlier attempts that reverted on chain (they paid a fee), or never reached the chain.
     r.failedAttempts = [];
@@ -276,7 +293,8 @@ async function plan() {
   log(`deployer ${acc.address}: ${Number(await strkBalance(acc.address)) / 1e18} STRK`);
   for (const c of CLASSES) log(`${c} ${H[c]} ${(await declared(H[c])) ? "declared" : "not declared"}`);
   log(`Falcon-512 verifier (testnet-v1): ${FALCON_VERIFIER}, migratable class ${MIGRATABLE_CLASS} ${(await declared(MIGRATABLE_CLASS)) ? "declared" : "NOT declared"}`);
-  for (const name of Object.keys(ACCOUNTS)) {
+  log(`target ${SCHEME}`);
+  for (const name of T.accounts) {
     const s = state.accounts?.[name];
     log(`${name}: ${s ? ["deploy", "falconMigration", "move", "hybridTransfer"].map((k) => `${k}=${s[k]?.status || (s[k]?.error ? "error" : "-")}`).join(" ") + ` ecdsaOnly=${s.ecdsaOnly || "-"}` : "not started"}`);
   }
@@ -288,6 +306,6 @@ if (cmd === "--plan") await plan();
 else if (cmd === "declare") await declareAll();
 else if (cmd === "run") {
   for (const c of CLASSES) if (!(await declared(H[c]))) throw new Error(`${c} is not declared; run declare first`);
-  for (const name of args.length ? args : Object.keys(ACCOUNTS)) { await runAccount(name); await sleep(2000); }
+  for (const name of args.length ? args : T.accounts) { await runAccount(name); await sleep(2000); }
 } else if (cmd === "receipts") await receipts();
 else { console.error("usage: pf13_sepolia.mjs --plan | declare | run [name ...] | receipts"); process.exit(1); }

@@ -1,8 +1,13 @@
 # PF-14 implementation plan: NIST level 5 (Falcon-1024 class, ML-DSA-87 write-up)
 
-Issue: https://github.com/Ryun1/starknet-pq-account/issues/22. Planned 2026-11-19. Nothing here is
-built or measured in this repository yet. Board figures are external; figures marked "est." are
-estimates to be replaced by the measurements in steps A2 and A7.
+Issue: https://github.com/Ryun1/starknet-pq-account/issues/22. Planned 2026-11-19. Board figures
+are external; figures marked "est." were estimates, since replaced by the measurements in steps A2
+and A7.
+
+**Progress, 2026-11-26.** Part A steps A1–A8 merged in PR #37, Part B in PR #38; both acceptance
+criteria closed. Benches re-measured on scarb 2.22.0 in PR #42. A9 and A8's manifest entry done
+(PR #43, then the Falcon-512 move and release `testnet-v2`'s Falcon-1024 entry in PR #45). Every step is done. Not done: the kit's per-scheme allow list (see
+`bench/pf14/README.md`).
 
 Depends on step 1 of the PF-13 plan (`PF-13-ml-dsa-44.md`, `HybridMigratableAccountV2` and
 `set_pq_key`) and on nothing else in PF-13. Part A can therefore be built before ML-DSA-44, and
@@ -134,6 +139,18 @@ The same new manifest as PF-13 step 9 lists the class with `scheme: falcon-1024`
 Declare the verifier (and V2 if PF-13 has not). With fresh public test keys: one wallet migrated
 straight to Falcon-1024, one Falcon-512 account moved with `[upgrade, set_pq_key]`, a hybrid
 transfer on each, an ECDSA-only transfer rejected. Receipts into `bench/pf14/sepolia.json`.
+
+Status 2026-11-26: partly done in PR #43. `HybridShakeVerifierFalcon1024` declared from a scarb
+2.22.0 build (`0x647ae0aa…`, 4.43e9 L2 gas). The public demo account (demo words index 1) migrated
+straight to Falcon-1024 (171.8M L2 gas), hybrid transfer 54.2M, ECDSA-only rejected; receipts in
+`bench/pf14/sepolia.json`.
+
+Status 2026-11-26: done. A fresh Argent 0.5.0 account migrated to testnet-v1 Falcon-512 and then
+moved with one hybrid-signed `[upgrade V2, set_pq_key Falcon-1024]`: 115.7M L2 gas, 4,832 L1 data
+gas, 3.38 STRK; hybrid transfer 54.2M; ECDSA-only rejected; stored keys equal the words' keys,
+balance drop equals the fee. `signer/pf13_sepolia.mjs` with `PQ_TARGET=falcon-1024`; receipts in
+`bench/pf14/a9-sepolia.json` (`sepolia.json` stays the demo account's). A8's manifest entry:
+release `testnet-v2` lists the verifier with `scheme: falcon-1024` and its declare transaction.
 
 ## Part B: ML-DSA-87, write-up only
 

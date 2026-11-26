@@ -4,11 +4,13 @@
   "experimental": true,
   "note": "Experimental, unaudited, testnet only. Class hashes are Sepolia declarations. Falcon-512 verifiers stay in testnet-v1; a V2 account can use them.",
   "source": {
-    "commit": "79c0b5973dcee3074aafa10f549992a2ee44d2e8",
+    "commit": "b5d4290bcefb636fcf7501c279133c7e708d38a6",
     "provably_fast_ml_dsa_44_bundle": "78c83599f57ecb28847ba3ebc4528598318129b8",
+    "provably_fast_falcon_1024_bundle": "bf7fd8785a189164d638e7f7c11d261c9e864d56",
     "provably_fast_patches": {
-      "record-mj_2e2f9ddebbcc4281b07d84937ae0ffbc.patch": "281b100eef3784fea37f620e65653643c6ca812b8e37bdbf91afaac0ca906d1d",
-      "cache.cairo": "d507ac3ced746097883c3c2f46d367941ba63d7fc73d0100460c458bf2239d6f"
+      "ml-dsa-44/record-mj_2e2f9ddebbcc4281b07d84937ae0ffbc.patch": "281b100eef3784fea37f620e65653643c6ca812b8e37bdbf91afaac0ca906d1d",
+      "ml-dsa-44/cache.cairo": "d507ac3ced746097883c3c2f46d367941ba63d7fc73d0100460c458bf2239d6f",
+      "falcon-1024/record-fk_2956035507114a6c89165c8cc8e8fe56.patch": "1df6049694d77f84552d6df6c8fe8dcb81ada28ad9b3418d4fee038b7f14c98b"
     }
   },
   "toolchain": {
@@ -47,6 +49,15 @@
       "casm_sha256": "22829065ab6d210f8d60caf0cf078dd085e60c61460d3c9c8ed0c982acb80fc5",
       "declarable": true,
       "declare_tx": "0x65cbd374c750205134da3561e820eb62e71996c7fb0633b42d2b49dbe12b990"
+    },
+    "HybridShakeVerifierFalcon1024": {
+      "role": "verifier",
+      "class_hash": "0x647ae0aa39903ec2e15c33bee124ff72120e63ad39adc5368cc52799cd4661d",
+      "compiled_class_hash": "0xdcf08e62ee942a5a02315bc738006da9fc24826a2d1d5c76afa566f5340ee8",
+      "sierra_sha256": "31979839d438d0da9c5c1729703401b5260aabf80f59ce5f79de365c5a705960",
+      "casm_sha256": "ab3d88b6936a96d85b673de7b4accd773022e134d93550462d415ae2c4d9a34f",
+      "declarable": true,
+      "declare_tx": "0x62cffff0c2ef735b3537812a4de33dc7f183322202ca726b3ce735bef4ccc62"
     }
   },
   "verifiers": {
@@ -54,6 +65,10 @@
       "class": "HybridMlDsa44Verifier",
       "scheme": "ml-dsa-44",
       "setup": "MlDsa44KeySetup"
+    },
+    "falcon-1024": {
+      "class": "HybridShakeVerifierFalcon1024",
+      "scheme": "falcon-1024"
     }
   },
   "default_verifier": "ml-dsa-44"

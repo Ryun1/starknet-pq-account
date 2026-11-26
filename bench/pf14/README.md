@@ -3,7 +3,8 @@
 Issue #22. A Falcon-1024 verifier class, `HybridShakeVerifierFalcon1024`, for
 `HybridMigratableAccountV2` ([scheme-switch.md](../../contracts/docs/scheme-switch.md)), built on the
 Provably Fast Falcon-1024 record `fk_29560355` ([PROVENANCE](../../vendor/provably-fast/falcon-1024/PROVENANCE.md)).
-Experimental, unaudited, testnet only; nothing here is declared on Sepolia.
+Experimental, unaudited, testnet only. Declared on Sepolia from a scarb 2.22.0 build and pinned in
+release [`testnet-v2`](../../release/testnet-v2.json); see [Sepolia receipts](#sepolia-receipts-a9-2026-11-26).
 Part B, ML-DSA-87 (no class; the trigger to revisit): [ml-dsa-87.md](ml-dsa-87.md).
 
 Acceptance criterion 1, "Falcon-1024 declare gas and validation gas measured": declare **4.43e9 L2
@@ -149,13 +150,39 @@ node pq_demo_setup.mjs falcon-1024   # fund, deploy, [upgrade(V2), migrate] to F
                                  # transfer, ECDSA-only transfer rejected; writes sepolia.json
 ```
 
-Until that has run, the page's Falcon-1024 button reports that the keys do not control a migrated
-account.
+## Sepolia receipts (A9, 2026-11-26)
+
+`HybridShakeVerifierFalcon1024` `0x647ae0aa…661d` declared from a scarb 2.22.0 build
+([`0x62cffff0…`](https://sepolia.voyager.online/tx/0x62cffff0c2ef735b3537812a4de33dc7f183322202ca726b3ce735bef4ccc62),
+about 4.43e9 L2 gas). Each account from its own words (ECDSA key by the wallet's derivation,
+Falcon-1024 key by backup profile v0.2):
+
+| Account | Path | Move: L2 gas / L1 data gas / fee | Hybrid transfer: L2 gas / fee |
+| --- | --- | ---: | ---: |
+| Public demo, OpenZeppelin (demo words index 1) | `[upgrade V2, migrate]` straight to Falcon-1024 ([tx](https://sepolia.voyager.online/tx/0xa9ae3f8f95304e0b60bcc65e93176062384a7fdb9188a712b5d8ef55ffb5ad)) | 171,843,520 / – / 5.16 STRK | 54,223,517 / 1.57 STRK ([tx](https://sepolia.voyager.online/tx/0x5f761f3f269f06a0cfced699ecd1ddde46bedc1d217c1d40c90d82d085ddc95)) |
+| Argent 0.5.0 on testnet-v1 Falcon-512 | `[upgrade V2, set_pq_key]`, signed hybrid with Falcon-512 ([tx](https://sepolia.voyager.online/tx/0x7fa616e21dd5cd510393894a30739bf4dd0fe090cd11d605ecb1a357065d34e)) | 115,749,732 / 4,832 / 3.38 STRK | 54,226,127 / 1.58 STRK ([tx](https://sepolia.voyager.online/tx/0x6928ed48b8da1839b23577c9a40fc6850e753e0eb087cf629382a5bc0d24cd4)) |
+
+For both: the account's class is V2 (`0x7c7c9de0…`), a hybrid (ECDSA + Falcon-1024) transfer
+succeeded and an ECDSA-only transfer was rejected in `__validate__`. For the moved account the
+stored ECDSA and Falcon-1024 keys equal the keys from its words and the balance dropped by exactly
+the move's fee. Receipts: [`sepolia.json`](sepolia.json) (demo account) and
+[`a9-sepolia.json`](a9-sepolia.json) (the move), the latter from
+
+```sh
+cd signer
+PQ_TARGET=falcon-1024 node pf13_sepolia.mjs run        # deploy, Falcon-512 migration, move, transfers
+PQ_TARGET=falcon-1024 node pf13_sepolia.mjs receipts   # writes bench/pf14/a9-sepolia.json
+```
+
+The move (115.7M) is above the local `set_pq_key` figure (78.8M) by the transaction's Falcon-512
+validation, the `upgrade` call and the 2.22.0 build. Unlike ML-DSA-44 it writes only the 57-felt
+key, but its 4,832 L1 data gas is only 3% under the 5,000 bound that reverted the ML-DSA-44 moves;
+the script bounds it at 20,000, and a wallet should not rely on 5,000 either.
 
 ## Not done
 
-- A9, Sepolia receipts: scripted, not yet run (needs the deployer key). See [Demo page](#demo-page).
-- No class hash for Falcon-1024 in `KNOWN_VERIFIERS` or the release manifest until it is declared;
-  the per-scheme allow list and the manifest's `scheme` field wait for that (PF-13 step 9).
+- Falcon-1024 is pinned in release `testnet-v2` with `scheme: falcon-1024`, but the kit does not
+  read that manifest: `KNOWN_VERIFIERS` still lists only the testnet-v1 verifiers, so callers pass
+  their own `allowedVerifiers`, and there is no per-scheme allow list yet.
 - A review of the record patch. It is minified contest code, attacked (one hammer round) but not
   audited.
