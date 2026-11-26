@@ -9,7 +9,12 @@ import { CallData, ec, num } from "starknet";
 import { readFileSync } from "node:fs";
 import { falcon512, falcon1024, makeNtt, publicKeyFelts } from "./falcon_adapter.mjs";
 import { deriveAccountKeys } from "./pq_keys.mjs";
-import { KNOWN_VERIFIERS, migrationArgs, rotationHash, setPqKeyCalls } from "./pq_account_kit.mjs";
+import { HybridSigner, KNOWN_VERIFIERS, migrationArgs, prepareKeys, rotationHash, setPqKeyCalls } from "./pq_account_kit.mjs";
+import { hashBytes, ml_dsa44 } from "./mldsa_adapter.mjs";
+import { hkdf } from "@noble/hashes/hkdf";
+import { sha512 } from "@noble/hashes/sha2";
+import { mnemonicToSeedSync } from "@scure/bip39";
+import { createHash } from "node:crypto";
 import { ROOTS, ROTATION_FIXTURE, TARGET } from "./config.mjs";
 
 const abi = (name) => JSON.parse(readFileSync(`${TARGET}/pq_hybrid_${name}.contract_class.json`, "utf8")).abi;
@@ -95,5 +100,47 @@ check("backup v0.2 gives a Falcon-1024 key with the same ECDSA key", v02.falconP
   v02.falconPublicKey[0] === 0x0a && v02.ecdsaPublicKey === v01.ecdsaPublicKey);
 check("backup v0.2 is deterministic", same([...v02.falconPublicKey], [...deriveAccountKeys(WORDS, 0, "pq", "falcon-1024").falconPublicKey]));
 check("backup v0.1 is unchanged by the scheme argument", same([...v01.falconPublicKey], [...deriveAccountKeys(WORDS, 0, "pq", "falcon-512").falconPublicKey]));
+
+// PF-13: ML-DSA-44 through the same kit calls, against tests_mldsa_fixture.cairo (seed 13, ECDSA_PK).
+const MLDSA_FIXTURE = readFileSync(new URL("../contracts/src/tests_mldsa_fixture.cairo", import.meta.url), "utf8");
+const cairoArray = (fn) => [...new RegExp(`pub fn ${fn}\\(\\) -> Array<felt252> \\{\\s*array!\\[([^\\]]*)\\]`).exec(MLDSA_FIXTURE)[1].matchAll(/0x[0-9a-f]+/g)].map((m) => m[0]);
+const km = ml_dsa44.keygen(new Uint8Array(32).fill(13));
+const nextMl = prepareKeys({ ...ecdsa, falconPublicKey: km.publicKey, falconSecretKey: km.secretKey });
+check("ML-DSA-44: prepareKeys gives the fixture's 43-felt key", same(nextMl.falconFelts, cairoArray("mldsa_pk")));
+const MLDSA = "0x3d5a44", MLSETUP = "0x5e7d5a";
+const allowMl = { ...KNOWN_VERIFIERS, [MLDSA]: "ML-DSA-44", [MLSETUP]: "ML-DSA-44 setup" };
+const [callMl] = setPqKeyCalls(ACCOUNT, current, nextMl, { verifierClass: MLDSA, setupClass: MLSETUP, allowedVerifiers: allowMl });
+const proofMl = callMl.calldata.slice(43 + 4);
+check("ML-DSA-44: set_pq_key calldata matches the V2 ABI", same(callMl.calldata, compile("HybridMigratableAccountV2", "set_pq_key",
+  { pq_public_key: nextMl.falconFelts, verifier_class_hash: MLDSA, setup_class_hash: MLSETUP, proof: proofMl })));
+check("ML-DSA-44: the kit's proof is the fixture's, which tests_scheme.cairo accepts on chain", same(proofMl, cairoArray("mldsa_rotation_proof")));
+const MSG = /REGISTRATION_HASH: felt252 =\s*(0x[0-9a-f]+);/.exec(readFileSync(new URL("../contracts/src/tests_wallets_fixture.cairo", import.meta.url), "utf8"))[1];
+check("ML-DSA-44: HybridSigner signs a transaction hash as the fixture does",
+  same(await new HybridSigner(nextMl).signRaw(MSG), cairoArray("mldsa_sig")));
+
+// Backup profile v0.2 (ML-DSA-44): FIPS 204 KeyGen_internal, checked against NIST's ACVP keyGen cases.
+const acvp = JSON.parse(readFileSync(new URL("../bench/pf13/acvp_keygen.json", import.meta.url), "utf8")).tests;
+const sha = (b) => createHash("sha256").update(b).digest("hex");
+const acvpBad = acvp.filter((t) => { const k = ml_dsa44.keygen(Buffer.from(t.seed, "hex")); return sha(k.publicKey) !== t.pk_sha256 || sha(k.secretKey) !== t.sk_sha256; });
+check(`ML-DSA-44: noble keygen matches all ${acvp.length} NIST ACVP keyGen cases`, acvp.length === 25 && acvpBad.length === 0, acvpBad.map((t) => t.tcId).join(","));
+const v02ml = deriveAccountKeys(WORDS, 0, "pq", "ml-dsa-44");
+check("backup v0.2 gives an ML-DSA-44 key with the same ECDSA key", v02ml.falconPublicKey.length === 1312 && v02ml.ecdsaPublicKey === v01.ecdsaPublicKey);
+check("backup v0.2 ML-DSA-44 vector", sha(v02ml.falconPublicKey) === "ac0882837d8d1a2f1b2fba51c5cb0c1403b1acbb64d951e1bd522ed6c936e599", sha(v02ml.falconPublicKey));
+check("backup v0.2 Falcon-1024 key is unchanged by the ML-DSA-44 entry",
+  sha(v02.falconPublicKey) === "d14527e61098ec1c65435148886c783d064dd193339720d3d5b544b4ecff864a");
+
+// The browser page's ML-DSA-44 block (signer/browser-wallet.template.html), run here as written:
+// its keys, key felts and signatures must be the kit's.
+const PAGE = readFileSync(new URL("./browser-wallet.template.html", import.meta.url), "utf8");
+const block = /\/\/ --- ML-DSA-44 \(PF-13\)[^\n]*\n([\s\S]*?)\/\/ --- end ML-DSA-44 ---/.exec(PAGE)[1];
+const page = new Function("ml_dsa44", "hkdf", "sha512", `${block}; return { mldsaKeysFromSeed, bytesToFelts, mldsaSignatureFelts };`)(ml_dsa44, hkdf, sha512);
+const pageKeys = page.mldsaKeysFromSeed(mnemonicToSeedSync(WORDS), 0);
+check("page: ML-DSA-44 key from the words = backup v0.2's", same([...pageKeys.falconPublicKey], [...v02ml.falconPublicKey]));
+check("page: key felts = the kit's", same(page.bytesToFelts(km.publicKey), nextMl.falconFelts));
+const pageSig = page.mldsaSignatureFelts(MSG, km.secretKey);
+// Inverse of the packing: 31 little-endian bytes per felt, the last felt the rest.
+const feltsToBytes = (felts, n) => Uint8Array.from({ length: n }, (_, k) => Number((felts[Math.floor(k / 31)] >> BigInt(8 * (k % 31))) & 0xffn));
+check("page: its signature felts unpack to a signature noble accepts",
+  pageSig.length === 79 && ml_dsa44.verify(feltsToBytes(pageSig, 2420), hashBytes(MSG), km.publicKey));
 
 process.exit(failed ? 1 : 0);

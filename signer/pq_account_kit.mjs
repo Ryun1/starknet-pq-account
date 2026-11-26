@@ -15,6 +15,7 @@
 import { Signer, ec, hash, num, shortString } from "starknet";
 import { deriveAccountKeys } from "./pq_keys.mjs";
 import { makeNtt, publicKeyFelts, signatureFelts, signTxHash } from "./falcon_adapter.mjs";
+import * as mldsa from "./mldsa_adapter.mjs";
 
 export { deriveAccountKeys };
 export const REGISTER_DOMAIN = "starknet-pq-register-v1";
@@ -41,9 +42,14 @@ function assertAllowedVerifier(verifierClass, allowedVerifiers, what = "verifier
   }
 }
 
-/** Adds the on-chain Falcon public key felts (needs the NTT roots exported from falcon.py). */
+// The PQ scheme of a key pair, from its public key length (Falcon keys go through falcon_adapter).
+const MLDSA44_PK_BYTES = 1312;
+const isMlDsa44 = (keys) => keys.falconPublicKey.length === MLDSA44_PK_BYTES;
+
+/** Adds the on-chain PQ public key felts. Falcon needs the NTT roots exported from falcon.py; ML-DSA-44 does not. */
 export function prepareKeys(keys, roots) {
-  return { ...keys, falconFelts: publicKeyFelts(keys.falconPublicKey, makeNtt(roots)).map(num.toHex) };
+  const felts = isMlDsa44(keys) ? mldsa.publicKeyFelts(keys.falconPublicKey) : publicKeyFelts(keys.falconPublicKey, makeNtt(roots));
+  return { ...keys, falconFelts: felts.map(num.toHex) };
 }
 
 /** Message of the key-possession proof, same as `registration_hash` in migratable.cairo. */
@@ -56,12 +62,15 @@ export function rotationHash(ecdsaPublicKey, falconFelts) {
   return hash.computePoseidonHashOnElements([shortString.encodeShortString(ROTATE_DOMAIN), ecdsaPublicKey, ...falconFelts]);
 }
 
-/** [falcon x60] (x116 at n = 1024): the Falcon half of a hybrid signature, alone (PQ-only, ARCH-01). */
+/** The PQ half of a hybrid signature, alone (PQ-only, ARCH-01): Falcon x60 (x116 at n = 1024), or ML-DSA-44 x79. */
 export function falconSignature(msgHash, keys) {
-  return signatureFelts(signTxHash(BigInt(msgHash), keys.falconSecretKey), keys.falconPublicKey).map(num.toHex);
+  const pq = isMlDsa44(keys)
+    ? mldsa.signatureFelts(mldsa.signTxHash(BigInt(msgHash), keys.falconSecretKey))
+    : signatureFelts(signTxHash(BigInt(msgHash), keys.falconSecretKey), keys.falconPublicKey);
+  return pq.map(num.toHex);
 }
 
-/** [r, s, falcon x60]: STARK-curve ECDSA and Falcon-512 (SHAKE-256) over the same hash. */
+/** [r, s, pq...]: STARK-curve ECDSA and the PQ scheme (Falcon SHAKE-256, or ML-DSA-44) over the same hash. */
 export function hybridSignature(msgHash, keys) {
   const e = ec.starkCurve.sign(num.toHex(msgHash), keys.ecdsaPrivateKey);
   return [num.toHex(e.r), num.toHex(e.s), ...falconSignature(msgHash, keys)];

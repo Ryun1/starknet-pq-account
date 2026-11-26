@@ -3,8 +3,9 @@
 Status: experimental, unaudited, testnet only. The class is built and tested locally
 (`contracts/src/migratable_v2.cairo`, `tests_scheme.cairo`). It is not declared on Sepolia and is
 not in `release/testnet-v1.json`. It has been tested with SHAKE-256 Falcon-512, Falcon-1024
-(`HybridShakeVerifierFalcon1024`, PF-14, [`bench/pf14`](../../bench/pf14/README.md)) and a mock
-scheme with a setup class (see [Tests](#tests)).
+(`HybridShakeVerifierFalcon1024`, PF-14, [`bench/pf14`](../../bench/pf14/README.md)), ML-DSA-44
+(`HybridMlDsa44Verifier` with the setup class `MlDsa44KeySetup`, PF-13,
+[`bench/pf13`](../../bench/pf13/README.md)) and a mock scheme with a setup class (see [Tests](#tests)).
 
 ## Why a new account class
 
@@ -111,6 +112,11 @@ pointer and signature checks are as before.
 | Falcon-512 → Falcon-1024 → Falcon-512 with `set_pq_key` (57 felts, then 29); a v1 account moved to Falcon-1024 by `[upgrade, set_pq_key]`; an Argent account migrated straight to Falcon-1024 | switched; each scheme's signatures pass only while it is installed |
 | a 29-felt key under the Falcon-1024 verifier; a Falcon-1024 key under a Falcon-512 verifier | reverts: `Migratable: invalid key proof` |
 | raw `set_verifier_class_hash` to the Falcon-1024 verifier | reverts: `Migratable: verifier rejects` |
+| Falcon-512 → ML-DSA-44 → Falcon-512 with `set_pq_key` (43 felts with setup, then 29 without); a v1 account moved to ML-DSA-44 by `[upgrade, set_pq_key]`; an Argent account migrated straight to ML-DSA-44 | switched; each scheme's signatures pass only while it is installed |
+| ML-DSA-44 key without its setup class; ML-DSA-44 key under a Falcon-512 verifier | reverts: `Migratable: invalid key proof` |
+| ML-DSA-44 setup class on a Falcon key | reverts: `MlDsa44: malformed key` |
+| raw `set_verifier_class_hash` to the ML-DSA-44 verifier | reverts: `Migratable: verifier rejects` |
+| ML-DSA-44 key A → key B: without the setup (stale cache), then with it | reverts, then rotated; key A's signatures then fail |
 
 Removing the proof check from `set_pq_key` fails six of these, removing its state check fails the
 key-rewriting case, and not clearing the old key before writing the new one fails three.
@@ -118,12 +124,15 @@ key-rewriting case, and not clearing the old key before writing the new one fail
 The mock scheme has no cryptography: its signature is `[hash + key[0]]`. It tests the account (a
 key of another length, a setup class, a proof checked by the new verifier), not a verifier.
 Falcon-1024 (issue #22) is the first real second scheme; its fixture is
-`tests_falcon1024_fixture.cairo` (`signer/falcon1024_fixture.mjs`). ML-DSA-44 is separate work (#21).
+`tests_falcon1024_fixture.cairo` (`signer/falcon1024_fixture.mjs`). ML-DSA-44 (#21) is the first real
+scheme with a setup class; its fixture is `tests_mldsa_fixture.cairo` (`signer/mldsa_fixture.mjs`).
 `set_pq_key` from Falcon-512 to Falcon-1024 costs 78.8M L2 gas in `__execute__`, and a migration
-straight to Falcon-1024 84.3M ([`bench/pf14`](../../bench/pf14/README.md)).
+straight to Falcon-1024 84.3M ([`bench/pf14`](../../bench/pf14/README.md)). To ML-DSA-44, where the
+setup computes the key's cache, 414M and 420M ([`bench/pf13`](../../bench/pf13/README.md)).
 
 `signer/scheme_switch_check.mjs` checks offline that the kit's `set_pq_key` and V2 `migrate`
-calldata match the compiled ABI, and that the proof signs the hash the Cairo test verifies.
+calldata match the compiled ABI, and that the proof signs the hash the Cairo test verifies, for
+Falcon-512, Falcon-1024 and ML-DSA-44 (where the kit's proof and signature equal the Cairo fixture's).
 
 ## Size
 

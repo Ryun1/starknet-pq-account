@@ -20,11 +20,19 @@
   (a child of `bece5c07`), MIT, unchanged. `vendor/provably-fast/falcon-1024/`: the lane's record patch
   `record-fk_2956035507114a6c89165c8cc8e8fe56.patch` (`1df60496…c98b`), MIT, by the contributors listed in its
   `PROVENANCE.md`, and the crates generated from it: `HybridShakeVerifierFalcon1024`, built and tested only (PF-14).
+- `vendor/cairo-pq-verifiers/crates/ml_dsa_44/`: the Provably Fast ML-DSA-44 lane's baseline crate, from its bundle
+  at commit `78c83599f57ecb28847ba3ebc4528598318129b8` (a child of `bece5c07`), MIT, unchanged.
+  `vendor/provably-fast/ml-dsa-44/`: the lane's record patch `record-mj_2e2f9ddebbcc4281b07d84937ae0ffbc.patch`
+  (`281b100e…6d1d`), MIT, by the contributors listed in its `PROVENANCE.md`, the cache module `cache.cairo`
+  ported from the board's account (see `PROVENANCE.md`), and the crate generated from them:
+  `HybridMlDsa44Verifier` and `MlDsa44KeySetup` (PF-13), declared on Sepolia (testnet only).
+- `bench/pf13/acvp_keygen.json`: seeds and key hashes from NIST's ACVP ML-DSA keyGen vectors
+  ([usnistgov/ACVP-Server](https://github.com/usnistgov/ACVP-Server), public domain).
 - `contracts/src/utils/execution.cairo` and `contracts/src/utils/interface.cairo` are adapted from the same
   repository (MIT).
 - Falcon key generation and signing use [falcon.py](https://github.com/tprest/falcon.py) by Thomas Prest
   (MIT License), commit `5145a818c9512b4a443507d3375e75dae3076af6`. It is not vendored; point `FALCON_PY_DIR`
   at a checkout of that commit. `signer/falcon_ntt_roots.json` holds falcon.py's NTT root constants
   (exported by `scripts/export_ntt_roots.py`); `signer/falcon1024_ntt_roots.json` the same up to n = 1024.
-- Browser and Node Falcon-512 and Falcon-1024 signing use [@noble/post-quantum](https://github.com/paulmillr/noble-post-quantum)
+- Browser and Node Falcon-512 and Falcon-1024 signing, and Node ML-DSA-44 signing, use [@noble/post-quantum](https://github.com/paulmillr/noble-post-quantum)
   0.6.1 (MIT License), loaded as a dependency or from jsDelivr; it is not vendored.

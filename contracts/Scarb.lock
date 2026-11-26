@@ -18,6 +18,7 @@ dependencies = [
  "pqbench_falcon_512_pf_record",
  "pqbench_falcon_512_pf_small",
  "pqbench_interface",
+ "pqbench_ml_dsa_44_pf_record",
 ]
 
 [[package]]
@@ -74,6 +75,14 @@ dependencies = [
 [[package]]
 name = "pqbench_interface"
 version = "0.1.0"
+
+[[package]]
+name = "pqbench_ml_dsa_44_pf_record"
+version = "0.1.0"
+dependencies = [
+ "corelib_imports",
+ "pqbench_interface",
+]
 
 [[package]]
 name = "pqbench_ntt"

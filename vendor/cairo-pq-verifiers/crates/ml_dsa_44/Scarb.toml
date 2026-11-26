@@ -1,0 +1,20 @@
+[package]
+name = "pqbench_ml_dsa_44"
+version.workspace = true
+edition.workspace = true
+cairo-version.workspace = true
+scarb-version.workspace = true
+authors.workspace = true
+
+[dependencies]
+starknet.workspace = true
+# corelib's internal modules (bounded_int among them), as OpenZeppelin's Falcon crate uses them.
+corelib_imports = "0.1.2"
+pqbench_interface.workspace = true
+
+[dev-dependencies]
+snforge_std.workspace = true
+assert_macros.workspace = true
+
+[tool]
+scarb.workspace = true
